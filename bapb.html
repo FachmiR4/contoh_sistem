@@ -6,146 +6,68 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    body { 
-      font-family: 'Segoe UI', Arial, sans-serif; 
-      background: #f8fafc; 
-      margin: 0; 
-      padding: 30px 0;
-    }
-    .container-main {
-      max-width: 700px;
-      margin: auto;
-      background: #fff;
-      border-radius: 18px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      padding: 32px 28px 24px 28px;
-    }
-    h2 {
-      font-weight: 700;
-      color: #0d6efd;
-      margin-bottom: 18px;
-      letter-spacing: 1px;
-    }
-    .item-group {
-      border: 1px solid #e3e6f0;
-      border-radius: 12px;
-      margin-bottom: 18px;
-      padding: 18px 18px 12px 18px;
-      background: #f6fafd;
-      position: relative;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    }
-    .item-group .remove-barang-btn {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      background: #fff;
-      border: none;
-      color: #dc3545;
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-    .item-group .remove-barang-btn:hover {
-      color: #a71d2a;
-    }
-    .child {
-      margin-left: 0;
-      background: #eaf6ff;
-      padding: 12px 16px 10px 16px;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      border: 1px solid #b6e0fe;
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; margin: 0; padding: 30px 0; }
+    .container-main { max-width: 700px; margin: auto; background: #fff; border-radius: 18px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 32px 28px 24px 28px; }
+    h2 { font-weight: 700; color: #0d6efd; margin-bottom: 18px; letter-spacing: 1px; }
+    .item-group { border: 1px solid #e3e6f0; border-radius: 12px; margin-bottom: 18px; padding: 18px 18px 12px 18px; background: #f6fafd; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.03);}
+    .item-group .remove-barang-btn { position: absolute; top: 12px; right: 12px; background: #fff; border: none; color: #dc3545; font-size: 1.2rem; cursor: pointer; transition: color 0.2s;}
+    .item-group .remove-barang-btn:hover { color: #a71d2a;}
+    .child { background: #eaf6ff; padding: 12px 16px 10px 16px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #b6e0fe; display: flex; align-items: center; gap: 12px;}
+    .child .remove-child-btn { background: none; border: none; color: #dc3545; font-size: 1.1rem; margin-left: 8px; cursor: pointer; transition: color 0.2s;}
+    .child .remove-child-btn:hover { color: #a71d2a;}
+    .children-container { margin-top: 10px; margin-bottom: 8px;}
+    .form-label { font-weight: 500; margin-bottom: 4px;}
+    .form-check-label { font-weight: 400; margin-left: 6px;}
+    .action-btns-barang {
       display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .child .remove-child-btn {
-      background: none;
-      border: none;
-      color: #dc3545;
-      font-size: 1.1rem;
-      margin-left: 8px;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-    .child .remove-child-btn:hover {
-      color: #a71d2a;
-    }
-    .children-container {
-      margin-top: 10px;
+      gap: 10px;
       margin-bottom: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
     }
-    .form-label {
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
-    .form-check-label {
-      font-weight: 400;
-      margin-left: 6px;
-    }
-    .add-barang-btn, .add-komponen-btn {
+    .add-barang-btn, .add-komponen-btn, .generate-barcode-btn {
       border-radius: 8px;
       font-weight: 500;
       letter-spacing: 0.5px;
       box-shadow: 0 2px 8px rgba(13,110,253,0.07);
       transition: transform 0.15s, box-shadow 0.15s;
     }
-    .add-barang-btn:hover, .add-komponen-btn:hover {
+    .add-barang-btn:hover, .add-komponen-btn:hover, .generate-barcode-btn:hover {
       transform: translateY(-2px) scale(1.03);
       box-shadow: 0 4px 16px rgba(13,110,253,0.13);
     }
-    hr {
-      margin: 32px 0 18px 0;
-    }
-    pre {
-      background: #f3f6fa;
-      border-radius: 8px;
-      padding: 16px;
-      font-size: 1rem;
-      color: #333;
-      border: 1px solid #e3e6f0;
-    }
+    hr { margin: 32px 0 18px 0;}
+    pre { background: #f3f6fa; border-radius: 8px; padding: 16px; font-size: 1rem; color: #333; border: 1px solid #e3e6f0;}
+    .barcode-list { background: #fffbe7; border: 1px solid #ffe082; border-radius: 8px; padding: 12px; margin-top: 10px; font-size: 1rem;}
+    .barcode-list ul { padding-left: 18px; margin-bottom: 0;}
     @media (max-width: 600px) {
-      .container-main {
-        padding: 16px 6px 12px 6px;
-      }
-      .item-group {
-        padding: 10px 6px 8px 6px;
-      }
-      .child {
-        padding: 8px 6px 8px 6px;
-        flex-direction: column;
-        gap: 4px;
-      }
+      .container-main { padding: 16px 6px 12px 6px;}
+      .item-group { padding: 10px 6px 8px 6px;}
+      .child { padding: 8px 6px 8px 6px; flex-direction: column; gap: 4px;}
+      .action-btns-barang { flex-direction: column; gap: 8px; }
     }
   </style>
 </head>
 <body>
-
 <div class="container-main">
   <h2><i class="bi bi-box-seam"></i> Input Barang BAPB</h2>
-
   <div id="form-barang-container"></div>
-
   <button class="btn btn-primary add-barang-btn mb-2" onclick="addBarang()">
     <i class="bi bi-plus-lg"></i> Tambah Barang
   </button>
-
   <hr>
   <h5 class="mb-2"><i class="bi bi-code-slash"></i> Output JSON:</h5>
   <pre id="output"></pre>
 </div>
-
 <script>
 let barangIndex = 0;
+let barcodeStart = 2000;
 
 function addBarang() {
   const container = document.getElementById('form-barang-container');
-
   const html = `
     <div class="item-group" data-index="${barangIndex}">
-      <button type="button" class="remove-barang-btn" title="Hapus Barang" onclick="this.parentElement.remove()">
+      <button type="button" class="remove-barang-btn" title="Hapus Barang" onclick="this.parentElement.remove(); updateOutput();">
         <i class="bi bi-x-circle"></i>
       </button>
       <div class="row g-2">
@@ -155,104 +77,151 @@ function addBarang() {
         </div>
         <div class="col-md-2">
           <label class="form-label">Qty</label>
-          <input type="number" class="form-control" name="qty" value="1" min="1" required />
+          <input type="number" class="form-control" name="qty" value="1" min="1" required onchange="updateOutput()" />
         </div>
         <div class="col-md-5">
           <label class="form-label">Total Harga</label>
-          <input type="number" class="form-control" name="total_harga" placeholder="Rp" required />
+          <input type="number" class="form-control" name="total_harga" placeholder="Rp" required onchange="updateOutput()" />
         </div>
       </div>
       <div class="form-check mt-2">
         <input class="form-check-input" type="checkbox" name="is_composite" id="isComposite${barangIndex}" onchange="toggleChildren(this)">
         <label class="form-check-label" for="isComposite${barangIndex}">
-          Barang Pecahan? <span class="text-secondary">(memiliki komponen)</span>
+          Barang Pecahan? <span class="text-secondary">(memiliki komponen yang akan dibarcode)</span>
         </label>
       </div>
       <div class="children-container"></div>
-      <div class="button mb-1" style="display:none;">
+      <div class="action-btns-barang" style="display:none;">
         <button type="button" class="btn btn-outline-info add-komponen-btn" onclick="addChild(this)">
           <i class="bi bi-plus-circle"></i> Tambah Komponen
         </button>
+        <button type="button" class="btn btn-outline-success generate-barcode-btn" onclick="generateBarcode(this)">
+          <i class="bi bi-upc"></i> Generate Barcode
+        </button>
       </div>
+      <div class="barcode-btn mb-1 mt-2" style="display:block;">
+        <button type="button" class="btn btn-outline-success generate-barcode-btn" onclick="generateBarcode(this)">
+          <i class="bi bi-upc"></i> Generate Barcode
+        </button>
+      </div>
+      <div class="barcode-list" style="display:none;"></div>
     </div>
   `;
-
   container.insertAdjacentHTML('beforeend', html);
   barangIndex++;
+  updateOutput();
 }
 
 function toggleChildren(checkbox) {
   const group = checkbox.closest('.item-group');
-  const childBtn = group.querySelector('.button');
+  const actionBtns = group.querySelector('.action-btns-barang');
+  const barcodeBtn = group.querySelector('.barcode-btn');
   const childrenDiv = group.querySelector('.children-container');
-
   if (checkbox.checked) {
-    childBtn.style.display = 'block';
+    actionBtns.style.display = 'flex';
+    barcodeBtn.style.display = 'none';
     childrenDiv.innerHTML = '';
   } else {
-    childBtn.style.display = 'none';
+    actionBtns.style.display = 'none';
+    barcodeBtn.style.display = 'block';
     childrenDiv.innerHTML = '';
   }
+  updateOutput();
 }
 
 function addChild(button) {
   const group = button.closest('.item-group');
   const childrenDiv = group.querySelector('.children-container');
-
   const childHTML = `
     <div class="child">
       <div class="flex-grow-1">
         <label class="form-label mb-1">Nama Komponen</label>
-        <input type="text" class="form-control mb-1" name="child_nama" placeholder="Nama Komponen" required />
+        <input type="text" class="form-control mb-1" name="child_nama" placeholder="Nama Komponen" required onchange="updateOutput()" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Qty</label>
+        <input type="number" class="form-control" name="child_qty" value="1" min="1" required onchange="updateOutput()" />
       </div>
       <div>
-        <label class="form-label mb-1">Harga</label>
-        <input type="number" class="form-control mb-1" name="child_harga" placeholder="Rp" required />
+        <label class="form-label mb-1">Harga Per Price</label>
+        <input type="number" class="form-control mb-1" name="child_harga" placeholder="Rp" required onchange="updateOutput()" />
       </div>
-      <button type="button" class="remove-child-btn" title="Hapus Komponen" onclick="this.parentElement.remove()">
+      <button type="button" class="remove-child-btn" title="Hapus Komponen" onclick="this.parentElement.remove(); updateOutput();">
         <i class="bi bi-x-circle"></i>
       </button>
     </div>
   `;
-
   childrenDiv.insertAdjacentHTML('beforeend', childHTML);
+  updateOutput();
 }
 
-// Optional: Untuk melihat hasilnya dalam JSON
-setInterval(() => {
+function generateBarcode(button) {
+  let barcode = barcodeStart;
+  const group = button.closest('.item-group');
+  const isComposite = group.querySelector('[name="is_composite"]').checked;
+  const barcodeDiv = group.querySelector('.barcode-list');
+  barcodeDiv.innerHTML = '';
+  let barcodes = [];
+  if (!isComposite) {
+    const nama = group.querySelector('[name="nama_barang"]').value || 'Barang';
+    const qty = parseInt(group.querySelector('[name="qty"]').value) || 1;
+    for (let i = 0; i < qty; i++) {
+      barcodes.push({ nama: nama, barcode: barcode++ });
+    }
+  } else {
+    const children = group.querySelectorAll('.children-container .child');
+    children.forEach(child => {
+      const childNama = child.querySelector('[name="child_nama"]').value || 'Komponen';
+      const childQty = parseInt(child.querySelector('[name="child_qty"]').value) || 1;
+      for (let i = 0; i < childQty; i++) {
+        barcodes.push({ nama: childNama, barcode: barcode++ });
+      }
+    });
+  }
+  barcodeStart = barcode;
+  if (barcodes.length > 0) {
+    barcodeDiv.style.display = 'block';
+    barcodeDiv.innerHTML = `<strong>Barcode List:</strong><ul>` +
+      barcodes.map(b => `<li>${b.nama} - <span class="badge bg-warning text-dark">${b.barcode}</span></li>`).join('') +
+      `</ul>`;
+  } else {
+    barcodeDiv.style.display = 'none';
+  }
+}
+
+function updateOutput() {
   const allGroups = document.querySelectorAll('.item-group');
   const result = [];
-
   allGroups.forEach(group => {
     const nama = group.querySelector('[name="nama_barang"]').value;
     const qty = group.querySelector('[name="qty"]').value;
     const harga = group.querySelector('[name="total_harga"]').value;
     const isComposite = group.querySelector('[name="is_composite"]').checked;
-
     const item = {
       nama_barang: nama,
-      qty: parseInt(qty),
-      total_harga: parseFloat(harga),
+      qty: parseInt(qty) || 0,
+      total_harga: parseFloat(harga) || 0,
       is_composite: isComposite,
       children: []
     };
-
     if (isComposite) {
       const children = group.querySelectorAll('.children-container .child');
       children.forEach(child => {
         const childNama = child.querySelector('[name="child_nama"]').value;
+        const childQty = child.querySelector('[name="child_qty"]').value;
         const childHarga = child.querySelector('[name="child_harga"]').value;
-
         item.children.push({
           nama_barang: childNama,
-          harga_satuan: parseFloat(childHarga)
+          qty: parseInt(childQty) || 0,
+          harga_satuan: parseFloat(childHarga) || 0
         });
       });
     }
-
     result.push(item);
   });
-
   document.getElementById('output').textContent = JSON.stringify(result, null, 2);
-}, 500);
+}
+
+// Update output on any change
+document.addEventListener('input', updateOutput);
 </script>
