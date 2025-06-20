@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Form Kendaraan</title>
+    <style>
+        .hidden { display: none; }
+        .form-group { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    
+    <form action="#" method="POST">
+
+    <!-- Step 1: Input Awal -->
+    <div class="form-group">
+        <label>Merk:</label>
+        <input type="text" name="merk" required>
+    </div>
+    <div class="form-group">
+        <label>Jenis:</label>
+        <input type="text" name="jenis" required>
+    </div>
+    <div class="form-group">
+        <label>Tipe:</label>
+        <input type="text" name="tipe" required>
+    </div>
+
+    <!-- Tombol Tambah -->
+    <div>
+        <button type="button" onclick="showManualForm()">Tambah Manual</button>
+        <button type="button" onclick="showAutomaticForm()">Tambah Otomatis</button>
+    </div>
+
+    <hr>
+
+    <!-- Form Manual -->
+    <div id="manualForm" class="hidden">
+        <h3>Form Tambah Manual</h3>
+        <input type="hidden" name="mode" value="manual">
+        <div class="form-group">
+            <label>Nama:</label>
+            <input type="text" name="nama">
+        </div>
+        <div class="form-group">
+            <label>STNK:</label>
+            <input type="text" name="stnk">
+        </div>
+        <div class="form-group">
+            <label>No Mesin:</label>
+            <input type="text" name="nomesin">
+        </div>
+        <div class="form-group">
+            <label>No Rangka:</label>
+            <input type="text" name="norangka">
+        </div>
+    </div>
+
+    <!-- Form Otomatis -->
+    <div id="autoForm" class="hidden">
+        <h3>Form Tambah Otomatis</h3>
+        <input type="hidden" name="mode" value="otomatis">
+        <div class="form-group">
+            <label>Code:</label>
+            <input type="text" id="auto_code" name="code" value="1001" readonly>
+        </div>
+        <div class="form-group">
+            <label>Nama:</label>
+            <input type="text" name="nama">
+        </div>
+        <div class="form-group">
+            <label>STNK:</label>
+            <input type="text" name="stnk">
+        </div>
+        <div class="form-group">
+            <label>No Mesin:</label>
+            <input type="text" name="nomesin">
+        </div>
+        <div class="form-group">
+            <label>No Rangka:</label>
+            <input type="text" name="norangka">
+        </div>
+    </div>
+
+    <button type="submit" id="btn-simpan" class="hidden">Simpan</button>
+</form>
+
+<script>
+    function showManualForm() {
+        document.getElementById('manualForm').classList.remove('hidden');
+        document.getElementById('autoForm').classList.add('hidden');
+        document.querySelector('[name=mode]').value = 'manual';
+        document.getElementById('btn-simpan').classList.remove('hidden');
+    }
+
+    function showAutomaticForm() {
+        document.getElementById('autoForm').classList.remove('hidden');
+        document.getElementById('manualForm').classList.add('hidden');
+        document.querySelector('[name=mode]').value = 'otomatis';
+
+        const codeInput = document.getElementById('auto_code');
+        let currentCode = parseInt(codeInput.value);
+        codeInput.value = !isNaN(currentCode) ? currentCode + 1 : 1001;
+        document.getElementById('btn-simpan').classList.remove('hidden');
+    }
+</script>
+
+<style>
+    .hidden { display: none; }
+    .form-group { margin-bottom: 10px; }
+</style>
+
+</body>
+</html>

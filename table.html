@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BAPB Table</title>
+    <style type="text/css">
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 14px;
+            margin: 30px;
+            background: #fff;
+        }
+        .bapb-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            margin-bottom: 0;
+        }
+        .bapb-logo {
+            width: 100px;
+            margin-right: 20px;
+        }
+        .bapb-company {
+            text-align: center;
+            flex: 1;
+            font-size: 15px;
+        }
+        .bapb-company h3, .bapb-company p {
+            margin: 0;
+        }
+        .bapb-company h4 {
+            margin: 10px 0 0 0;
+        }
+        .bapb-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .bapb-section {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .bapb-detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        .bapb-detail-table td {
+            padding: 6px 10px;
+            border: 1px solid #000;
+            font-size: 14px;
+        }
+        .bapb-detail-table .label {
+            background: #f5f5f5;
+            font-weight: bold;
+            width: 120px;
+        }
+        .bapb-detail-table .value {
+            background: #fff;
+        }
+        .bapb-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .bapb-table th, .bapb-table td {
+            border: 1px solid #000;
+            padding: 8px 6px;
+            text-align: center;
+        }
+        .bapb-table th {
+            background: #e5e5e5;
+            font-weight: bold;
+        }
+        .bapb-table .left {
+            text-align: left;
+        }
+        .bapb-note {
+            font-size: 13px;
+            margin-top: 8px;
+            margin-bottom: 0;
+            text-align: left;
+        }
+        .bapb-signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .bapb-signature-box {
+            width: 32%;
+            border: 1px solid #000;
+            height: 110px;
+            padding: 10px;
+            box-sizing: border-box;
+            text-align: center;
+            font-size: 13px;
+            position: relative;
+        }
+        .bapb-signature-label {
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            font-size: 12px;
+            text-align: left;
+        }
+        .bapb-signature-title {
+            font-weight: bold;
+            margin-bottom: 40px;
+        }
+        .bapb-date {
+            margin-top: 10px;
+            margin-bottom: 0;
+            text-align: right;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="bapb-header">
+        <div class="bapb-logo">
+            <img src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'%3e%3cpath fill='%23000000' d='M112 128c0-29.5 16.2-55 40-68.9V256h48V48h48v208h48V59.1c23.8 13.9 40 39.4 40 68.9v128h48V128C384 57.3 326.7 0 256 0h-64C121.3 0 64 57.3 64 128v128h48zm334.3 213.9l-10.7-32c-4.4-13.1-16.6-21.9-30.4-21.9H42.7c-13.8 0-26 8.8-30.4 21.9l-10.7 32C-5.2 362.6 10.2 384 32 384v112c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V384h256v112c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V384c21.8 0 37.2-21.4 30.3-42.1z'/%3e%3c/svg%3e" width="100" height="100">
+        </div>
+        <div class="bapb-company">
+            <h3>PT CITRA MARGA NUSAPHALA PERSADA Tbk</h3>
+            <p>Penyelangaraaan jalan Tol Ir. Wiyoto Wiyono Msc</p>
+            <p>Gedung CMNP - Jl. Yos Sudarso Kav.28 - Jakarta 14350</p>
+            <p>Telp : 65306930 ( Hunting ) Fax : 65306931</p>
+            <div class="bapb-title">Berita Acara Penerimaan Barang<br>( BAPB )</div>
+        </div>
+    </div>
+
+    <!-- Detail Section -->
+    <div class="bapb-section">
+        <span style="font-weight:bold;">Telah Diterima Barang Dari Pemasok :</span>
+        <table class="bapb-detail-table" style="margin-top:8px;">
+            <tr>
+                <td class="label">Nama</td>
+                <td class="value" colspan="3"></td>
+                <td class="label">No BAPB</td>
+                <td class="value" colspan="3"></td>
+            </tr>
+            <tr>
+                <td class="label">Document</td>
+                <td class="value" colspan="3"></td>
+                <td class="label">Nomor</td>
+                <td class="value" colspan="3"></td>
+            </tr>
+            <tr>
+                <td class="label">Lokasi</td>
+                <td class="value" colspan="3"></td>
+                <td class="label">Tanggal</td>
+                <td class="value" colspan="3"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Table Barang -->
+    <table class="bapb-table">
+        <thead>
+            <tr>
+                <th rowspan="2" style="width: 4%;">NO</th>
+                <th rowspan="2" style="width: 30%;">Nama dan Spesifikasi Barang</th>
+                <th rowspan="2" style="width: 7%;">Satuan</th>
+                <th colspan="4">Jumlah</th>
+                <th rowspan="2" style="width: 20%;">Keterangan</th>
+            </tr>
+            <tr>
+                <th style="width: 10%;">Pesanan</th>
+                <th style="width: 10%;">Dikirim</th>
+                <th style="width: 10%;">Diterima</th>
+                <th style="width: 10%;">Barcode</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td class="left">Asphal Instan OB Patch<br>Pengiriman Tgl 06/03/2023</td>
+                <td>ZAK</td>
+                <td>250</td>
+                <td>250</td>
+                <td>250</td>
+                <td>20012</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td><td class="left"></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td><td class="left"></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Note -->
+    <div class="bapb-note">
+        <strong>Catatan:</strong> Divisi P&P - Pengadaan Aspal Instan OB Patch/Cold Mix
+    </div>
+
+    <!-- Date -->
+    <div class="bapb-date">
+        Jakarta, <strong>Maret 2023</strong>
+    </div>
+
+    <!-- Signature Section -->
+    <div class="bapb-signature-section">
+        <div class="bapb-signature-box">
+            <div class="bapb-signature-title">Tanda tangan & cap</div>
+            <div class="bapb-signature-label">Nama:<br>Pemasok</div>
+        </div>
+        <div class="bapb-signature-box">
+            <div class="bapb-signature-title">Tanda tangan</div>
+            <div class="bapb-signature-label">A/n Manajer Divisi Teknik & HSE</div>
+        </div>
+        <div class="bapb-signature-box">
+            <div class="bapb-signature-title">Tanda tangan</div>
+            <div class="bapb-signature-label">Indah Dahlia Lavie<br>Manajer Divisi Umum</div>
+        </div>
+    </div>
+</body>
+</html>

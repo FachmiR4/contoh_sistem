@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Form Dinamis Barang</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        #form-barang {
+            display: none;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Input Data Barang</h2>
+
+    <!-- Select Kategori -->
+    <div class="form-group">
+        <label for="kategori">Pilih Kategori</label>
+        <select id="kategori">
+            <option value="">-- Pilih Kategori --</option>
+            <option value="Elektronik" data-keterangan="Barang berupa perangkat elektronik.">Elektronik</option>
+            <option value="Furniture" data-keterangan="Barang berupa meja, kursi, lemari, dll.">Furniture</option>
+            <option value="ATK" data-keterangan="Alat Tulis Kantor seperti pulpen, kertas, dll.">ATK</option>
+        </select>
+    </div>
+
+    <!-- Form Barang -->
+    <div id="form-barang">
+        <div class="form-group">
+            <label for="kategori_val">Kategori</label>
+            <input type="text" id="kategori_val" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="keterangan">Keterangan</label>
+            <input type="text" id="keterangan" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="nama_barang">Nama Barang</label>
+            <input type="text" id="nama_barang" required>
+        </div>
+
+        <div class="form-group">
+            <label for="jumlah">Jumlah</label>
+            <input type="number" id="jumlah" required>
+        </div>
+
+        <button onclick="submitForm()">Simpan</button>
+    </div>
+
+    <script>
+        document.getElementById('kategori').addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const kategori = selectedOption.value;
+            const keterangan = selectedOption.getAttribute('data-keterangan');
+
+            if (kategori) {
+                document.getElementById('kategori_val').value = kategori;
+                document.getElementById('keterangan').value = keterangan;
+                document.getElementById('form-barang').style.display = 'block';
+            } else {
+                document.getElementById('form-barang').style.display = 'none';
+            }
+        });
+
+        function submitForm() {
+            const kategori = document.getElementById('kategori_val').value;
+            const keterangan = document.getElementById('keterangan').value;
+            const nama_barang = document.getElementById('nama_barang').value;
+            const jumlah = document.getElementById('jumlah').value;
+
+            alert(
+                `Data Disimpan:\nKategori: ${kategori}\nKeterangan: ${keterangan}\nNama Barang: ${nama_barang}\nJumlah: ${jumlah}`
+            );
+
+            // Reset form (opsional)
+            // document.getElementById('form-barang').style.display = 'none';
+            // document.getElementById('kategori').value = '';
+        }
+    </script>
+
+</body>
+</html>

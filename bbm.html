@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=200, initial-scale=1.0"/>
+  <title>Indikator BBM</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 20px;
+    }
+
+    .fuel-gauge {
+      width: 200px;
+      height: 100px;
+      position: relative;
+      margin: 0 auto;
+    }
+
+    .arc {
+      width: 100%;
+      height: 100%;
+      border-top-left-radius: 100px;
+      border-top-right-radius: 100px;
+      background: #fff;
+      border: 4px solid #333;
+      border-bottom: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .needle {
+      width: 4px;
+      height: 90px;
+      background: red;
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform-origin: bottom center;
+      transform: rotate(-90deg);
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 3;
+    }
+
+    .tick {
+      width: 4px;
+      height: 15px;
+      background: #333;
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform-origin: bottom center;
+    }
+
+    /* Red zone (E) and green zone (F) indicators */
+    .tick.red {
+      background: red;
+    }
+
+    .tick.green {
+      background: green;
+    }
+
+    .labels {
+      display: flex;
+      justify-content: space-between;
+      width: 200px;
+      margin: 10px auto 0 auto;
+    }
+
+    .labels span {
+      font-weight: bold;
+    }
+
+    .center-icon {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    select {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+    <label>Tanggal Pengambilan</label>
+    <input type="datetime-local" name="tanggal_pengambilan" required>
+
+
+  <label for="bbm_diterima">BBM Diterima</label><br/>
+  <select name="bbm_diterima" id="bbm_diterima">
+    <option value="0">0</option>
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+    <option value="9">9</option>
+    <option value="10">10</option>
+  </select>
+
+  <div class="fuel-gauge">
+    <div class="arc"></div>
+    <div class="needle" id="needle"></div>
+    <div class="center-icon">⛽</div>
+
+    <!-- Ticks -->
+    <script>
+      for (let i = 0; i <= 10; i++) {
+        const tick = document.createElement('div');
+        tick.classList.add('tick');
+        if (i === 0) tick.classList.add('red');
+        if (i === 10) tick.classList.add('green');
+        const angle = -90 + i * 18; // 180° total / 10 = 18° step
+        tick.style.transform = `rotate(${angle}deg) translateY(-85px)`;
+        document.querySelector('.fuel-gauge').appendChild(tick);
+      }
+    </script>
+  </div>
+
+  <div class="labels">
+    <span>E</span>
+    <span>F</span>
+  </div>
+
+  <script>
+    const select = document.getElementById("bbm_diterima");
+    const needle = document.getElementById("needle");
+
+    function updateNeedle(value) {
+      const val = parseInt(value);
+      const step = 180 / 10;
+      const rotation = -90 + val * step;
+      needle.style.transform = `rotate(${rotation}deg)`;
+    }
+
+    updateNeedle(select.value);
+
+    select.addEventListener("change", function () {
+      updateNeedle(this.value);
+    });
+  </script>
+
+</body>
+</html>
