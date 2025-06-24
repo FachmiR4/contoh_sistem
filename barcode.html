@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Code Link Generator</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #qrcode { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>QR Code Generator - Link</h2>
+  <label for="link">Masukkan Link (URL):</label><br>
+  <input type="text" id="link" placeholder="https://contoh.com/page" size="50">
+  <br><br>
+  <button onclick="generateQRCode()">Generate QR Code</button>
+
+  <div id="qrcode"></div>
+
+  <script>
+    function generateQRCode() {
+      const link = document.getElementById("link").value;
+      const qrContainer = document.getElementById("qrcode");
+      qrContainer.innerHTML = ""; // bersihkan QR sebelumnya
+      if (link.trim() === "") {
+        alert("Masukkan URL terlebih dahulu!");
+        return;
+      }
+
+      QRCode.toCanvas(link, { width: 200 }, function (error, canvas) {
+        if (error) console.error(error);
+        qrContainer.appendChild(canvas);
+      });
+    }
+  </script>
+</body>
+</html>

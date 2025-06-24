@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Code dari ID</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #qrcode { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>QR Code Generator - Berdasarkan ID</h2>
+  <label for="idInput">Masukkan ID:</label><br>
+  <input type="number" id="idInput" placeholder="Misal: 7">
+  <br><br>
+  <button onclick="generateQRCode()">Generate QR Code</button>
+
+  <div id="qrcode"></div>
+
+  <script>
+    const baseURL = "http://172.16.176.36:8000/bapb-barang/";
+
+    function generateQRCode() {
+      const id = document.getElementById("idInput").value.trim();
+      const qrContainer = document.getElementById("qrcode");
+      qrContainer.innerHTML = "";
+
+      if (!id || isNaN(id)) {
+        alert("Masukkan ID yang valid!");
+        return;
+      }
+
+      const fullURL = `${baseURL}${id}/create`;
+
+      QRCode.toCanvas(fullURL, { width: 200 }, function (error, canvas) {
+        if (error) console.error(error);
+        qrContainer.appendChild(canvas);
+      });
+    }
+  </script>
+</body>
+</html>
