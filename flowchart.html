@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flowchart Builder</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(120deg, #f3f4f6 60%, #e0e7ef 100%);
+      min-height: 100vh;
+    }
+    #toolbar {
+      padding: 14px 20px;
+      background: #1f2937;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(31,41,55,0.07);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    #toolbar button {
+      margin-right: 0;
+      padding: 7px 16px;
+      background: #3b82f6;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #toolbar button:hover {
+      background: #2563eb;
+    }
+    #canvas {
+      width: 100vw;
+      height: calc(100vh - 60px);
+      position: relative;
+      overflow: auto;
+      background: repeating-linear-gradient(
+        45deg,
+        #e5e7eb,
+        #e5e7eb 20px,
+        #f3f4f6 20px,
+        #f3f4f6 40px
+      );
+    }
+    .node {
+      position: absolute;
+      padding: 12px 18px;
+      border-radius: 10px;
+      background: white;
+      border: 2.5px solid #3b82f6;
+      cursor: move;
+      user-select: none;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 500;
+      min-width: 80px;
+      min-height: 36px;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+      transition: box-shadow 0.2s, border 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .node.selected {
+      outline: 3px dashed #9333ea;
+      z-index: 2;
+    }
+    .node .delete-node {
+      background: none;
+      border: none;
+      color: #ef4444;
+      font-size: 1.2rem;
+      margin-left: 8px;
+      cursor: pointer;
+      transition: color 0.2s;
+      padding: 0;
+      line-height: 1;
+    }
+    .node .delete-node:hover {
+      color: #b91c1c;
+    }
+    .Start { background-color: #10b981; color: white; border-color: #059669; }
+    .Process { background-color: #3b82f6; color: white; border-color: #2563eb; }
+    .Decision {
+      background-color: #f59e0b;
+      color: white;
+      border-color: #d97706;
+      clip-path: polygon(20% 0%, 80% 0%, 100% 50%, 80% 100%, 20% 100%, 0% 50%);
+      min-width: 100px;
+    }
+    .End { background-color: #ef4444; color: white; border-color: #b91c1c; }
+    .Parallelogram {
+      background-color: #6366f1;
+      color: white;
+      border-color: #3730a3;
+      clip-path: polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%);
+      min-width: 100px;
+    }
+    .node-label {
+      flex: 1;
+      text-align: center;
+      pointer-events: auto;
+      background: transparent;
+      border: none;
+      font-size: 1rem;
+      font-weight: 500;
+      color: inherit;
+    }
+    .node-label[contenteditable="true"], .node-label-editing {
+      background: #f3f4f6;
+      border: 1px solid #3b82f6;
+      border-radius: 5px;
+      outline: none;
+      min-width: 60px;
+      color: #222;
+    }
+    @media (max-width: 700px) {
+      #toolbar {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 6px;
+      }
+      .node {
+        font-size: 0.95rem;
+        min-width: 60px;
+        min-height: 30px;
+        padding: 8px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="toolbar">
+  <button onclick="addNode('Start')"><span>⏺️</span> Start</button>
+  <button onclick="addNode('Process')"><span>🔵</span> Process</button>
+  <button onclick="addNode('Decision')"><span>🔶</span> Decision</button>
+  <button onclick="addNode('End')"><span>⏹️</span> End</button>
+  <button onclick="addNode('Parallelogram')"><span>🟪</span> Input/Output</button>
+  <button onclick="connectSelected()"><span>🔗</span> Connect</button>
+  <button onclick="deleteSelected()"><span>🗑️</span> Delete</button>
+</div>
+
+<div id="canvas"></div>
+
+<!-- LeaderLine CDN -->
+<script src="https://cdn.jsdelivr.net/npm/leader-line"></script>
+<script>
+  let selectedNodes = [];
+  let nodeCount = 0;
+  let lines = [];
+
+  function addNode(type) {
+    const node = document.createElement("div");
+    node.className = "node " + type;
+    node.id = "node" + (++nodeCount);
+
+    // Label
+    const label = document.createElement("span");
+    label.className = "node-label";
+    label.textContent = type;
+
+    // Enable editing label on double click
+    label.ondblclick = function(e) {
+      e.stopPropagation();
+      // Replace label with input for editing
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = label.textContent;
+      input.className = "node-label node-label-editing";
+      input.style.width = Math.max(90, label.textContent.length * 12) + "px";
+      input.style.textAlign = "center";
+      label.replaceWith(input);
+      input.focus();
+
+      input.onblur = function() {
+        label.textContent = input.value || type;
+        input.replaceWith(label);
+      };
+      input.onkeydown = function(ev) {
+        if (ev.key === "Enter") {
+          input.blur();
+        }
+      };
+    };
+
+    // Delete button
+    const delBtn = document.createElement("button");
+    delBtn.className = "delete-node";
+    delBtn.title = "Delete node";
+    delBtn.innerHTML = "&times;";
+    delBtn.onclick = function(e) {
+      e.stopPropagation();
+      deleteNode(node);
+    };
+
+    node.appendChild(label);
+    node.appendChild(delBtn);
+
+    node.style.left = "60px";
+    node.style.top = (60 * nodeCount) + "px";
+
+    node.addEventListener("mousedown", dragStart);
+    node.addEventListener("click", function (e) {
+      e.stopPropagation();
+      toggleSelect(node);
+    });
+
+    document.getElementById("canvas").appendChild(node);
+  }
+
+  function toggleSelect(node) {
+    if (node.classList.contains("selected")) {
+      node.classList.remove("selected");
+      selectedNodes = selectedNodes.filter(n => n !== node);
+    } else {
+      node.classList.add("selected");
+      selectedNodes.push(node);
+    }
+  }
+
+  function connectSelected() {
+    if (selectedNodes.length === 2) {
+      const line = new LeaderLine(
+        selectedNodes[0],
+        selectedNodes[1],
+        { color: "#6366f1", size: 3, path: "straight", endPlug: "arrow3" }
+      );
+      lines.push({ from: selectedNodes[0].id, to: selectedNodes[1].id, line });
+      selectedNodes.forEach(n => n.classList.remove("selected"));
+      selectedNodes = [];
+    } else {
+      alert("Pilih dua node untuk menghubungkan.");
+    }
+  }
+
+  function deleteNode(node) {
+    // Remove lines connected to this node
+    lines = lines.filter(obj => {
+      if (obj.from === node.id || obj.to === node.id) {
+        obj.line.remove();
+        return false;
+      }
+      return true;
+    });
+    node.remove();
+    selectedNodes = selectedNodes.filter(n => n !== node);
+  }
+
+  function deleteSelected() {
+    if (selectedNodes.length === 0) {
+      alert("Pilih node yang ingin dihapus.");
+      return;
+    }
+    selectedNodes.forEach(node => deleteNode(node));
+    selectedNodes = [];
+  }
+
+  // Drag logic
+  let currentNode = null;
+  let offsetX, offsetY;
+
+  function dragStart(e) {
+    if (e.target.classList.contains('delete-node') || e.target.tagName === 'INPUT') return;
+    currentNode = e.currentTarget;
+    offsetX = e.offsetX;
+    offsetY = e.offsetY;
+    document.addEventListener("mousemove", dragMove);
+    document.addEventListener("mouseup", dragEnd);
+  }
+
+  function dragMove(e) {
+    if (!currentNode) return;
+    const canvasRect = document.getElementById("canvas").getBoundingClientRect();
+    let x = e.pageX - canvasRect.left - offsetX;
+    let y = e.pageY - canvasRect.top - offsetY;
+    // Keep node inside canvas
+    x = Math.max(0, Math.min(x, canvasRect.width - currentNode.offsetWidth));
+    y = Math.max(0, Math.min(y, canvasRect.height - currentNode.offsetHeight));
+    currentNode.style.left = x + "px";
+    currentNode.style.top = y + "px";
+    updateLines(currentNode.id);
+  }
+
+  function dragEnd() {
+    currentNode = null;
+    document.removeEventListener("mousemove", dragMove);
+    document.removeEventListener("mouseup", dragEnd);
+  }
+
+  // Update lines when node moves
+  function updateLines(nodeId) {
+    lines.forEach(obj => {
+      if (obj.from === nodeId || obj.to === nodeId) {
+        obj.line.position();
+      }
+    });
+  }
+
+  // Deselect when clicking canvas
+  document.getElementById("canvas").addEventListener("click", () => {
+    selectedNodes.forEach(n => n.classList.remove("selected"));
+    selectedNodes = [];
+  });
+
+  // Responsive: update all lines on window resize
+  window.addEventListener("resize", () => {
+    lines.forEach(obj => obj.line.position());
+  });
+</script>
+
+</body>
+</html>
