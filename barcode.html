@@ -5,34 +5,170 @@
   <title>QR Code Link Generator</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #qrcode { margin-top: 20px; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(120deg, #f0f2f5 60%, #e0e7ef 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 420px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(37,99,235,0.09);
+      padding: 32px 28px 28px 28px;
+      text-align: center;
+    }
+    h2 {
+      color: #2563eb;
+      margin-bottom: 18px;
+      letter-spacing: 1px;
+    }
+    label {
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+      display: block;
+      text-align: left;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      font-size: 1rem;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input[type="text"]:focus {
+      border: 1.5px solid #2563eb;
+    }
+    input[type="file"] {
+      margin-bottom: 18px;
+      display: block;
+      width: 100%;
+    }
+    button {
+      padding: 10px 28px;
+      border-radius: 6px;
+      border: none;
+      background: #2563eb;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+      margin-bottom: 18px;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    #qrcode {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 220px;
+    }
+    .img-preview {
+      display: block;
+      margin: 0 auto 10px auto;
+      max-width: 80px;
+      max-height: 80px;
+      border-radius: 10px;
+      object-fit: contain;
+      border: 1px solid #e5e7eb;
+      background: #f1f5f9;
+    }
+    .note {
+      font-size: 0.95rem;
+      color: #64748b;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
-  <h2>QR Code Generator - Link</h2>
-  <label for="link">Masukkan Link (URL):</label><br>
-  <input type="text" id="link" placeholder="https://contoh.com/page" size="50">
-  <br><br>
-  <button onclick="generateQRCode()">Generate QR Code</button>
+  <div class="container">
+    <h2>QR Code Generator - Link</h2>
+    <label for="link">Masukkan Link (URL):</label>
+    <input type="text" id="link" placeholder="https://contoh.com/page" autocomplete="off">
 
-  <div id="qrcode"></div>
+    <label for="imgInput">Pilih Gambar (opsional):</label>
+    <input type="file" id="imgInput" accept="image/*">
+    <span class="note">Gambar akan muncul di tengah QR Code</span>
+    <img id="imgPreview" class="img-preview" style="display:none;" alt="Preview">
+
+    <button onclick="generateQRCode()">Generate QR Code</button>
+
+    <div id="qrcode"></div>
+  </div>
 
   <script>
+    let selectedImg = null;
+
+    // Preview gambar
+    document.getElementById('imgInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      const preview = document.getElementById('imgPreview');
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          selectedImg = evt.target.result;
+          preview.src = selectedImg;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        selectedImg = null;
+        preview.src = '';
+        preview.style.display = 'none';
+      }
+    });
+
     function generateQRCode() {
-      const link = document.getElementById("link").value;
+      const link = document.getElementById("link").value.trim();
       const qrContainer = document.getElementById("qrcode");
       qrContainer.innerHTML = ""; // bersihkan QR sebelumnya
-      if (link.trim() === "") {
+
+      if (link === "") {
         alert("Masukkan URL terlebih dahulu!");
         return;
       }
 
-      QRCode.toCanvas(link, { width: 200 }, function (error, canvas) {
-        if (error) console.error(error);
-        qrContainer.appendChild(canvas);
+      // Buat QR di canvas
+      QRCode.toCanvas(link, { width: 220, margin: 2 }, function (error, canvas) {
+        if (error) {
+          console.error(error);
+          alert("Gagal membuat QR Code.");
+          return;
+        }
+
+        if (selectedImg) {
+          // Gabungkan gambar ke tengah QR
+          const ctx = canvas.getContext('2d');
+          const img = new window.Image();
+          img.onload = function() {
+            // Hitung ukuran dan posisi gambar di tengah QR
+            const imgSize = canvas.width * 0.28; // 28% dari QR
+            const x = (canvas.width - imgSize) / 2;
+            const y = (canvas.height - imgSize) / 2;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(canvas.width/2, canvas.height/2, imgSize/2, 0, 2 * Math.PI);
+            ctx.closePath();
+            ctx.clip();
+            ctx.drawImage(img, x, y, imgSize, imgSize);
+            ctx.restore();
+            qrContainer.appendChild(canvas);
+          };
+          img.src = selectedImg;
+        } else {
+          qrContainer.appendChild(canvas);
+        }
       });
     }
   </script>
-</body>
-</html>
