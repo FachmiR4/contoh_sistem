@@ -23,7 +23,6 @@
       z-index: 10;
     }
     #toolbar button {
-      margin-right: 0;
       padding: 7px 16px;
       background: #3b82f6;
       border: none;
@@ -63,6 +62,7 @@
       cursor: move;
       user-select: none;
       text-align: center;
+      touch-action: none;
       font-size: 1rem;
       font-weight: 500;
       min-width: 80px;
@@ -162,6 +162,8 @@
   let selectedNodes = [];
   let nodeCount = 0;
   let lines = [];
+  let currentNode = null;
+  let offsetX, offsetY;
 
   function addNode(type) {
     const node = document.createElement("div");
@@ -176,7 +178,6 @@
     // Enable editing label on double click
     label.ondblclick = function(e) {
       e.stopPropagation();
-      // Replace label with input for editing
       const input = document.createElement("input");
       input.type = "text";
       input.value = label.textContent;
@@ -214,6 +215,7 @@
     node.style.top = (60 * nodeCount) + "px";
 
     node.addEventListener("mousedown", dragStart);
+    node.addEventListener("touchstart", dragStart, {passive: false});
     node.addEventListener("click", function (e) {
       e.stopPropagation();
       toggleSelect(node);
@@ -269,24 +271,37 @@
     selectedNodes = [];
   }
 
-  // Drag logic
-  let currentNode = null;
-  let offsetX, offsetY;
-
   function dragStart(e) {
     if (e.target.classList.contains('delete-node') || e.target.tagName === 'INPUT') return;
     currentNode = e.currentTarget;
-    offsetX = e.offsetX;
-    offsetY = e.offsetY;
-    document.addEventListener("mousemove", dragMove);
-    document.addEventListener("mouseup", dragEnd);
+    if (e.type === "mousedown") {
+      offsetX = e.offsetX;
+      offsetY = e.offsetY;
+      document.addEventListener("mousemove", dragMove);
+      document.addEventListener("mouseup", dragEnd);
+    } else if (e.type === "touchstart") {
+      const touch = e.touches[0];
+      const rect = currentNode.getBoundingClientRect();
+      offsetX = touch.clientX - rect.left;
+      offsetY = touch.clientY - rect.top;
+      document.addEventListener("touchmove", dragMove, {passive: false});
+      document.addEventListener("touchend", dragEnd);
+    }
   }
 
   function dragMove(e) {
     if (!currentNode) return;
+    let x, y;
     const canvasRect = document.getElementById("canvas").getBoundingClientRect();
-    let x = e.pageX - canvasRect.left - offsetX;
-    let y = e.pageY - canvasRect.top - offsetY;
+    if (e.type === "mousemove") {
+      x = e.pageX - canvasRect.left - offsetX;
+      y = e.pageY - canvasRect.top - offsetY;
+    } else if (e.type === "touchmove") {
+      e.preventDefault();
+      const touch = e.touches[0];
+      x = touch.clientX - canvasRect.left - offsetX;
+      y = touch.clientY - canvasRect.top - offsetY;
+    }
     // Keep node inside canvas
     x = Math.max(0, Math.min(x, canvasRect.width - currentNode.offsetWidth));
     y = Math.max(0, Math.min(y, canvasRect.height - currentNode.offsetHeight));
@@ -295,13 +310,14 @@
     updateLines(currentNode.id);
   }
 
-  function dragEnd() {
+  function dragEnd(e) {
     currentNode = null;
     document.removeEventListener("mousemove", dragMove);
     document.removeEventListener("mouseup", dragEnd);
+    document.removeEventListener("touchmove", dragMove);
+    document.removeEventListener("touchend", dragEnd);
   }
 
-  // Update lines when node moves
   function updateLines(nodeId) {
     lines.forEach(obj => {
       if (obj.from === nodeId || obj.to === nodeId) {
