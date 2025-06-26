@@ -89,6 +89,67 @@
       color: #64748b;
       margin-bottom: 10px;
     }
+    /* Modal Styles */
+    .modal-bg {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0; top: 0; right: 0; bottom: 0;
+      background: rgba(30,41,59,0.25);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-bg.active {
+      display: flex;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px 24px 18px 24px;
+      box-shadow: 0 8px 32px rgba(37,99,235,0.13);
+      min-width: 320px;
+      max-width: 95vw;
+      text-align: center;
+      position: relative;
+      animation: fadeIn 0.2s;
+    }
+    @keyframes fadeIn {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-content canvas, .modal-content img {
+      margin-bottom: 18px;
+      max-width: 260px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #64748b;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .modal-close:hover {
+      color: #ef4444;
+    }
+    .modal-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    @media (max-width: 500px) {
+      .container { padding: 18px 6px 16px 6px; }
+      .modal-content { min-width: 0; padding: 16px 4vw 12px 4vw; }
+    }
   </style>
 </head>
 <body>
@@ -107,8 +168,21 @@
     <div id="qrcode"></div>
   </div>
 
+  <!-- Modal -->
+  <div class="modal-bg" id="modalBg">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <div id="modalQrImg"></div>
+      <div class="modal-btns">
+        <button onclick="downloadQr('png')">Unduh PNG</button>
+        <button onclick="downloadQr('jpg')">Unduh JPG</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let selectedImg = null;
+    let lastCanvas = null;
 
     // Preview gambar
     document.getElementById('imgInput').addEventListener('change', function(e) {
@@ -129,6 +203,7 @@
       }
     });
 
+    // Generate QR dan tampilkan tombol show modal
     function generateQRCode() {
       const link = document.getElementById("link").value.trim();
       const qrContainer = document.getElementById("qrcode");
@@ -139,7 +214,6 @@
         return;
       }
 
-      // Buat QR di canvas
       QRCode.toCanvas(link, { width: 220, margin: 2 }, function (error, canvas) {
         if (error) {
           console.error(error);
@@ -152,8 +226,7 @@
           const ctx = canvas.getContext('2d');
           const img = new window.Image();
           img.onload = function() {
-            // Hitung ukuran dan posisi gambar di tengah QR
-            const imgSize = canvas.width * 0.28; // 28% dari QR
+            const imgSize = canvas.width * 0.28;
             const x = (canvas.width - imgSize) / 2;
             const y = (canvas.height - imgSize) / 2;
             ctx.save();
@@ -164,11 +237,60 @@
             ctx.drawImage(img, x, y, imgSize, imgSize);
             ctx.restore();
             qrContainer.appendChild(canvas);
+            lastCanvas = canvas;
+            showQrModalBtn();
           };
           img.src = selectedImg;
         } else {
           qrContainer.appendChild(canvas);
+          lastCanvas = canvas;
+          showQrModalBtn();
         }
       });
     }
+
+    // Tampilkan tombol untuk show modal QR jika QR sudah ada
+    function showQrModalBtn() {
+      let btn = document.getElementById('showQrModalBtn');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'showQrModalBtn';
+        btn.textContent = 'Tampilkan & Unduh QR Code';
+        btn.style.marginTop = '18px';
+        btn.onclick = showModal;
+        document.getElementById('qrcode').appendChild(btn);
+      }
+    }
+
+    function showModal() {
+      if (!lastCanvas) return;
+      const modalBg = document.getElementById('modalBg');
+      const modalQrImg = document.getElementById('modalQrImg');
+      modalQrImg.innerHTML = '';
+      const clone = lastCanvas.cloneNode(true);
+      modalQrImg.appendChild(clone);
+      modalBg.classList.add('active');
+    }
+    function closeModal() {
+      document.getElementById('modalBg').classList.remove('active');
+    }
+
+    function downloadQr(type) {
+      if (!lastCanvas) return;
+      const link = document.createElement('a');
+      link.download = `qrcode.${type}`;
+      link.href = lastCanvas.toDataURL(`image/${type === 'jpg' ? 'jpeg' : type}`);
+      link.click();
+    }
+
+    // Tutup modal jika klik di luar modal-content
+    document.getElementById('modalBg').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+    // Tutup modal dengan ESC
+    document.addEventListener('keydown', function(e) {
+      if (e.key === "Escape") closeModal();
+    });
   </script>
+</body>
+</html>
