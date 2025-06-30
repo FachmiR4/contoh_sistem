@@ -1,0 +1,16 @@
+<!-- scanner.html -->
+<input type="text" id="scanInput" placeholder="Masukkan hasil scan barcode" />
+<button onclick="redirect()">Redirect</button>
+
+<script>
+  function redirect() {
+    const code = document.getElementById("scanInput").value.trim();
+    const map = JSON.parse(localStorage.getItem("barcodeRedirects") || "{}");
+    const link = map[code];
+    if (link) {
+      window.location.href = link;
+    } else {
+      alert("Kode tidak ditemukan.");
+    }
+  }
+</script>

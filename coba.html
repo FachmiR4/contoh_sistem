@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Scan QR Code dari Gambar</title>
+    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.2/umd/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: linear-gradient(120deg, #e0e7ff 0%, #f0f4fa 100%);
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        background: #fff;
+        padding: 28px 22px 24px 22px;
+        border-radius: 16px;
+        max-width: 420px;
+        margin: 48px auto 0 auto;
+        box-shadow: 0 6px 24px rgba(79, 140, 255, 0.1);
+        text-align: center;
+      }
+      h2 {
+        color: #1e40af;
+        margin-bottom: 18px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+      input[type="file"] {
+        margin-top: 12px;
+        margin-bottom: 10px;
+        padding: 8px 0;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
+        width: 100%;
+        font-size: 1rem;
+      }
+      img#preview {
+        max-width: 90%;
+        margin: 14px auto 10px auto;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(30, 64, 175, 0.08);
+        border: 1px solid #e5e7eb;
+        display: none;
+      }
+      #result {
+        font-weight: bold;
+        color: #1e40af;
+        margin-top: 18px;
+        font-size: 1.08rem;
+        min-height: 24px;
+        background: #f0f4fa;
+        border-radius: 6px;
+        padding: 10px 8px;
+        box-shadow: 0 1px 4px rgba(30, 64, 175, 0.04);
+      }
+      .note {
+        color: #555;
+        font-size: 0.97em;
+        background: #f0f4fa;
+        padding: 8px 10px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        margin-top: 4px;
+        text-align: left;
+      }
+      canvas {
+        display: none;
+      }
+      @media (max-width: 600px) {
+        .container {
+          padding: 16px 4vw 18px 4vw;
+          margin: 18px 0 0 0;
+        }
+        img#preview {
+          max-width: 98vw;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Scan QR Code dari Gambar</h2>
+      <div class="note">
+        Format gambar: <b>JPG, PNG</b> &nbsp;|&nbsp; Ukuran disarankan &lt; 2MB<br />
+        Pastikan QR Code <b>jelas</b> dan <b>tidak blur</b>.<br />
+        <span style="color: #1e40af">Console log akan tampil di DevTools (F12).</span>
+      </div>
+      <input type="file" id="barcodeImage" accept="image/*" />
+      <img id="preview" src="" alt="Preview" />
+      <canvas id="canvas"></canvas>
+      <div id="result">Belum ada hasil.</div>
+    </div>
+
+    <script>
+      const input = document.getElementById("barcodeImage");
+      const preview = document.getElementById("preview");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const resultText = document.getElementById("result");
+
+      input.addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const img = new Image();
+          img.src = event.target.result;
+
+          img.onload = function () {
+            // Tampilkan preview
+            preview.src = img.src;
+            preview.style.display = "block";
+
+            // Gambar ke canvas
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            // ZXing decode
+            const codeReader = new ZXing.BrowserQRCodeReader();
+            codeReader
+              .decodeFromImageUrl(img.src)
+              .then((result) => {
+                console.log("ZXing result:", result);
+                resultText.textContent = "Hasil: " + result.text;
+                resultText.style.color = "green";
+              })
+              .catch((err) => {
+                // Fallback ke jsQR
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, canvas.width, canvas.height);
+                if (code) {
+                  console.log("jsQR result:", code);
+                  resultText.textContent = "Hasil (jsQR): " + code.data;
+                  resultText.style.color = "green";
+                } else {
+                  console.log("QR Code tidak terdeteksi.");
+                  resultText.textContent = "QR Code tidak terdeteksi.";
+                  resultText.style.color = "red";
+                }
+              });
+          };
+        };
+        reader.readAsDataURL(file);
+      });
+    </script>
+  </body>
+</html>

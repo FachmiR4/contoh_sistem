@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Generator Barcode & QR Redirect</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+    <style>
+      body {
+        font-family: Arial;
+        max-width: 600px;
+        margin: auto;
+        padding: 20px;
+      }
+      input,
+      button {
+        width: 100%;
+        padding: 10px;
+        margin: 8px 0;
+        box-sizing: border-box;
+      }
+      .barcode-container,
+      .qr-container {
+        margin-top: 20px;
+        text-align: center;
+      }
+      canvas,
+      svg {
+        max-width: 100%;
+        margin-top: 10px;
+      }
+      a.download-link {
+        display: block;
+        margin-top: 10px;
+        color: blue;
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>🔗 Generator Barcode & QR Redirect</h2>
+
+    <label for="linkInput">Masukkan Link Tujuan:</label>
+    <input type="text" id="linkInput" placeholder="https://example.com/halaman" />
+
+    <button onclick="generateBarcode()">🔲 Generate Barcode Batang</button>
+    <button onclick="generateQRCode()">🔳 Generate QR Code</button>
+
+    <div class="barcode-container" id="barcodeContainer">
+      <svg id="barcodeSVG"></svg>
+      <a id="downloadBarcode" class="download-link" download="barcode.png" style="display: none">⬇ Download Barcode PNG</a>
+    </div>
+
+    <div class="qr-container" id="qrContainer">
+      <canvas id="qrCanvas"></canvas>
+      <a id="downloadQR" class="download-link" download="qrcode.png" style="display: none">⬇ Download QR Code PNG</a>
+    </div>
+
+    <script>
+      function generateBarcode() {
+        const link = document.getElementById("linkInput").value.trim();
+        if (!link) return alert("Masukkan link terlebih dahulu.");
+
+        const code = "BAR_" + Date.now().toString().slice(-6); // kode unik
+        const barcodeSVG = document.getElementById("barcodeSVG");
+
+        JsBarcode(barcodeSVG, code, {
+          format: "CODE128",
+          displayValue: true,
+          fontSize: 18,
+        });
+
+        // Simpan kode → link di localStorage
+        const map = JSON.parse(localStorage.getItem("barcodeRedirects") || "{}");
+        map[code] = link;
+        localStorage.setItem("barcodeRedirects", JSON.stringify(map));
+
+        // Download barcode sebagai PNG
+        setTimeout(() => {
+          const svgData = new XMLSerializer().serializeToString(barcodeSVG);
+          const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+          const url = URL.createObjectURL(svgBlob);
+          const downloadLink = document.getElementById("downloadBarcode");
+          downloadLink.href = url;
+          downloadLink.style.display = "block";
+        }, 200);
+      }
+
+      function generateQRCode() {
+        const link = document.getElementById("linkInput").value.trim();
+        if (!link) return alert("Masukkan link terlebih dahulu.");
+
+        const code = "QR_" + Date.now().toString().slice(-6); // kode unik
+        const qrCanvas = document.getElementById("qrCanvas");
+
+        QRCode.toCanvas(qrCanvas, code, { width: 200 }, function (error) {
+          if (error) {
+            console.error(error);
+            return alert("Gagal membuat QR Code");
+          }
+
+          // Simpan kode → link di localStorage
+          const map = JSON.parse(localStorage.getItem("barcodeRedirects") || "{}");
+          map[code] = link;
+          localStorage.setItem("barcodeRedirects", JSON.stringify(map));
+
+          // Buat file PNG untuk download
+          const downloadLink = document.getElementById("downloadQR");
+          downloadLink.href = qrCanvas.toDataURL("image/png");
+          downloadLink.style.display = "block";
+        });
+      }
+    </script>
+  </body>
+</html>

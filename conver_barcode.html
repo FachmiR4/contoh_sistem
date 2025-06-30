@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sistem Barcode Redirect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- JsBarcode untuk generate barcode (tidak dipakai untuk QR baru) -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <!-- jsQR untuk scan QR Code -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+    <!-- QuaggaJS untuk scan barcode batang -->
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <!-- QRCode.js untuk generate QR Code baru -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #f5f7fa;
+        padding: 0;
+        margin: 0;
+        min-height: 100vh;
+      }
+      .container {
+        background: #fff;
+        max-width: 430px;
+        margin: 40px auto 0 auto;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        padding: 32px 28px 24px 28px;
+      }
+      h2 {
+        text-align: center;
+        color: #2d3a4b;
+        margin-bottom: 24px;
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+      label {
+        font-weight: 500;
+        color: #2d3a4b;
+        margin-bottom: 6px;
+        display: block;
+      }
+      input[type="file"] {
+        margin-bottom: 8px;
+      }
+      input[type="text"] {
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        width: 100%;
+        font-size: 1rem;
+        transition: border 0.2s;
+      }
+      input[type="text"]:focus {
+        border-color: #4f8cff;
+        outline: none;
+      }
+      small {
+        color: #555;
+        display: block;
+        margin-bottom: 16px;
+        font-size: 0.95em;
+        background: #f0f4fa;
+        padding: 8px 10px;
+        border-radius: 6px;
+      }
+      #preview {
+        margin: 12px auto 18px auto;
+        display: block;
+        max-width: 220px;
+        max-height: 120px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e5e7eb;
+        background: #fff;
+      }
+      #barcode {
+        margin: 24px auto 0 auto;
+        display: none;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+        padding: 12px 0;
+        min-height: 60px;
+        min-width: 220px;
+        max-width: 320px;
+      }
+      button {
+        background: linear-gradient(90deg, #4f8cff 0%, #1e40af 100%);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 12px 0;
+        width: 100%;
+        font-size: 1.08rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 8px;
+        margin-bottom: 8px;
+        transition: background 0.2s;
+        box-shadow: 0 2px 8px rgba(79, 140, 255, 0.07);
+      }
+      button:disabled {
+        background: #b6c6e3;
+        cursor: not-allowed;
+      }
+      @media (max-width: 500px) {
+        .container {
+          padding: 18px 6vw 18px 6vw;
+          margin: 12px 0 0 0;
+        }
+        #barcode {
+          min-width: 120px;
+          max-width: 98vw;
+        }
+      }
+      #output {
+        font-weight: bold;
+        color: #1e40af;
+        word-break: break-all;
+      }
+      #canvas {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Barcode Redirect Generator</h2>
+
+      <label for="barcodeImage">Upload Gambar Barcode/QR Code Lama:</label>
+      <input type="file" id="barcodeImage" accept="image/*" />
+      <small>
+        <b>Format gambar:</b> JPG, PNG &nbsp;|&nbsp; <b>Ukuran maksimal:</b> &lt; 2MB<br />
+        <b>Jenis barcode didukung:</b> QR Code, Code128, EAN, Code39, UPC<br />
+        <b>Tips:</b> Pastikan gambar <b>jelas</b>, tidak blur, dan barcode <b>tidak terpotong</b>.
+      </small>
+
+      <canvas id="canvas"></canvas>
+      <img id="preview" src="" alt="Preview" style="display: none" />
+
+      <label for="newLink">Link Baru (tujuan redirect):</label>
+      <input type="text" id="newLink" placeholder="https://contoh.com/halaman-baru" />
+
+      <button id="generateBtn" disabled>Buat QR Code Baru</button>
+
+      <div style="text-align: center">
+        <canvas id="barcode"></canvas>
+        <div id="barcodeInfo" style="margin-top: 8px; color: #1e40af; font-size: 0.98em"></div>
+      </div>
+
+      <p><strong>Hasil Deteksi:</strong> <span id="output">Belum ada</span></p>
+    </div>
+
+    <!-- Hanya bagian script yang diperbaiki -->
+    <script>
+      let oldBarcodeValue = "";
+
+      document.getElementById("barcodeImage").addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const img = new Image();
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+          img.src = event.target.result;
+
+          img.onload = function () {
+            const preview = document.getElementById("preview");
+            preview.src = img.src;
+            preview.style.display = "block";
+
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            const output = document.getElementById("output");
+            oldBarcodeValue = "";
+            document.getElementById("generateBtn").disabled = true;
+
+            // QR Code detection using jsQR
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+            if (code) {
+              oldBarcodeValue = code.data;
+              output.textContent = "QR Code: " + oldBarcodeValue;
+              output.style.color = "green";
+              document.getElementById("generateBtn").disabled = false;
+            } else {
+              // Quagga fallback (barcode batang)
+              Quagga.decodeSingle(
+                {
+                  src: canvas.toDataURL(),
+                  numOfWorkers: 0,
+                  inputStream: {
+                    size: 800, // Ensure image scaled properly
+                  },
+                  locator: {
+                    patchSize: "medium",
+                    halfSample: true,
+                  },
+                  decoder: {
+                    readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"],
+                  },
+                  locate: true,
+                },
+                (result) => {
+                  if (result && result.codeResult) {
+                    oldBarcodeValue = result.codeResult.code;
+                    output.textContent = "Barcode: " + oldBarcodeValue;
+                    output.style.color = "green";
+                    document.getElementById("generateBtn").disabled = false;
+                  } else {
+                    output.textContent = "Barcode/QR Code tidak terdeteksi. Coba gunakan gambar lain.";
+                    output.style.color = "red";
+                  }
+                }
+              );
+            }
+          };
+        };
+
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById("generateBtn").addEventListener("click", function () {
+        const newLink = document.getElementById("newLink").value.trim();
+
+        if (!oldBarcodeValue || !newLink) {
+          alert("Mohon lengkapi semua data.");
+          return;
+        }
+
+        // Simpan mapping barcode lama ke link baru
+        const barcodeMap = JSON.parse(localStorage.getItem("barcodeRedirects") || "{}");
+        barcodeMap[oldBarcodeValue] = newLink;
+        localStorage.setItem("barcodeRedirects", JSON.stringify(barcodeMap));
+
+        const barcodeCanvas = document.getElementById("barcode");
+        const ctx = barcodeCanvas.getContext("2d");
+
+        // Pastikan canvas ditampilkan dan punya ukuran
+        barcodeCanvas.style.display = "block";
+        barcodeCanvas.width = 220;
+        barcodeCanvas.height = 220;
+        ctx.clearRect(0, 0, barcodeCanvas.width, barcodeCanvas.height);
+
+        QRCode.toCanvas(
+          barcodeCanvas,
+          newLink,
+          {
+            width: 220,
+            margin: 2,
+            color: {
+              dark: "#1e40af",
+              light: "#fff",
+            },
+          },
+          function (error) {
+            if (error) {
+              alert("Gagal generate QR Code: " + error);
+            } else {
+              document.getElementById("barcodeInfo").innerHTML = 'QR Code baru untuk:<br><a href="' + newLink + '" target="_blank" style="color:#1e40af;word-break:break-all;">' + newLink + "</a>";
+            }
+          }
+        );
+      });
+    </script>
+  </body>
+</html>
