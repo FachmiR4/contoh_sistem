@@ -76,7 +76,7 @@
         border: 1px solid #e5e7eb;
         background: #fff;
       }
-      #barcode {
+      #barcode, #barcodePattern {
         margin: 24px auto 0 auto;
         display: none;
         background: #fff;
@@ -111,7 +111,7 @@
           padding: 18px 6vw 18px 6vw;
           margin: 12px 0 0 0;
         }
-        #barcode {
+        #barcode, #barcodePattern {
           min-width: 120px;
           max-width: 98vw;
         }
@@ -148,15 +148,16 @@
 
       <div style="text-align: center">
         <canvas id="barcode"></canvas>
+        <svg id="barcodePattern"></svg>
         <div id="barcodeInfo" style="margin-top: 8px; color: #1e40af; font-size: 0.98em"></div>
       </div>
 
       <p><strong>Hasil Deteksi:</strong> <span id="output">Belum ada</span></p>
     </div>
 
-    <!-- Hanya bagian script yang diperbaiki -->
     <script>
       let oldBarcodeValue = "";
+      let detectedType = ""; // "qr" atau "barcode"
 
       document.getElementById("barcodeImage").addEventListener("change", function (e) {
         const file = e.target.files[0];
@@ -181,6 +182,7 @@
 
             const output = document.getElementById("output");
             oldBarcodeValue = "";
+            detectedType = "";
             document.getElementById("generateBtn").disabled = true;
 
             // QR Code detection using jsQR
@@ -189,9 +191,11 @@
 
             if (code) {
               oldBarcodeValue = code.data;
+              detectedType = "qr";
               output.textContent = "QR Code: " + oldBarcodeValue;
               output.style.color = "green";
               document.getElementById("generateBtn").disabled = false;
+              document.getElementById("barcodePattern").style.display = "none";
             } else {
               // Quagga fallback (barcode batang)
               Quagga.decodeSingle(
@@ -199,7 +203,7 @@
                   src: canvas.toDataURL(),
                   numOfWorkers: 0,
                   inputStream: {
-                    size: 800, // Ensure image scaled properly
+                    size: 800,
                   },
                   locator: {
                     patchSize: "medium",
@@ -213,12 +217,16 @@
                 (result) => {
                   if (result && result.codeResult) {
                     oldBarcodeValue = result.codeResult.code;
+                    detectedType = "barcode";
                     output.textContent = "Barcode: " + oldBarcodeValue;
                     output.style.color = "green";
                     document.getElementById("generateBtn").disabled = false;
+                    // Tampilkan pola barcode
+                    showBarcodePattern(oldBarcodeValue);
                   } else {
                     output.textContent = "Barcode/QR Code tidak terdeteksi. Coba gunakan gambar lain.";
                     output.style.color = "red";
+                    document.getElementById("barcodePattern").style.display = "none";
                   }
                 }
               );
@@ -228,6 +236,23 @@
 
         reader.readAsDataURL(file);
       });
+
+      function showBarcodePattern(value) {
+        const svg = document.getElementById("barcodePattern");
+        svg.style.display = "block";
+        // Clear SVG
+        svg.innerHTML = "";
+        // Generate barcode pattern menggunakan JsBarcode
+        JsBarcode(svg, value, {
+          format: "CODE128",
+          lineColor: "#1e40af",
+          width: 2,
+          height: 60,
+          displayValue: true,
+          fontSize: 16,
+          margin: 8,
+        });
+      }
 
       document.getElementById("generateBtn").addEventListener("click", function () {
         const newLink = document.getElementById("newLink").value.trim();
@@ -266,7 +291,12 @@
             if (error) {
               alert("Gagal generate QR Code: " + error);
             } else {
-              document.getElementById("barcodeInfo").innerHTML = 'QR Code baru untuk:<br><a href="' + newLink + '" target="_blank" style="color:#1e40af;word-break:break-all;">' + newLink + "</a>";
+              document.getElementById("barcodeInfo").innerHTML =
+                'QR Code baru untuk:<br><a href="' +
+                newLink +
+                '" target="_blank" style="color:#1e40af;word-break:break-all;">' +
+                newLink +
+                "</a>";
             }
           }
         );
