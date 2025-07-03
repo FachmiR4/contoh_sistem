@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Clone & Replace Link</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      margin: 20px;
+    }
+    input, button {
+      margin-top: 10px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    canvas {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Clone QR Code & Replace Link</h2>
+
+  <label>1. Upload Gambar QR Lama:</label><br>
+  <input type="file" accept="image/*" id="oldQrImage"><br>
+
+  <label>2. Masukkan Link Baru:</label><br>
+  <input type="text" id="newLink" placeholder="https://link-baru.com"><br>
+
+  <button onclick="processQRCode()">Generate QR Code Baru</button>
+
+  <div id="output" style="margin-top: 20px;">
+    <h3>QR Baru:</h3>
+    <canvas id="newQrCanvas"></canvas><br>
+    <button onclick="downloadQR()">Unduh QR Code</button>
+  </div>
+
+  <script>
+    let oldData = '';
+    
+    function processQRCode() {
+      const file = document.getElementById('oldQrImage').files[0];
+      const newLink = document.getElementById('newLink').value.trim();
+      const canvas = document.getElementById('newQrCanvas');
+      const ctx = canvas.getContext("2d");
+
+      if (!file || !newLink) {
+        alert("Upload gambar QR lama dan masukkan link baru!");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+          if (code) {
+            oldData = code.data;
+            console.log("QR Lama: ", oldData);
+
+            // Buat QR baru dengan link baru
+            QRCode.toCanvas(canvas, newLink, { width: img.width }, function (err) {
+              if (err) {
+                console.error(err);
+                alert("Gagal membuat QR baru");
+              }
+            });
+          } else {
+            alert("Gagal membaca QR lama!");
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function downloadQR() {
+      const canvas = document.getElementById('newQrCanvas');
+      const link = document.createElement('a');
+      link.download = 'qr_baru.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+  </script>
+
+</body>
+</html>

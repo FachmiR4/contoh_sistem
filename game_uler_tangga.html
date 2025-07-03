@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ular Tangga Multiplayer</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+    #board {
+      background: url('depositphotos_655853034-stock-illustration-ladder-snakes-game-funny-frame.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      width: 768px;
+      height: 816px;
+      margin: auto;
+      position: relative;
+    }
+    .player {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      position: absolute;
+      text-align: center;
+      line-height: 24px;
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    #controls {
+      margin: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+    }
+    .name-input {
+      margin: 5px;
+    }
+    #log {
+      max-height: 200px;
+      overflow-y: auto;
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      width: 300px;
+      margin: 10px auto;
+      text-align: left;
+    }
+    #diceResult {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    #diceImage {
+      width: 60px;
+      height: 60px;
+      margin: 10px auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Game Ular Tangga Multiplayer</h1>
+  <div id="controls">
+    <label>Jumlah Pemain: </label>
+    <input type="number" id="playerCount" min="2" max="6" value="2" onchange="generateNameInputs()">
+    <div id="playerNames"></div>
+    <button onclick="startGame()">Mulai Game</button>
+    <button onclick="rollDice()">Lempar Dadu</button>
+    <p id="turnInfo"></p>
+    <div id="diceImage"></div>
+    <p id="diceResult"></p>
+  </div>
+  <div id="board"></div>
+  <div id="log"></div>
+
+  <script>
+    const players = [];
+    const colors = ['red', 'blue', 'green', 'orange', 'purple', 'black'];
+    let currentPlayer = 0;
+    let positions = [];
+    let names = [];
+
+    const snakes = { 83: 61, 65: 46, 92: 72, 50: 31, 38: 22 };
+    const ladders = { 5: 44, 58: 77, 60: 79, 28: 48, 36: 57, 86: 93, 22: 39 };
+
+    function getPositionCoords(pos) {
+      const row = Math.floor((pos - 1) / 10);
+      const col = (row % 2 === 0) ? (pos - 1) % 10 : 9 - (pos - 1) % 10;
+      const x = col * 76.8 + 24;
+      const y = (9 - row) * 81.6 + 12;
+      return { x, y };
+    }
+
+    function generateNameInputs() {
+      const count = parseInt(document.getElementById('playerCount').value);
+      const container = document.getElementById('playerNames');
+      container.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Nama Pemain ${i + 1}`;
+        input.className = 'name-input';
+        container.appendChild(input);
+      }
+    }
+
+    function startGame() {
+      const count = parseInt(document.getElementById('playerCount').value);
+      const nameInputs = document.querySelectorAll('#playerNames input');
+      const board = document.getElementById('board');
+      const log = document.getElementById('log');
+      board.innerHTML = '';
+      log.innerHTML = '';
+      players.length = 0;
+      names = [];
+      positions = new Array(count).fill(1);
+
+      nameInputs.forEach((input, i) => {
+        names.push(input.value.trim() || `Pemain ${i + 1}`);
+      });
+
+      for (let i = 0; i < count; i++) {
+        const div = document.createElement('div');
+        div.className = 'player';
+        div.style.background = colors[i];
+        div.textContent = i + 1;
+        board.appendChild(div);
+        players.push(div);
+      }
+
+      updatePositions();
+      currentPlayer = 0;
+      document.getElementById('turnInfo').textContent = `Giliran ${names[currentPlayer]}`;
+      loadLog();
+    }
+
+    function rollDice() {
+      if (players.length === 0) return;
+      document.getElementById('diceResult').textContent = 'Mengocok...';
+      document.getElementById('diceImage').innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Alea_1.png" width="60">';
+
+      setTimeout(() => {
+        const dice = Math.floor(Math.random() * 6) + 1;
+        let pos = positions[currentPlayer] + dice;
+        if (pos > 100) pos = 100 - (pos - 100);
+
+        let logText = `${names[currentPlayer]} melempar dadu: ${dice}, ke posisi ${pos}`;
+
+        if (snakes[pos]) {
+          logText += `, kena 🐍 turun ke ${snakes[pos]}`;
+          pos = snakes[pos];
+        } else if (ladders[pos]) {
+          logText += `, naik 🪜 ke ${ladders[pos]}`;
+          pos = ladders[pos];
+        }
+
+        positions[currentPlayer] = pos;
+        updatePositions();
+        document.getElementById('diceResult').textContent = `${names[currentPlayer]} dapat ${dice}`;
+        document.getElementById('diceImage').innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(dice)}" width="60">`;
+        logAction(logText);
+
+        if (pos === 100) {
+          alert(`${names[currentPlayer]} menang!`);
+          return;
+        }
+
+        currentPlayer = (currentPlayer + 1) % players.length;
+        document.getElementById('turnInfo').textContent = `Giliran ${names[currentPlayer]}`;
+      }, 600);
+    }
+
+    function getDiceImage(val) {
+      const map = {
+        1: '2/2c/Alea_1.png',
+        2: 'b/b8/Alea_2.png',
+        3: '2/2f/Alea_3.png',
+        4: '8/8d/Alea_4.png',
+        5: '5/55/Alea_5.png',
+        6: 'f/f4/Alea_6.png'
+      };
+      return map[val];
+    }
+
+    function updatePositions() {
+      for (let i = 0; i < players.length; i++) {
+        const { x, y } = getPositionCoords(positions[i]);
+        players[i].style.left = `${x + (i * 5)}px`;
+        players[i].style.top = `${y + (i * 5)}px`;
+      }
+    }
+
+    function logAction(text) {
+      const log = document.getElementById('log');
+      const p = document.createElement('p');
+      p.textContent = text;
+      log.prepend(p);
+      saveLog(text);
+    }
+
+    function saveLog(entry) {
+      const existing = JSON.parse(localStorage.getItem('gameLog') || '[]');
+      existing.unshift(entry);
+      localStorage.setItem('gameLog', JSON.stringify(existing.slice(0, 50)));
+    }
+
+    function loadLog() {
+      const log = document.getElementById('log');
+      const existing = JSON.parse(localStorage.getItem('gameLog') || '[]');
+      log.innerHTML = '';
+      existing.forEach(entry => {
+        const p = document.createElement('p');
+        p.textContent = entry;
+        log.appendChild(p);
+      });
+    }
+  </script>
+</body>
+</html>
