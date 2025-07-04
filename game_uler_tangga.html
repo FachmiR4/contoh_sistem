@@ -7,8 +7,83 @@
   <style>
     body {
       text-align: center;
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(120deg, #e0e7ff 0%, #f4f4f4 100%);
+      margin: 0;
+      min-height: 100vh;
+    }
+    h1 {
+      color: #1e40af;
+      margin-top: 24px;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+      font-size: 2.2rem;
+    }
+    #controls {
+      margin: 20px auto 10px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(30,64,175,0.08);
+      padding: 18px 18px 10px 18px;
+      max-width: 420px;
+    }
+    label {
+      font-weight: 500;
+      color: #1e293b;
+      margin-right: 8px;
+    }
+    #playerCount {
+      width: 60px;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+    .name-input {
+      margin: 5px 0;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      width: 90%;
+      font-size: 1rem;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 7px 5px 0 5px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      background: linear-gradient(90deg, #4f8cff 0%, #1e40af 100%);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-shadow: 0 2px 8px rgba(79,140,255,0.07);
+    }
+    button:disabled {
+      background: #b6c6e3;
+      cursor: not-allowed;
+    }
+    #turnInfo {
+      font-size: 1.1rem;
+      color: #1e40af;
+      margin: 10px 0 0 0;
+      font-weight: 500;
+    }
+    #diceResult {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #0f5132;
+      margin: 0;
+    }
+    #diceImage {
+      width: 60px;
+      height: 60px;
+      margin: 10px auto 0 auto;
     }
     #board {
       background: url('depositphotos_655853034-stock-illustration-ladder-snakes-game-funny-frame.jpg');
@@ -16,60 +91,63 @@
       background-repeat: no-repeat;
       width: 768px;
       height: 816px;
-      margin: auto;
+      margin: 24px auto 0 auto;
       position: relative;
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgba(30,64,175,0.09);
+      border: 2px solid #1e40af;
     }
     .player {
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       position: absolute;
       text-align: center;
-      line-height: 24px;
+      line-height: 28px;
       color: white;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: bold;
-    }
-    #controls {
-      margin: 20px;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      font-size: 16px;
-    }
-    .name-input {
-      margin: 5px;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      z-index: 2;
     }
     #log {
       max-height: 200px;
       overflow-y: auto;
       background: #fff;
       padding: 10px;
-      border: 1px solid #ccc;
-      width: 300px;
-      margin: 10px auto;
+      border: 1px solid #cbd5e1;
+      width: 340px;
+      margin: 18px auto 0 auto;
       text-align: left;
+      border-radius: 8px;
+      font-size: 1rem;
+      box-shadow: 0 2px 8px rgba(30,64,175,0.07);
     }
-    #diceResult {
-      font-size: 24px;
-      font-weight: bold;
-    }
-    #diceImage {
-      width: 60px;
-      height: 60px;
-      margin: 10px auto;
+    @media (max-width: 900px) {
+      #board {
+        width: 98vw;
+        height: 104vw;
+        max-width: 98vw;
+        max-height: 104vw;
+      }
+      #log {
+        width: 96vw;
+      }
+      #controls {
+        max-width: 98vw;
+      }
     }
   </style>
 </head>
 <body>
   <h1>Game Ular Tangga Multiplayer</h1>
   <div id="controls">
-    <label>Jumlah Pemain: </label>
+    <label>Jumlah Pemain:</label>
     <input type="number" id="playerCount" min="2" max="6" value="2" onchange="generateNameInputs()">
     <div id="playerNames"></div>
-    <button onclick="startGame()">Mulai Game</button>
-    <button onclick="rollDice()">Lempar Dadu</button>
+    <button id="startBtn" onclick="startGame()">Mulai Game</button>
+    <button id="rollBtn" onclick="rollDice()" disabled>Lempar Dadu</button>
     <p id="turnInfo"></p>
     <div id="diceImage"></div>
     <p id="diceResult"></p>
@@ -83,9 +161,12 @@
     let currentPlayer = 0;
     let positions = [];
     let names = [];
+    let gameStarted = false;
 
     const snakes = { 83: 61, 65: 46, 92: 72, 50: 31, 38: 22 };
     const ladders = { 5: 44, 58: 77, 60: 79, 28: 48, 36: 57, 86: 93, 22: 39 };
+
+    window.onload = generateNameInputs;
 
     function getPositionCoords(pos) {
       const row = Math.floor((pos - 1) / 10);
@@ -104,6 +185,7 @@
         input.type = 'text';
         input.placeholder = `Nama Pemain ${i + 1}`;
         input.className = 'name-input';
+        input.maxLength = 12;
         container.appendChild(input);
       }
     }
@@ -127,21 +209,27 @@
         const div = document.createElement('div');
         div.className = 'player';
         div.style.background = colors[i];
-        div.textContent = i + 1;
+        div.textContent = names[i][0].toUpperCase();
+        div.title = names[i];
         board.appendChild(div);
         players.push(div);
       }
 
       updatePositions();
       currentPlayer = 0;
-      document.getElementById('turnInfo').textContent = `Giliran ${names[currentPlayer]}`;
+      document.getElementById('turnInfo').textContent = `Giliran: ${names[currentPlayer]}`;
+      document.getElementById('rollBtn').disabled = false;
+      gameStarted = true;
       loadLog();
+      document.getElementById('diceResult').textContent = '';
+      document.getElementById('diceImage').innerHTML = '';
     }
 
     function rollDice() {
-      if (players.length === 0) return;
+      if (!gameStarted || players.length === 0) return;
       document.getElementById('diceResult').textContent = 'Mengocok...';
       document.getElementById('diceImage').innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Alea_1.png" width="60">';
+      document.getElementById('rollBtn').disabled = true;
 
       setTimeout(() => {
         const dice = Math.floor(Math.random() * 6) + 1;
@@ -165,12 +253,23 @@
         logAction(logText);
 
         if (pos === 100) {
-          alert(`${names[currentPlayer]} menang!`);
+          setTimeout(() => {
+            alert(`${names[currentPlayer]} menang!`);
+            document.getElementById('turnInfo').textContent = `${names[currentPlayer]} MENANG!`;
+            document.getElementById('rollBtn').disabled = true;
+            gameStarted = false;
+          }, 300);
           return;
         }
 
-        currentPlayer = (currentPlayer + 1) % players.length;
-        document.getElementById('turnInfo').textContent = `Giliran ${names[currentPlayer]}`;
+        if (dice !== 6) {
+          currentPlayer = (currentPlayer + 1) % players.length;
+        } else {
+          logAction(`${names[currentPlayer]} dapat 6 dan mendapat giliran lagi!`);
+        }
+
+        document.getElementById('turnInfo').textContent = `Giliran: ${names[currentPlayer]}`;
+        document.getElementById('rollBtn').disabled = false;
       }, 600);
     }
 
