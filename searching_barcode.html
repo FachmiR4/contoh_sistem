@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistem Barcode</title>
+  <script src="https://unpkg.com/@zxing/library@0.19.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input, button { margin: 10px 0; padding: 10px; }
+    video, canvas { display: block; margin-top: 10px; }
+    #result { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>🔍 Cari Barang Berdasarkan Barcode</h2>
+  <input type="text" id="barcodeInput" placeholder="Masukkan Nomor Barcode...">
+  <button onclick="searchBarcode()">Cari</button>
+
+  <h3>📷 Scan Barcode dari Kamera</h3>
+  <video id="video" width="300" height="200"></video>
+  <button onclick="startScanner()">Mulai Scan</button>
+
+  <h3>🖼️ Upload Gambar Barcode</h3>
+  <input type="file" id="uploadInput" accept="image/*">
+  <canvas id="canvas" width="300" height="200" style="display:none;"></canvas>
+
+  <div id="result"></div>
+
+  <script>
+    const dataBarang = [
+      { barcode: '123456789012', nama: 'Laptop Asus', kategori: 'Elektronik' },
+      { barcode: '987654321098', nama: 'Printer Epson', kategori: 'Elektronik' },
+      { barcode: '555666777888', nama: 'Meja Kantor', kategori: 'Furniture' },
+      { barcode: '111222333444', nama: 'Kursi Gaming', kategori: 'Furniture' },
+    ];
+
+    function searchBarcode(barcode = null) {
+      const kode = barcode || document.getElementById('barcodeInput').value;
+      const item = dataBarang.find(b => b.barcode === kode);
+      const result = document.getElementById('result');
+      if (item) {
+        result.innerHTML = `<b>✅ Ditemukan:</b><br>Nama: ${item.nama}<br>Kategori: ${item.kategori}`;
+      } else {
+        result.innerHTML = '<b>❌ Barcode tidak ditemukan!</b>';
+      }
+    }
+
+    // Kamera Scanner
+    async function startScanner() {
+      const codeReader = new ZXing.BrowserBarcodeReader();
+      const videoInputDevices = await codeReader.getVideoInputDevices();
+      const selectedDeviceId = videoInputDevices[0].deviceId;
+      const video = document.getElementById('video');
+
+      codeReader.decodeFromVideoDevice(selectedDeviceId, video, (result, err) => {
+        if (result) {
+          searchBarcode(result.text);
+          codeReader.reset(); // stop scanner
+        }
+      });
+    }
+
+    // Gambar Upload
+    document.getElementById('uploadInput').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function () {
+        const img = new Image();
+        img.onload = function () {
+          const canvas = document.getElementById('canvas');
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, canvas.width, canvas.height);
+          if (code) {
+            searchBarcode(code.data);
+          } else {
+            document.getElementById('result').innerHTML = '<b>❌ Gagal membaca barcode dari gambar</b>';
+          }
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>
