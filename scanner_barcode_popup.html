@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Barcode Scanner Modal</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <style>
+        #interactive.viewport {position: relative; width: 100%; height: auto; overflow: hidden; text-align: center;}
+        #interactive.viewport > video {max-width: 100%; width: 100%;}
+        .hidden { display: none; }
+    </style>
+ </head>
+ <body>
+   <div class="row">
+    <div class="col-lg-6">
+        <div class="input-group">
+            <br>
+            <span class="input-group-btn"> 
+                <button class="btn btn-default" type="button" data-toggle="modal" data-target="#livestream_scanner">scan
+                    <i class="fa fa-barcode"></i>
+                </button>
+            </span>
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<!-- Include QuaggaJS for barcode scanning -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
+<script type="text/javascript">
+$(function() {
+    // Start the live stream when the modal opens
+    $('#livestream_scanner').on('shown.bs.modal', function () {
+        // Destroy previous instance if exists
+        if (Quagga.initialized) {
+            Quagga.stop();
+        }
+        Quagga.init({
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: document.querySelector('#interactive'), // Or '#yourElement' (optional)
+                constraints: {
+                    facingMode: "environment" // or user
+                },
+            },
+            decoder: {
+                readers: [
+                    "code_128_reader",
+                    "ean_reader",
+                    "ean_8_reader",
+                    "code_39_reader",
+                    "code_39_vin_reader",
+                    "codabar_reader",
+                    "upc_reader",
+                    "upc_e_reader",
+                    "i2of5_reader"
+                ]
+            }
+        }, function(err) {
+            if (err) {
+                $('.error').text("Camera error: " + err.message);
+                return;
+            }
+            Quagga.initialized = true;
+            Quagga.start();
+        });
+
+        Quagga.onDetected(function(result) {
+            var code = result.codeResult.code;
+            $('.error').html('<div class="alert alert-success">Barcode detected: <strong>' + code + '</strong></div>');
+            // Optional: stop after first scan
+            Quagga.stop();
+            setTimeout(function() {
+                $('#livestream_scanner').modal('hide');
+                $('.error').empty();
+            }, 1500);
+        });
+    });
+
+    // Stop camera when modal is closed
+    $('#livestream_scanner').on('hidden.bs.modal', function () {
+        if (Quagga.initialized) {
+            Quagga.stop();
+        }
+        $('#interactive').empty();
+        $('.error').empty();
+    });
+});
+</script>
+
+<div class="modal fade" id="livestream_scanner" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">Barcode Scanner</h4>
+            </div>
+            <div class="modal-body" style="position: static">
+                <div id="interactive" class="viewport"></div>
+                <div class="error"></div>
+            </div>
+            <div class="modal-footer">
+                <label class="btn btn-default pull-left">
+                    <i class="fa fa-camera"></i> Use camera app
+                    <input type="file" accept="image/*;capture=camera" capture="camera" class="hidden" />
+                </label>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
