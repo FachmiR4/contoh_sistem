@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Redirect Dropdown Barang & Karyawan</title>
+</head>
+<body>
+
+    <label for="barang">Pilih Barang:</label>
+    <select id="barang">
+        <option value="">-- Pilih Barang --</option>
+        <option value="20">Barang A</option>
+        <option value="35">Barang B</option>
+        <option value="48">Barang C</option>
+    </select>
+
+    <br><br>
+
+    <label for="karyawan">Pilih Karyawan:</label>
+    <select id="karyawan">
+        <option value="">-- Pilih Karyawan --</option>
+        <option value="12">Karyawan X</option>
+        <option value="15">Karyawan Y</option>
+        <option value="18">Karyawan Z</option>
+    </select>
+
+    <script>
+        const barangSelect = document.getElementById('barang');
+        const karyawanSelect = document.getElementById('karyawan');
+
+        function redirect() {
+            const barangId = barangSelect.value;
+            const karyawanId = karyawanSelect.value;
+
+            if (barangId) {
+                let url = `http://172.16.3.70/aset/stock-opname/monitoring-barang?id=${barangId}`;
+                if (karyawanId) {
+                    url += `&karyawan=${karyawanId}`;
+                }
+                window.location.href = url;
+            }
+        }
+
+        // Trigger redirect jika salah satu dropdown berubah
+        barangSelect.addEventListener('change', redirect);
+        karyawanSelect.addEventListener('change', redirect);
+    </script>
+
+</body>
+</html>

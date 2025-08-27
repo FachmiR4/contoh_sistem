@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interaktif Bagian Mobil</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .car-container {
+      position: relative;
+      display: inline-block;
+    }
+    .car-container img {
+      max-width: 100%;
+      height: auto;
+      border: 2px solid #333;
+      border-radius: 8px;
+    }
+    .click-area {
+      position: absolute;
+      cursor: pointer;
+      background: rgba(255, 255, 0, 0.3); /* transparan */
+      border: 1px solid yellow;
+      transition: background 0.3s ease;
+    }
+    .click-area:hover {
+      background: rgba(255, 0, 0, 0.4);
+    }
+    .info-box {
+      margin-top: 15px;
+      padding: 10px;
+      background: #f0f0f0;
+      border-radius: 5px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>Klik Bagian Mobil untuk Melihat Detail</h2>
+  <div class="car-container">
+    <img src="Capture.PNG" alt="Gambar Mobil">
+    
+    <!-- Contoh area klik (posisi disesuaikan manual) -->
+    <div class="click-area" data-info="Bagian nomor 3 adalah pintu samping kiri depan"
+         style="top: 160px; left: 90px; width: 60px; height: 40px;"></div>
+    <div class="click-area" data-info="Bagian nomor 12 adalah kap mobil"
+         style="top: 100px; left: 150px; width: 100px; height: 60px;"></div>
+    <div class="click-area" data-info="Bagian nomor 7 adalah ban depan kanan"
+         style="top: 80px; left: 290px; width: 40px; height: 40px; border-radius: 50%;"></div>
+  </div>
+
+  <div id="infoBox" class="info-box"></div>
+
+  <script>
+    const areas = document.querySelectorAll('.click-area');
+    const infoBox = document.getElementById('infoBox');
+
+    areas.forEach(area => {
+      area.addEventListener('click', function () {
+        const info = this.getAttribute('data-info');
+        infoBox.textContent = info;
+        infoBox.style.display = 'block';
+      });
+    });
+  </script>
+</body>
+</html>
