@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kamera Capture</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    video, canvas, img { border: 2px solid #333; border-radius: 10px; }
+    button { margin-top: 10px; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; }
+    #snap { background: #007bff; color: #fff; }
+    #upload { background: #28a745; color: #fff; }
+  </style>
+</head>
+<body>
+
+  <h2>Ambil Foto dari Kamera</h2>
+
+  <!-- Preview kamera -->
+  <video id="video" width="320" height="240" autoplay></video>
+  <br>
+
+  <!-- Tombol ambil foto -->
+  <button id="snap">📸 Ambil Foto</button>
+
+  <br><br>
+
+  <!-- Hasil foto -->
+  <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+  <img id="preview" alt="Hasil foto akan muncul di sini"/>
+
+  <br>
+
+  <!-- Tombol upload simulasi -->
+  <button id="upload">⬆️ Upload (Simulasi)</button>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const snapBtn = document.getElementById("snap");
+    const uploadBtn = document.getElementById("upload");
+    const preview = document.getElementById("preview");
+    const context = canvas.getContext("2d");
+
+    // Minta izin kamera
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        alert("Tidak bisa akses kamera: " + err);
+      });
+
+    // Ambil foto dari kamera
+    snapBtn.addEventListener("click", () => {
+      context.drawImage(video, 0, 0, 320, 240);
+      let dataUrl = canvas.toDataURL("image/png");
+      preview.src = dataUrl;
+    });
+
+    // Simulasi upload
+    uploadBtn.addEventListener("click", () => {
+      let dataUrl = canvas.toDataURL("image/png");
+      console.log("Data foto (base64):", dataUrl);
+
+      alert("Foto siap dikirim ke server!\nLihat console untuk base64 image.");
+      // Contoh kalau mau kirim ke server pakai fetch:
+      /*
+      fetch("/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ foto: dataUrl })
+      }).then(res => res.json())
+        .then(data => console.log(data));
+      */
+    });
+  </script>
+</body>
+</html>

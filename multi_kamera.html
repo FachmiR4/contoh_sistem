@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kamera Capture Multiple</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    video, canvas, img { border: 2px solid #333; border-radius: 10px; }
+    button { margin-top: 10px; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; }
+    #snap { background: #007bff; color: #fff; }
+    #upload { background: #28a745; color: #fff; }
+    #gallery { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 15px; gap: 10px; }
+    #gallery img { width: 150px; height: auto; border: 2px solid #555; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+  <h2>Ambil Banyak Foto dari Kamera</h2>
+
+  <!-- Preview kamera -->
+  <video id="video" width="320" height="240" autoplay></video>
+  <br>
+
+  <!-- Tombol ambil foto -->
+  <button id="snap">📸 Ambil Foto</button>
+  <button id="upload">⬆️ Upload Semua (Simulasi)</button>
+
+  <!-- Hasil foto lebih dari satu -->
+  <div id="gallery"></div>
+
+  <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const snapBtn = document.getElementById("snap");
+    const uploadBtn = document.getElementById("upload");
+    const gallery = document.getElementById("gallery");
+    const context = canvas.getContext("2d");
+
+    let photos = []; // simpan semua foto
+
+    // Minta izin kamera
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        alert("Tidak bisa akses kamera: " + err);
+      });
+
+    // Ambil foto dari kamera
+    snapBtn.addEventListener("click", () => {
+      context.drawImage(video, 0, 0, 320, 240);
+      let dataUrl = canvas.toDataURL("image/png");
+      photos.push(dataUrl);
+
+      // Tambahkan ke galeri
+      let img = document.createElement("img");
+      img.src = dataUrl;
+      gallery.appendChild(img);
+    });
+
+    // Simulasi upload semua foto
+    uploadBtn.addEventListener("click", () => {
+      console.log("Total foto:", photos.length);
+      console.log("Data foto (base64):", photos);
+
+      alert(photos.length + " foto siap dikirim ke server!\nLihat console untuk base64 image.");
+      // Contoh kirim ke server Laravel:
+      /*
+      fetch("/upload-multiple", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fotos: photos })
+      }).then(res => res.json())
+        .then(data => console.log(data));
+      */
+    });
+  </script>
+</body>
+</html>

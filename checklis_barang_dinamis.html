@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dynamic Checklist</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+    .btn { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; }
+    .btn-primary { background: #007bff; color: white; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-danger { background: #dc3545; color: white; }
+  </style>
+</head>
+<body>
+  <h2>Input List Barang</h2>
+  <form id="form-barang">
+    <input type="text" id="barang" placeholder="Masukkan nama barang" required>
+    <button type="submit" class="btn btn-primary">Tambah</button>
+  </form>
+
+  <h3>Daftar Barang</h3>
+  <ul id="list-barang"></ul>
+  <button onclick="buatChecklist()" class="btn btn-success">Buat Checklist</button>
+
+  <hr>
+  <h3>Form Checklist</h3>
+  <form id="form-checklist"></form>
+
+  <script>
+    let daftarBarang = JSON.parse(localStorage.getItem("barangList")) || [];
+
+    const formBarang = document.getElementById("form-barang");
+    const listBarang = document.getElementById("list-barang");
+    const formChecklist = document.getElementById("form-checklist");
+
+    // render list barang
+    function renderList() {
+      listBarang.innerHTML = "";
+      daftarBarang.forEach((b, i) => {
+        listBarang.innerHTML += `
+          <li>
+            ${b} 
+            <button class="btn btn-danger" onclick="hapusBarang(${i})">Hapus</button>
+          </li>
+        `;
+      });
+      localStorage.setItem("barangList", JSON.stringify(daftarBarang));
+    }
+
+    // tambah barang
+    formBarang.addEventListener("submit", function(e) {
+      e.preventDefault();
+      let barang = document.getElementById("barang").value.trim();
+      if (barang !== "") {
+        daftarBarang.push(barang);
+        document.getElementById("barang").value = "";
+        renderList();
+      }
+    });
+
+    // hapus barang
+    function hapusBarang(index) {
+      daftarBarang.splice(index, 1);
+      renderList();
+    }
+
+    // buat checklist
+    function buatChecklist() {
+      formChecklist.innerHTML = "";
+      daftarBarang.forEach((b, i) => {
+        formChecklist.innerHTML += `
+          <div class="card">
+            <label>
+              <input type="checkbox" name="check_${i}"> ${b}
+            </label>
+          </div>
+        `;
+      });
+    }
+
+    renderList();
+  </script>
+</body>
+</html>
