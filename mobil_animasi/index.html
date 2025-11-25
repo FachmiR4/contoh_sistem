@@ -1,71 +1,224 @@
+// ...existing code...
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Interaktif Bagian Mobil</title>
   <style>
+    :root { --highlight: rgba(255,200,0,0.45); --hover: rgba(255,0,0,0.35); }
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      margin-top: 20px;
+      margin: 20px;
+      background:#fafafa;
     }
-    .car-container {
-      position: relative;
-      display: inline-block;
+    .car-wrapper {
+      display:inline-block;
+      position:relative;
+      max-width:100%;
+      width:900px; /* adapt if needed */
+      border-radius:8px;
+      overflow:visible;
+      box-shadow:0 6px 18px rgba(0,0,0,0.08);
+      background:#fff;
     }
-    .car-container img {
-      max-width: 100%;
-      height: auto;
-      border: 2px solid #333;
-      border-radius: 8px;
+
+    /* base full car image */
+    .car-base {
+      display:block;
+      width:100%;
+      height:auto;
+      user-select:none;
+      -webkit-user-drag:none;
+      border-radius:6px;
     }
-    .click-area {
-      position: absolute;
-      cursor: pointer;
-      background: rgba(255, 255, 0, 0.3); /* transparan */
-      border: 1px solid yellow;
-      transition: background 0.3s ease;
+
+    /* overlay container sits on top of image */
+    .overlay {
+      position:absolute;
+      top:0; left:0; right:0; bottom:0;
+      pointer-events:none; /* enable pointer only on buttons */
     }
-    .click-area:hover {
-      background: rgba(255, 0, 0, 0.4);
+
+    /* clickable part button */
+    .part-btn {
+      position:absolute;
+      pointer-events:auto;
+      border:0;
+      background:var(--highlight);
+      padding:0;
+      width:64px;
+      height:64px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:50%;
+      cursor:pointer;
+      transition:transform .12s ease, background .12s ease;
+      box-shadow:0 4px 10px rgba(0,0,0,0.12);
     }
+    .part-btn img { width:60%; height:60%; object-fit:contain; pointer-events:none; user-select:none; }
+    .part-btn:hover { transform:scale(1.08); background:var(--hover); }
+
+    /* small label near clicked item */
     .info-box {
-      margin-top: 15px;
-      padding: 10px;
-      background: #f0f0f0;
-      border-radius: 5px;
-      display: none;
+      margin-top:15px;
+      padding:12px 16px;
+      background:#fff;
+      border-radius:6px;
+      display:inline-block;
+      min-width:220px;
+      box-shadow:0 6px 18px rgba(0,0,0,0.06);
+      text-align:left;
+      display:none;
+    }
+    .info-box strong { display:block; margin-bottom:6px; }
+    .hint { font-size:0.9rem; color:#666; margin-bottom:8px; }
+
+    /* responsive: scale button size on small screens */
+    @media (max-width:600px) {
+      .car-wrapper { width:100%; }
+      .part-btn { width:29px; height:26px; }
     }
   </style>
 </head>
 <body>
   <h2>Klik Bagian Mobil untuk Melihat Detail</h2>
-  <div class="car-container">
-    <img src="Capture.PNG" alt="Gambar Mobil">
-    
-    <!-- Contoh area klik (posisi disesuaikan manual) -->
-    <div class="click-area" data-info="Bagian nomor 3 adalah pintu samping kiri depan"
-         style="top: 160px; left: 90px; width: 60px; height: 40px;"></div>
-    <div class="click-area" data-info="Bagian nomor 12 adalah kap mobil"
-         style="top: 100px; left: 150px; width: 100px; height: 60px;"></div>
-    <div class="click-area" data-info="Bagian nomor 7 adalah ban depan kanan"
-         style="top: 80px; left: 290px; width: 40px; height: 40px; border-radius: 50%;"></div>
+
+  <div class="car-wrapper" id="carWrapper" aria-label="Gambar mobil interaktif">
+    <!-- full base image (cover) -->
+    <img src="kendaraan blue print/cover-full.png" alt="Gambar Mobil" class="car-base" id="carBase">
+
+    <!-- overlay with clickable partials (positions in percent). 
+         Adjust data-top and data-left values to match your layout.
+         data-info contains the message to show on click.
+    -->
+    <div class="overlay" id="overlay">
+      <button class="part-btn" data-info="Bagian Spakbor Depan Kanan" style="top:69%; left:62%;" aria-label="Spakbor Depan Kanan">
+        <p>1</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Pintu Depan Kanan" style="top:73%; left:51%;" aria-label="Pintu Depan Kanan">
+        <p>2</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Pintu Belakang Kanan" style="top:73%; left:40%;" aria-label="Pintu Belakang Kanan">
+        <p>3</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Spakbor Belakang Kanan" style="top:72%; left:23%;" aria-label="Spakbor Belakang Kanan">
+        <p>4</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Ban Depan Kanan" style="top:79%; left:65%;" aria-label="Ban Depan Kanan">
+        <p>5</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Ban Belakang Kanan" style="top:81%; left:30%;" aria-label="Ban Belakang Kanan">
+        <p>6</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Spakbor Depan Kiri" style="top:14%; left:60%;" aria-label="Spakbor Depan Kiri">
+        <p>7</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Pintu Depan Kiri" style="top:12%; left:51%;" aria-label="Pintu Depan Kiri">
+        <p>8</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Pintu Belakang Kiri" style="top:10%; left:39%;" aria-label="Pintu Belakang Kiri">
+        <p>9</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Spakbor Belakang Kiri" style="top:7%; left:23%;" aria-label="Spakbor Belakang Kiri">
+        <p>10</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Ban Depan Kiri" style="top:6%; left:65%;" aria-label="Ban Depan Kiri">
+        <p>11</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Ban Belakang Kiri" style="top:1%; left:30%;" aria-label="Ban Belakang Kiri">
+        <p>12</p>
+      </button>
+ 
+      <button class="part-btn" data-info="Bagian Kap Mesin" style="top:41%; left:64%;" aria-label="Kap Mesin">
+        <p>13</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Bemper Depan" style="top:44%; left:78%;" aria-label="Bemper Depan">
+        <p>14</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Kaca Depan" style="top:44%; left:54%;" aria-label="Kaca Depan">
+        <p>15</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Atap Mobil" style="top:42%; left:42%;" aria-label="Atap Mobil">
+        <p>16</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Tutup Bagasi" style="top:43%; left:22%;" aria-label="Tutup Bagasi">
+        <p>17</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Bemper Belakang" style="top:43%; left:10%;" aria-label="Bemper Belakang">
+        <p>18</p>
+      </button>
+
+      <button class="part-btn" data-info="Bagian Kaca Belakang" style="top:42%; left:31%;" aria-label="Kaca Belakang">
+        <p>19</p>
+      </button>
+    </div>
   </div>
 
-  <div id="infoBox" class="info-box"></div>
+  <div id="infoBox" class="info-box" role="status" aria-live="polite">
+    <div class="hint">Informasi bagian:</div>
+    <div id="infoText"><strong>-</strong><div class="small">Klik salah satu nomor pada gambar mobil</div></div>
+  </div>
 
   <script>
-    const areas = document.querySelectorAll('.click-area');
-    const infoBox = document.getElementById('infoBox');
+    (function () {
+      const overlay = document.getElementById('overlay');
+      const infoBox = document.getElementById('infoBox');
+      const infoText = document.getElementById('infoText');
 
-    areas.forEach(area => {
-      area.addEventListener('click', function () {
-        const info = this.getAttribute('data-info');
-        infoBox.textContent = info;
-        infoBox.style.display = 'block';
+      // Attach click handler to overlay buttons (delegation)
+      overlay.addEventListener('click', function (e) {
+        const btn = e.target.closest('.part-btn');
+        if (!btn) return;
+        const info = btn.getAttribute('data-info') || 'Tidak ada informasi';
+        // show info
+        infoText.innerHTML = '<strong>' + info + '</strong>';
+        infoBox.style.display = 'inline-block';
+
+        // optional: small animation/focus
+        btn.animate([{ transform: 'scale(1.0)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1.0)' }], { duration: 220 });
       });
-    });
+
+      // Hide info when clicking outside the car
+      document.addEventListener('click', function (e) {
+        const inside = e.target.closest('.car-wrapper');
+        if (!inside) {
+          // do not hide immediately if click on infoBox itself
+          if (!e.target.closest('#infoBox')) {
+            infoBox.style.display = 'none';
+          }
+        }
+      });
+
+      // Make overlay buttons keyboard accessible (enter/space)
+      overlay.querySelectorAll('.part-btn').forEach(btn => {
+        btn.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            btn.click();
+          }
+        });
+      });
+
+    })();
   </script>
 </body>
 </html>

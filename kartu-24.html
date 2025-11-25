@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Game 24 — All-in-One (UI • Drag&Drop • Solver)</title>
+  <!-- Tailwind CDN (play) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* small custom styles */
+    .card { width: 96px; height: 128px; border-radius: 12px; }
+    .card.red { background: linear-gradient(135deg,#fff0f0,#ffc8c8); color:#941414 }
+    .card.black { background: linear-gradient(135deg,#f7f8ff,#d0dbff); color:#0f172a }
+    .drop-slot { min-width: 64px; min-height: 48px; border-radius: 6px; border: 2px dashed rgba(255,255,255,0.12); display:flex;align-items:center;justify-content:center }
+    .glow { box-shadow:0 8px 30px rgba(99,102,241,0.25) }
+    .fade-in { animation: fadeIn .35s ease both }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(6px) } to { opacity:1; transform:none } }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6">
+  <div class="max-w-5xl mx-auto">
+    <header class="flex items-center justify-between mb-6">
+      <h1 class="text-3xl font-extrabold">24 Game — All-in-One</h1>
+      <div class="space-x-2">
+        <button id="btnNew" class="px-4 py-2 bg-emerald-500 rounded-md shadow hover:bg-emerald-600">Kartu Baru</button>
+        <button id="btnSolve" class="px-4 py-2 bg-indigo-500 rounded-md shadow hover:bg-indigo-600">Cari Solusi</button>
+        <button id="btnHint" class="px-3 py-2 bg-yellow-500 rounded-md shadow hover:bg-yellow-600">Hint</button>
+      </div>
+    </header>
+
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Left: Card area -->
+      <div class="col-span-2 bg-slate-800 p-4 rounded-2xl shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="text-sm text-slate-300">Kartu (Drag & Click)</div>
+            <label class="inline-flex items-center gap-2 text-xs text-slate-400">
+              <input id="toggleAutoShuffle" type="checkbox" class="w-4 h-4" checked>
+              Auto shuffle setiap kartu baru
+            </label>
+          </div>
+          <div class="text-sm text-slate-400">Target: <span class="font-semibold">24</span></div>
+        </div>
+
+        <div id="cards" class="flex gap-4 mb-6"></div>
+
+        <!-- Expression builder -->
+        <div class="bg-slate-900/40 p-4 rounded-xl">
+          <div class="flex gap-3 items-center mb-3">
+            <div class="flex gap-2" id="operators">
+              <button class="op-btn px-3 py-1 rounded-md bg-slate-700">+</button>
+              <button class="op-btn px-3 py-1 rounded-md bg-slate-700">-</button>
+              <button class="op-btn px-3 py-1 rounded-md bg-slate-700">*</button>
+              <button class="op-btn px-3 py-1 rounded-md bg-slate-700">/</button>
+              <button class="op-btn px-3 py-1 rounded-md bg-slate-700">(</button>
+              <button class="op-btn px-3 py-1 rounded-md bg-slate-700">)</button>
+            </div>
+            <div class="ml-auto text-sm text-slate-400">Drag kartu ke area atau klik kartu untuk menambahkan ke ekspresi</div>
+          </div>
+
+          <div class="flex flex-col md:flex-row gap-3">
+            <div class="flex-1">
+              <div class="mb-2 text-xs text-slate-400">Expression</div>
+              <div id="expressionArea" class="min-h-[56px] bg-slate-800 p-3 rounded-lg text-xl font-mono flex items-center gap-2 flex-wrap"></div>
+            </div>
+
+            <div class="w-full md:w-80">
+              <div class="mb-2 text-xs text-slate-400">Drop Slots (Drag & Drop mode)</div>
+              <div id="dropSlots" class="flex gap-2"></div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 mt-4">
+            <input id="exprInput" class="flex-1 px-3 py-2 rounded-md bg-slate-700 placeholder:text-slate-400" placeholder="atau ketik ekspresi manual: (A+K)*(8-7)">
+            <button id="btnCheck" class="px-4 py-2 bg-sky-500 rounded-md">Cek</button>
+          </div>
+
+          <div id="message" class="mt-3 text-sm"></div>
+        </div>
+      </div>
+
+      <!-- Right: Controls & Solver -->
+      <aside class="bg-slate-800 p-4 rounded-2xl shadow-lg">
+        <div class="mb-4">
+          <h3 class="text-lg font-semibold">Mode</h3>
+          <div class="mt-2 flex flex-col gap-2">
+            <label class="inline-flex items-center gap-2"><input type="radio" name="mode" value="ui" checked> Modern UI (flip + buttons)</label>
+            <label class="inline-flex items-center gap-2"><input type="radio" name="mode" value="dnd"> Drag & Drop</label>
+            <label class="inline-flex items-center gap-2"><input type="radio" name="mode" value="solver"> Solver-only / Auto-solve</label>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <h3 class="text-lg font-semibold">Nilai Kartu</h3>
+          <div class="text-slate-400 text-sm">A=1, 2-9 = pip, J/Q/K = 10</div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold">Solusi</h3>
+          <div id="solutions" class="mt-2 text-sm text-amber-200"></div>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="mt-8 text-center text-slate-400 text-xs">Built with ❤️ — open to tweaks</footer>
+  </div>
+
+<script>
+// --- Data and utils ---
+const cardValues = { 'A':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'J':10,'Q':10,'K':10 };
+const ranks = Object.keys(cardValues);
+let currentCards = [];
+
+// Helpers
+function randCard(){ return ranks[Math.floor(Math.random()*ranks.length)]; }
+function clamp(n, eps=1e-9){ return Math.abs(n - 24) < eps; }
+
+// --- DOM refs ---
+const cardsDiv = document.getElementById('cards');
+const dropSlots = document.getElementById('dropSlots');
+const expressionArea = document.getElementById('expressionArea');
+const exprInput = document.getElementById('exprInput');
+const message = document.getElementById('message');
+const solutionsDiv = document.getElementById('solutions');
+
+// --- UI: generate/render cards ---
+function generateFour() {
+  currentCards = [];
+  for (let i=0;i<4;i++) currentCards.push(randCard());
+  renderCards();
+  clearBuilder();
+  solutionsDiv.textContent = '';
+}
+
+function renderCards(){
+  cardsDiv.innerHTML='';
+  currentCards.forEach((r, idx) => {
+    const red = ['H','D'].includes('H') ?? (['A','2']); // just to keep varied styles (emoji suits omitted)
+    const cardEl = document.createElement('button');
+    cardEl.className = 'card p-3 flex flex-col items-center justify-center gap-1 shadow-md hover:scale-105 transform transition-all duration-200 bg-white text-slate-900';
+    cardEl.draggable = true;
+    cardEl.dataset.rank = r;
+    cardEl.innerHTML = `<div class="text-xs text-slate-500">${['♠','♥','♦','♣'][idx%4]}</div><div class="text-3xl font-bold">${r}</div><div class="text-xs text-slate-500">${cardValues[r]}</div>`;
+
+    // click to add
+    cardEl.addEventListener('click', ()=> addTokenToExpression(r));
+    // drag events
+    cardEl.addEventListener('dragstart', (e)=>{
+      e.dataTransfer.setData('text/plain', r);
+      setTimeout(()=> cardEl.classList.add('opacity-40'), 0);
+    });
+    cardEl.addEventListener('dragend', ()=> cardEl.classList.remove('opacity-40'));
+
+    cardsDiv.appendChild(cardEl);
+  });
+
+  // create drop slots
+  dropSlots.innerHTML='';
+  for (let i=0;i<4;i++){
+    const s = document.createElement('div');
+    s.className = 'drop-slot p-2 bg-slate-700/20';
+    s.dataset.slot = i;
+    s.addEventListener('dragover', e=> e.preventDefault());
+    s.addEventListener('drop', (e)=>{
+      e.preventDefault();
+      const rank = e.dataTransfer.getData('text/plain');
+      s.textContent = rank;
+      s.dataset.rank = rank;
+      maybeTryBuildFromSlots();
+    });
+    dropSlots.appendChild(s);
+  }
+}
+
+// --- expression builder ---
+function clearBuilder(){ expressionArea.innerHTML=''; exprInput.value=''; message.textContent=''; }
+function addTokenToExpression(token){
+  const span = document.createElement('span');
+  span.className = 'px-2 py-1 bg-slate-700/60 rounded-md inline-block m-1 cursor-default select-none';
+  span.textContent = token;
+  // allow remove
+  span.addEventListener('click', ()=> span.remove());
+  expressionArea.appendChild(span);
+}
+
+// operator buttons
+document.querySelectorAll('.op-btn').forEach(b=> b.addEventListener('click', ()=> addTokenToExpression(b.textContent)));
+
+// try build from slots (auto when DnD used)
+function maybeTryBuildFromSlots(){
+  const filled = Array.from(dropSlots.children).map(s => s.dataset.rank || null);
+  if (filled.every(x=>x)){
+    // build (slot-order) as '(a op b) op (c op d)' placeholder
+    expressionArea.innerHTML='';
+    filled.forEach(r=> addTokenToExpression(r));
+  }
+}
+
+// check / evaluate
+function evaluateExpression(str){
+  // replace card letters with numbers (A,J,Q,K -> their numeric values)
+  let mapped = str.replace(/\bA\b/g,'1');
+  mapped = mapped.replace(/\bJ\b|\bQ\b|\bK\b/g,'10');
+  // also replace any standalone card letters without boundaries (e.g. inside parenthesis)
+  mapped = mapped.replace(/A/g,'1').replace(/[JQK]/g,'10');
+  // prevent dangerous tokens: allow only digits, whitespace, parentheses and +-*/. and decimals
+  if (/[^0-9+\-*/().\s]/.test(mapped)) throw new Error('Char tidak valid');
+  // safe eval via Function
+  // eslint-disable-next-line no-new-func
+  const fn = new Function('return (' + mapped + ')');
+  return fn();
+}
+
+// button checks
+document.getElementById('btnCheck').addEventListener('click', ()=>{
+  const manual = exprInput.value.trim();
+  let expr = manual;
+  if (!expr) {
+    // join tokens from expressionArea
+    expr = Array.from(expressionArea.childNodes).map(n => n.textContent).join(' ');
+  }
+  if (!expr) { message.textContent = 'Masukkan ekspresi atau gunakan kartu.'; return; }
+  try {
+    const val = evaluateExpression(expr);
+    if (clamp(val)){
+      message.innerHTML = `<span class="text-green-300 font-semibold">✔️ Benar! Hasil = ${val}</span>`;
+    } else {
+      message.innerHTML = `<span class="text-rose-300">❌ Salah — Hasil = ${val}</span>`;
+    }
+  } catch(e){ message.innerHTML = `<span class="text-yellow-300">Error: ${e.message}</span>` }
+});
+
+// keyboard: allow Backspace to remove last token
+window.addEventListener('keydown', (e)=>{
+  if (e.key === 'Backspace'){
+    const last = expressionArea.lastChild; if (last) last.remove();
+  }
+});
+
+// --- Solver (brute force) ---
+function permutations(arr){
+  if (arr.length<=1) return [arr.slice()];
+  const result=[];
+  for (let i=0;i<arr.length;i++){
+    const x = arr.splice(i,1)[0];
+    const perms = permutations(arr);
+    for (const p of perms){ result.push([x].concat(p)); }
+    arr.splice(i,0,x);
+  }
+  return result;
+}
+
+function allOperatorCombos(){
+  const ops = ['+','-','*','/'];
+  const res = [];
+  for (let a of ops) for (let b of ops) for (let c of ops) res.push([a,b,c]);
+  return res;
+}
+
+function buildExpressions(nums, ops){
+  const n = nums.map(x=> String(x));
+  // 5 parentheses patterns for 4 numbers
+  const patterns = [
+    `((A ${ops[0]} B) ${ops[1]} C) ${ops[2]} D`,
+    `(A ${ops[0]} (B ${ops[1]} C)) ${ops[2]} D`,
+    `(A ${ops[0]} B) ${ops[1]} (C ${ops[2]} D)`,
+    `A ${ops[0]} ((B ${ops[1]} C) ${ops[2]} D)`,
+    `A ${ops[0]} (B ${ops[1]} (C ${ops[2]} D))`
+  ];
+  const exprs = patterns.map(p => p.replace('A', nums[0]).replace('B', nums[1]).replace('C', nums[2]).replace('D', nums[3]));
+  return exprs;
+}
+
+function findSolutions(cards){
+  const numeric = cards.map(c => cardValues[c]);
+  const permNums = permutations(numeric);
+  const opsComb = allOperatorCombos();
+  const solutions = new Set();
+  for (const nums of permNums){
+    for (const ops of opsComb){
+      const exprs = buildExpressions(nums, ops);
+      for (const ex of exprs){
+        try{
+          const val = (new Function('return ('+ex+')'))();
+          if (Math.abs(val - 24) < 1e-9) solutions.add(ex);
+        } catch(e) { /* skip div0 */ }
+      }
+    }
+  }
+  return Array.from(solutions).slice(0,30); // limit
+}
+
+// btnSolve
+document.getElementById('btnSolve').addEventListener('click', ()=>{
+  solutionsDiv.textContent = 'Mencari...';
+  setTimeout(()=>{
+    const sols = findSolutions(currentCards);
+    if (sols.length===0) solutionsDiv.innerHTML = '<span class="text-slate-400">Tidak ditemukan solusi.</span>';
+    else solutionsDiv.innerHTML = sols.map(s=>`<div class="p-2 rounded-md bg-slate-700/30 text-sm">${s} = 24</div>`).join('');
+  }, 30);
+});
+
+// Hint button (show one solution short)
+document.getElementById('btnHint').addEventListener('click', ()=>{
+  solutionsDiv.textContent = 'Mencari hint...';
+  setTimeout(()=>{
+    const sols = findSolutions(currentCards);
+    solutionsDiv.textContent = sols[0] ? sols[0] : 'Tidak ada solusi yang ditemukan';
+  }, 30);
+});
+
+// new
+document.getElementById('btnNew').addEventListener('click', ()=> generateFour());
+
+// auto-generate on load
+generateFour();
+
+// small UX: clicking on a found solution copies it to expression area
+solutionsDiv.addEventListener('click', (e)=>{
+  const t = e.target.closest('div');
+  if (!t) return;
+  expressionArea.innerHTML = '';
+  const ex = t.textContent.replace(' = 24','');
+  // split tokens crudely
+  ex.replace(/([+\-*/()])/g, ' $1 ').split(/\s+/).filter(Boolean).forEach(tok => addTokenToExpression(tok));
+});
+</script>
+</body>
+</html>

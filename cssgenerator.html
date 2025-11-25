@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini CSS Grid Generator — HTML + JS</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#06b6d4}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;background:linear-gradient(180deg,#061021 0%,#071226 100%);color:#e6eef6;min-height:100vh;padding:24px}
+    h1{font-size:18px;margin:0 0 8px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:360px 1fr;gap:20px}
+    .panel{background:rgba(255,255,255,0.03);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    .control{margin-bottom:12px}
+    input[type=range]{width:100%}
+    input[type=number], input[type=text], select{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+    .row{display:flex;gap:8px}
+    .row .col{flex:1}
+    .preview{min-height:320px;display:flex;flex-direction:column}
+    .grid-wrap{flex:1;border-radius:10px;padding:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));overflow:auto}
+    .grid{width:100%;height:100%;min-height:220px;border-radius:8px;background:linear-gradient(180deg, rgba(0,0,0,0.15), rgba(255,255,255,0.02));display:grid;align-items:start;justify-items:stretch;padding:10px}
+    .item{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));border-radius:6px;padding:10px;color:#dbeafe;font-weight:600;display:flex;align-items:center;justify-content:center;user-select:none}
+    .controls-footer{display:flex;gap:8px;margin-top:10px}
+    button{background:var(--accent);border:none;padding:8px 12px;border-radius:8px;color:#042028;font-weight:700;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);font-weight:600}
+    pre{background:#021226;padding:12px;border-radius:8px;color:#cbe6ef;overflow:auto;font-size:13px}
+    .small{font-size:12px;color:var(--muted)}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .template-areas{font-family:monospace;font-size:13px;white-space:pre;}
+    .actions{display:flex;gap:8px}
+    .btn-inline{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 8px;border-radius:8px;color:var(--muted);cursor:pointer}
+    footer{margin-top:14px;color:var(--muted);font-size:13px}
+    @media (max-width:900px){.wrap{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="topbar">
+        <div>
+          <h1>Mini CSS Grid Generator</h1>
+          <div class="small">Buat layout dengan cepat — ubah kolom, baris, gap, dan item.</div>
+        </div>
+        <div class="actions">
+          <button id="copyCSS" title="Copy CSS">Copy CSS</button>
+          <button id="downloadHTML" class="ghost">Download HTML</button>
+        </div>
+      </div>
+
+      <div class="control">
+        <label>Columns: <span id="colCountLabel">3</span></label>
+        <input id="colCount" type="range" min="1" max="12" value="3" />
+      </div>
+
+      <div class="control">
+        <label>Rows: <span id="rowCountLabel">2</span></label>
+        <input id="rowCount" type="range" min="0" max="10" value="2" />
+        <div class="small">Set ke 0 untuk auto-rows.</div>
+      </div>
+
+      <div class="control row">
+        <div class="col">
+          <label>Column template</label>
+          <input id="colsInput" type="text" value="repeat(3, 1fr)" />
+        </div>
+        <div class="col">
+          <label>Row template</label>
+          <input id="rowsInput" type="text" value="auto" />
+        </div>
+      </div>
+
+      <div class="control row">
+        <div class="col">
+          <label>Gap (px)</label>
+          <input id="gapInput" type="number" value="12" min="0" />
+        </div>
+        <div class="col">
+          <label>Align items</label>
+          <select id="alignItems">
+            <option value="stretch">stretch</option>
+            <option value="start">start</option>
+            <option value="center">center</option>
+            <option value="end">end</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="control">
+        <label>Jumlah Item: <span id="itemCountLabel">5</span></label>
+        <input id="itemCount" type="range" min="1" max="50" value="5" />
+      </div>
+
+      <div class="control">
+        <label>Template Areas (opsional)</label>
+        <textarea id="areasInput" rows="4" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;font-family:monospace;" placeholder='Contoh:\n"a a b"\n"c d b"'>
+</textarea>
+        <div class="small">Bisa dibiarkan kosong. Gunakan nama area tanpa spasi. Jumlah kolom pada setiap baris harus sama.</div>
+      </div>
+
+      <div class="controls-footer">
+        <button id="applyBtn">Apply & Preview</button>
+        <button id="addItem" class="ghost">Tambah Item</button>
+        <button id="resetBtn" class="ghost">Reset</button>
+      </div>
+
+      <footer>Generated with ❤️ — sederhana tapi bisa dikembangkan.</footer>
+    </div>
+
+    <div class="panel preview">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <strong>Preview</strong>
+        <div class="small">(klik item untuk pilih, seret tidak diperlukan)</div>
+      </div>
+      <div class="grid-wrap">
+        <div id="grid" class="grid" role="region" aria-label="preview grid"></div>
+      </div>
+
+      <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label>CSS</label>
+          <pre id="cssOutput">/* CSS akan muncul di sini */</pre>
+        </div>
+        <div>
+          <label>HTML</label>
+          <pre id="htmlOutput">&lt;div class="grid"&gt; ... &lt;/div&gt;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Element refs
+    const colCount = document.getElementById('colCount');
+    const rowCount = document.getElementById('rowCount');
+    const colsInput = document.getElementById('colsInput');
+    const rowsInput = document.getElementById('rowsInput');
+    const gapInput = document.getElementById('gapInput');
+    const itemCount = document.getElementById('itemCount');
+    const areasInput = document.getElementById('areasInput');
+    const alignItems = document.getElementById('alignItems');
+
+    const grid = document.getElementById('grid');
+    const cssOutput = document.getElementById('cssOutput');
+    const htmlOutput = document.getElementById('htmlOutput');
+
+    const colCountLabel = document.getElementById('colCountLabel');
+    const rowCountLabel = document.getElementById('rowCountLabel');
+    const itemCountLabel = document.getElementById('itemCountLabel');
+
+    const applyBtn = document.getElementById('applyBtn');
+    const addItemBtn = document.getElementById('addItem');
+    const resetBtn = document.getElementById('resetBtn');
+    const copyCSS = document.getElementById('copyCSS');
+    const downloadHTML = document.getElementById('downloadHTML');
+
+    // initial sync
+    colCountLabel.textContent = colCount.value;
+    rowCountLabel.textContent = rowCount.value;
+    itemCountLabel.textContent = itemCount.value;
+
+    function parseAreas(text){
+      const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+      if(lines.length===0) return null;
+      const tokens = lines.map(l=>l.split(/\s+/));
+      const cols = tokens[0].length;
+      for(const t of tokens){ if(t.length !== cols) throw new Error('Jumlah kolom tidak sama di semua baris'); }
+      const formatted = tokens.map(r => '"' + r.join(' ') + '"').join('\n    ');
+      return {raw:formatted, cols:cols, rows:tokens.length};
+    }
+
+    function generateCSS(){
+      const cols = colsInput.value.trim() || `repeat(${colCount.value}, 1fr)`;
+      const rows = rowsInput.value.trim() || (rowCount.value>0 ? `repeat(${rowCount.value}, auto)` : 'auto');
+      const gap = gapInput.value || 0;
+      const ai = alignItems.value || 'stretch';
+      let css = `.grid {\n  display: grid;\n  grid-template-columns: ${cols};\n  grid-template-rows: ${rows};\n  gap: ${gap}px;\n  align-items: ${ai};\n}\n`;
+
+      const areas = parseAreas(areasInput.value || '');
+      if(areas){
+        css = `.grid {\n  display: grid;\n  grid-template-columns: repeat(${areas.cols}, 1fr);\n  grid-template-rows: ${'auto '.repeat(areas.rows).trim()};\n  gap: ${gap}px;\n  align-items: ${ai};\n  grid-template-areas:\n    ${areas.raw};\n}\n`;
+      }
+
+      css += '\n.grid > .item {\n  padding: 8px;\n  border-radius: 6px;\n}\n';
+      return css;
+    }
+
+    function generateHTML(){
+      const count = Number(itemCount.value) || 0;
+      const items = [];
+      for(let i=1;i<=count;i++){
+        items.push(`<div class=\"item\">${i}</div>`);
+      }
+      return `<div class=\"grid\">\n  ${items.join('\n  ')}\n</div>`;
+    }
+
+    function renderGrid(){
+      // build style object
+      const css = generateCSS();
+      cssOutput.textContent = css;
+      const html = generateHTML();
+      htmlOutput.textContent = html;
+
+      // apply live style
+      grid.style.gridTemplateColumns = '';
+      grid.style.gridTemplateRows = '';
+      grid.style.gap = '';
+      grid.style.alignItems = '';
+      grid.removeAttribute('style');
+
+      // set using parsed values
+      const areas = (()=>{ try{ return parseAreas(areasInput.value||''); }catch(e){ return null; } })();
+
+      if(areas){
+        grid.style.gridTemplateColumns = `repeat(${areas.cols}, 1fr)`;
+        grid.style.gridTemplateRows = `repeat(${areas.rows}, auto)`;
+        grid.style.gridTemplateAreas = areas.raw.replace(/\n\s*/g,' ');
+      } else {
+        const cols = colsInput.value.trim() || `repeat(${colCount.value}, 1fr)`;
+        const rows = rowsInput.value.trim() || (rowCount.value>0 ? `repeat(${rowCount.value}, auto)` : 'auto');
+        grid.style.gridTemplateColumns = cols;
+        if(rowCount.value>0) grid.style.gridTemplateRows = rows;
+      }
+      grid.style.gap = (gapInput.value||0) + 'px';
+      grid.style.alignItems = alignItems.value;
+
+      // build items
+      grid.innerHTML = '';
+      const count = Number(itemCount.value) || 0;
+      for(let i=1;i<=count;i++){
+        const el = document.createElement('div');
+        el.className = 'item';
+        el.textContent = i;
+        el.dataset.index = i;
+        el.addEventListener('click', ()=>{ selectItem(el); });
+        grid.appendChild(el);
+      }
+
+      // apply area names if provided: try to map names -> items
+      if(areas){
+        // find all unique area names in the template, assign first matching items names
+        const names = Array.from(new Set(areas.raw.replace(/"/g,'').split(/\s+/)));
+        // if names length <= items count, set style grid-area on first items accordingly
+        const children = grid.children;
+        for(let i=0;i<Math.min(names.length, children.length); i++){
+          children[i].style.gridArea = names[i];
+        }
+      }
+    }
+
+    function selectItem(el){
+      const prev = grid.querySelector('.item.selected');
+      if(prev) prev.classList.remove('selected');
+      el.classList.add('selected');
+      // quick inline edit prompt for demonstration
+      const txt = prompt('Ganti teks item:', el.textContent);
+      if(txt!==null) el.textContent = txt;
+    }
+
+    // events
+    colCount.addEventListener('input', ()=>{ colCountLabel.textContent = colCount.value; colsInput.value = `repeat(${colCount.value}, 1fr)`; renderGrid(); });
+    rowCount.addEventListener('input', ()=>{ rowCountLabel.textContent = rowCount.value; rowsInput.value = rowCount.value>0? `repeat(${rowCount.value}, auto)`: 'auto'; renderGrid(); });
+    colsInput.addEventListener('change', renderGrid);
+    rowsInput.addEventListener('change', renderGrid);
+    gapInput.addEventListener('input', renderGrid);
+    itemCount.addEventListener('input', ()=>{ itemCountLabel.textContent = itemCount.value; renderGrid(); });
+    areasInput.addEventListener('change', ()=>{ try{ parseAreas(areasInput.value||''); renderGrid(); }catch(e){ alert(e.message); }});
+    alignItems.addEventListener('change', renderGrid);
+
+    applyBtn.addEventListener('click', renderGrid);
+    addItemBtn.addEventListener('click', ()=>{ itemCount.value = Number(itemCount.value)+1; itemCountLabel.textContent = itemCount.value; renderGrid(); });
+    resetBtn.addEventListener('click', ()=>{
+      colCount.value=3; rowCount.value=2; colsInput.value='repeat(3, 1fr)'; rowsInput.value='auto'; gapInput.value=12; itemCount.value=5; areasInput.value=''; alignItems.value='stretch';
+      colCountLabel.textContent=colCount.value; rowCountLabel.textContent=rowCount.value; itemCountLabel.textContent=itemCount.value; renderGrid();
+    });
+
+    copyCSS.addEventListener('click', ()=>{
+      navigator.clipboard.writeText(cssOutput.textContent).then(()=>{ copyCSS.textContent='Copied!'; setTimeout(()=>copyCSS.textContent='Copy CSS',900); }).catch(()=>{ alert('Gagal menyalin'); });
+    });
+
+    downloadHTML.addEventListener('click', ()=>{
+      const fileContent = `<!doctype html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<title>Grid Preview</title>\n<style>\n${cssOutput.textContent}\n</style>\n</head>\n<body>\n${htmlOutput.textContent}\n</body>\n</html>`;
+      const blob = new Blob([fileContent], {type: 'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'grid-preview.html'; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // initial render
+    renderGrid();
+  </script>
+</body>
+</html>

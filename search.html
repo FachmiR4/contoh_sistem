@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Live Table Search - Contoh</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; padding: 20px; background:#f7f9fc; color:#222; }
+    .search-box { max-width:600px; margin-bottom:12px; display:flex; gap:8px; }
+    .search-box input {
+      flex:1; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;
+      box-shadow: 0 1px 2px rgba(16,24,40,0.03);
+    }
+    .search-box .info { font-size:14px; color:#555; align-self:center; white-space:nowrap; }
+    table { width:100%; border-collapse:collapse; background:white; border-radius:8px; overflow:hidden; box-shadow: 0 4px 12px rgba(16,24,40,0.06); }
+    thead { background:#0ea5a4; color:white; }
+    th, td { padding:10px 12px; text-align:left; border-bottom:1px solid #eef2f7; }
+    tbody tr.hidden { display:none; }
+    tbody tr.no-results td { text-align:center; color:#777; font-style:italic; }
+    mark { background: #ffd54f; padding:0 .12em; border-radius:2px; }
+    @media (max-width:640px){
+      th,td{padding:8px}
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Contoh Live Search pada Table</h2>
+
+  <div class="search-box">
+    <input id="searchInput" type="search" placeholder="Ketik kata kunci... (nama, jabatan, tahun, dll)" autofocus />
+    <div class="info" id="matchCount">Menampilkan semua</div>
+  </div>
+
+  <table id="dataTable" aria-describedby="matchCount">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Nama</th>
+        <th>Jabatan</th>
+        <th>Unit</th>
+        <th>Tahun Masuk</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td><td>Andi Susanto</td><td>Manager</td><td>Keuangan</td><td>2019</td>
+      </tr>
+      <tr>
+        <td>2</td><td>Siti Aminah</td><td>Staf</td><td>Operasional</td><td>2021</td>
+      </tr>
+      <tr>
+        <td>3</td><td>Budi Hartono</td><td>Supervisor</td><td>Produksi</td><td>2018</td>
+      </tr>
+      <tr>
+        <td>4</td><td>Rina Marlina</td><td>Staf</td><td>Keuangan</td><td>2022</td>
+      </tr>
+      <tr>
+        <td>5</td><td>Joko Priyono</td><td>Manager</td><td>Operasional</td><td>2017</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <script>
+    // ======= Opsi =======
+    const useDebounce = true;   // set false jika ingin filter langsung tanpa debounce
+    const debounceMs = 180;     // delay debounce (ms)
+    const highlight = true;     // wrap match dengan <mark>
+
+    // ======= Implementasi =======
+    const input = document.getElementById('searchInput');
+    const table = document.getElementById('dataTable');
+    const tbody = table.tBodies[0];
+    const rows = Array.from(tbody.rows);
+    const matchCountEl = document.getElementById('matchCount');
+
+    // Utility: escape RegExp special chars
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Hapus highlight sebelumnya
+    function clearHighlights(row) {
+      for (const cell of row.cells) {
+        // replace <mark>..</mark> with its text content
+        cell.innerHTML = cell.textContent;
+      }
+    }
+
+    // Highlight kata yang cocok di semua sel
+    function applyHighlights(row, terms) {
+      for (const cell of row.cells) {
+        let html = cell.textContent;
+        for (const term of terms) {
+          if (!term) continue;
+          const re = new RegExp('('+escapeRegExp(term)+')', 'ig');
+          html = html.replace(re, '<mark>$1</mark>');
+        }
+        cell.innerHTML = html;
+      }
+    }
+
+    // Fungsi filter utama
+    function filterTable(rawQuery) {
+      const q = rawQuery.trim().toLowerCase();
+      if (q === '') {
+        // kosong -> tampilkan semua & hapus highlight
+        rows.forEach(r => {
+          r.classList.remove('hidden');
+          clearHighlights(r);
+        });
+        removeNoResultsRow();
+        matchCountEl.textContent = 'Menampilkan semua';
+        return;
+      }
+
+      // split kata (spasi) untuk multi-keyword search
+      const terms = q.split(/\s+/).filter(Boolean);
+      let matched = 0;
+
+      rows.forEach(row => {
+        clearHighlights(row);
+        // gabungkan teks semua sel untuk cek cepat
+        const rowText = Array.from(row.cells).map(c => c.textContent.toLowerCase()).join(' ');
+        const isMatch = terms.every(t => rowText.indexOf(t) !== -1);
+        if (isMatch) {
+          row.classList.remove('hidden');
+          if (highlight) applyHighlights(row, terms);
+          matched++;
+        } else {
+          row.classList.add('hidden');
+        }
+      });
+
+      updateNoResultsRow(matched);
+      matchCountEl.textContent = matched > 0 ? `${matched} hasil` : '0 hasil';
+    }
+
+    // Tambah / hapus baris "no results"
+    function updateNoResultsRow(matched) {
+      removeNoResultsRow();
+      if (matched === 0) {
+        const tr = document.createElement('tr');
+        tr.className = 'no-results';
+        const td = document.createElement('td');
+        td.colSpan = table.tHead.rows[0].cells.length;
+        td.textContent = 'Tidak ada data yang cocok.';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+      }
+    }
+    function removeNoResultsRow() {
+      const existing = tbody.querySelector('tr.no-results');
+      if (existing) existing.remove();
+    }
+
+    // Debounce helper
+    function debounce(fn, ms){
+      let t;
+      return (...args)=> {
+        clearTimeout(t);
+        t = setTimeout(()=> fn(...args), ms);
+      };
+    }
+
+    const onInput = (e) => filterTable(e.target.value);
+
+    if (useDebounce) {
+      input.addEventListener('input', debounce(onInput, debounceMs));
+    } else {
+      input.addEventListener('input', onInput);
+    }
+
+    // Jika table dinamis (di-fill lewat AJAX), panggil filterTable(input.value) setelah data selesai diisi.
+    // Contoh:
+    // fetch('/api/data').then(...).then(()=> filterTable(input.value));
+  </script>
+</body>
+</html>
