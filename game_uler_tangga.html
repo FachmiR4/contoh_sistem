@@ -32,7 +32,7 @@
       border-radius: 12px;
       box-shadow: 0 2px 12px rgba(30,64,175,0.08);
       padding: 14px;
-      max-width: 500px;
+      max-width: 540px;
       width: calc(100% - 32px);
     }
     label{ font-weight:600; color:#0f172a; display:block; margin-bottom:6px; }
@@ -81,12 +81,17 @@
       border: 2px solid #fff;
       box-shadow: 0 4px 10px rgba(2,6,23,0.18);
       z-index: 5;
-      transition: left 300ms cubic-bezier(.2,.9,.2,1), top 300ms cubic-bezier(.2,.9,.2,1);
+      transition: left 220ms cubic-bezier(.2,.9,.2,1), top 220ms cubic-bezier(.2,.9,.2,1), transform 200ms;
       display:flex; align-items:center; justify-content:center;
     }
 
+    .player.pop {
+      transform: translate(-50%, -50%) scale(1.18);
+      transition: transform 160ms;
+    }
+
     #log {
-      max-height: 200px;
+      max-height: 220px;
       overflow-y: auto;
       background: #fff;
       padding: 10px;
@@ -136,23 +141,36 @@
   <div id="log" aria-live="polite"></div>
 
   <script>
-    // ...existing code...
     const players = [];
     const colors = ['#ef4444','#2563eb','#16a34a','#f97316','#7c3aed','#0f172a'];
     let currentPlayer = 0;
     let positions = [];
     let names = [];
     let gameStarted = false;
+    let animating = false;
 
-    // example snakes & ladders (adjust as needed)
-    const snakes = { 83: 61, 65: 46, 92: 72, 50: 31, 38: 22 };
-    const ladders = { 5: 44, 58: 77, 60: 79, 28: 48, 36: 57, 86: 93, 22: 39 };
+    // updated ladders (naik) and snakes (turun) as requested
+    const ladders = {
+      5: 58,
+      14: 49,
+      42: 60,
+      53: 72,
+      64: 83,
+      75: 94
+    };
+    const snakes = {
+      38: 20,
+      45: 7,
+      51: 10,
+      76: 54,
+      91: 73,
+      97: 61
+    };
 
     window.addEventListener('load', generateNameInputs);
     window.addEventListener('resize', () => { if (gameStarted) updatePositions(); });
 
     function getPositionCoords(pos) {
-      // compute based on actual board size so responsive across devices
       const board = document.getElementById('board');
       const rect = board.getBoundingClientRect();
       const cellW = rect.width / 10;
@@ -161,9 +179,7 @@
       const row = Math.floor((pos - 1) / 10);
       const col = (row % 2 === 0) ? (pos - 1) % 10 : 9 - (pos - 1) % 10;
 
-      // coordinates relative to board (center of cell)
       const x = col * cellW + cellW / 2;
-      // row 0 is bottom row in game logic, so invert
       const y = (9 - row) * cellH + cellH / 2;
       return { x, y, cellW, cellH };
     }
@@ -191,23 +207,20 @@
       log.innerHTML = '';
       players.length = 0;
       names = [];
-      positions = new Array(count).fill(1); // start at square 1
+      positions = new Array(count).fill(1);
 
       nameInputs.forEach((input, i) => { names.push((input.value.trim()) || `P${i+1}`); });
 
-      // create player tokens
       for (let i = 0; i < count; i++) {
         const div = document.createElement('div');
         div.className = 'player';
         div.style.background = colors[i % colors.length];
         div.textContent = names[i][0]?.toUpperCase() || (i+1);
         div.title = names[i];
-        // ensure tokens are positioned relative to board
         board.appendChild(div);
         players.push(div);
       }
 
-      // initial placement and UI
       updatePositions();
       currentPlayer = 0;
       document.getElementById('turnInfo').textContent = `Giliran: ${names[currentPlayer]}`;
@@ -219,48 +232,105 @@
     }
 
     function rollDice() {
-      if (!gameStarted || players.length === 0) return;
+      if (!gameStarted || players.length === 0 || animating) return;
+      animating = true;
       document.getElementById('diceResult').textContent = 'Mengocok...';
       document.getElementById('diceImage').innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Alea_1.png" width="54" alt="dice">';
       document.getElementById('rollBtn').disabled = true;
 
       setTimeout(() => {
         const dice = Math.floor(Math.random() * 6) + 1;
-        let pos = positions[currentPlayer] + dice;
-        if (pos > 100) pos = 100 - (pos - 100);
-
-        let logText = `${names[currentPlayer]} melempar dadu: ${dice}, ke posisi ${pos}`;
-
-        if (snakes[pos]) {
-          logText += `, kena 🐍 turun ke ${snakes[pos]}`;
-          pos = snakes[pos];
-        } else if (ladders[pos]) {
-          logText += `, naik 🪜 ke ${ladders[pos]}`;
-          pos = ladders[pos];
-        }
-
-        positions[currentPlayer] = pos;
-        updatePositions();
-        document.getElementById('diceResult').textContent = `${names[currentPlayer]} dapat ${dice}`;
+        document.getElementById('diceResult').textContent = `${names[currentPlayer]} mendapatkan ${dice}`;
         document.getElementById('diceImage').innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(dice)}" width="54" alt="dice">`;
-        logAction(logText);
 
-        if (pos === 100) {
-          setTimeout(() => {
-            alert(`${names[currentPlayer]} menang!`);
-            document.getElementById('turnInfo').textContent = `${names[currentPlayer]} MENANG!`;
-            document.getElementById('rollBtn').disabled = true;
-            gameStarted = false;
-          }, 300);
+        // generate step-by-step positions with bounce-back at 100
+        const steps = generateSteps(positions[currentPlayer], dice);
+        animateSteps(steps, () => {
+          // after stepping, apply ladder or snake if present
+          const finalPos = positions[currentPlayer];
+          if (ladders[finalPos]) {
+            logAction(`${names[currentPlayer]} menemukan tangga! Naik dari ${finalPos} ke ${ladders[finalPos]}`);
+            positions[currentPlayer] = ladders[finalPos];
+            popToken(currentPlayer);
+            updatePositions();
+          } else if (snakes[finalPos]) {
+            logAction(`${names[currentPlayer]} terkena ular! Turun dari ${finalPos} ke ${snakes[finalPos]}`);
+            positions[currentPlayer] = snakes[finalPos];
+            popToken(currentPlayer);
+            updatePositions();
+          }
+
+          // check win
+          if (positions[currentPlayer] === 100) {
+            setTimeout(() => {
+              alert(`${names[currentPlayer]} menang!`);
+              document.getElementById('turnInfo').textContent = `${names[currentPlayer]} MENANG!`;
+              document.getElementById('rollBtn').disabled = true;
+              gameStarted = false;
+              animating = false;
+            }, 250);
+            return;
+          }
+
+          // if dice not 6, next player
+          if (dice !== 6) currentPlayer = (currentPlayer + 1) % players.length;
+          else logAction(`${names[currentPlayer]} dapat 6 dan mendapat giliran lagi!`);
+
+          document.getElementById('turnInfo').textContent = `Giliran: ${names[currentPlayer]}`;
+          document.getElementById('rollBtn').disabled = false;
+          animating = false;
+        });
+
+      }, 350);
+    }
+
+    function generateSteps(start, dice) {
+      // produce array of intermediate positions (not including start)
+      const steps = [];
+      let pos = start;
+      let dir = 1;
+      for (let i = 0; i < dice; i++) {
+        let next = pos + dir;
+        if (next > 100) {
+          dir = -1;
+          next = pos + dir;
+        } else if (next < 1) {
+          dir = 1;
+          next = pos + dir;
+        }
+        pos = next;
+        steps.push(pos);
+      }
+      return steps;
+    }
+
+    function animateSteps(steps, cb) {
+      // animate moving token through each step with small delay
+      const delay = 240;
+      let idx = 0;
+      function step() {
+        if (idx >= steps.length) {
+          // assign final position to positions array and call callback
+          // last step is current landing
+          // positions[currentPlayer] already set along the way, but ensure final
+          if (steps.length) positions[currentPlayer] = steps[steps.length - 1];
+          updatePositions();
+          cb();
           return;
         }
+        positions[currentPlayer] = steps[idx];
+        updatePositions();
+        logAction(`${names[currentPlayer]} bergerak ke ${steps[idx]}`);
+        idx++;
+        setTimeout(step, delay);
+      }
+      step();
+    }
 
-        if (dice !== 6) currentPlayer = (currentPlayer + 1) % players.length;
-        else logAction(`${names[currentPlayer]} dapat 6 dan mendapat giliran lagi!`);
-
-        document.getElementById('turnInfo').textContent = `Giliran: ${names[currentPlayer]}`;
-        document.getElementById('rollBtn').disabled = false;
-      }, 600);
+    function popToken(index) {
+      const el = players[index];
+      el.classList.add('pop');
+      setTimeout(()=> el.classList.remove('pop'), 260);
     }
 
     function getDiceImage(val) {
@@ -276,10 +346,8 @@
     }
 
     function updatePositions() {
-      // position each player token to center of its square
       for (let i = 0; i < players.length; i++) {
         const { x, y, cellW, cellH } = getPositionCoords(positions[i]);
-        // Slight offset to separate overlapping tokens inside same cell
         const offset = Math.min(cellW, cellH) * 0.18;
         const angle = (i / players.length) * Math.PI * 2;
         const dx = Math.round(Math.cos(angle) * offset);
