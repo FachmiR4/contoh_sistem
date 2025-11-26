@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ular Tangga Multiplayer — Fixed</title>
+  <style>
+    :root{
+      --accent:#1e40af;
+      --btn-grad: linear-gradient(90deg,#4f8cff 0%,#1e40af 100%);
+    }
+    *{box-sizing:border-box}
+    body {
+      text-align: center;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(120deg, #e0e7ff 0%, #f4f4f4 100%);
+      margin: 0;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+    h1 {
+      color: var(--accent);
+      margin-top: 20px;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+      font-size: clamp(1.25rem, 2.2vw, 2.2rem);
+    }
+
+    #controls {
+      margin: 16px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(30,64,175,0.08);
+      padding: 14px;
+      max-width: 720px;
+      width: calc(100% - 32px);
+    }
+    label{ font-weight:600; color:#0f172a; display:block; margin-bottom:6px; }
+    #playerCount { width:72px; padding:6px; border-radius:8px; border:1px solid #e2e8f0; font-size:1rem; }
+    .name-input { margin:6px 0; padding:8px 10px; border-radius:8px; border:1px solid #e2e8f0; width:100%; max-width:360px; }
+    .controls-row { display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; margin-bottom:8px; }
+
+    .btn {
+      padding:10px 16px; margin:6px 4px; font-size:15px; border-radius:8px; border: none;
+      background: var(--btn-grad); color:#fff; font-weight:700; cursor:pointer;
+      box-shadow: 0 4px 14px rgba(30,64,175,0.12);
+    }
+    .btn:disabled { opacity:0.6; cursor:not-allowed; transform:none; box-shadow:none; }
+
+    #turnInfo { font-size:1rem; color:var(--accent); margin-top:8px; font-weight:600; }
+    #diceResult{ font-size:0.95rem; margin:4px 0 0; color:#064e3b; font-weight:700; }
+    #diceImage img{ width:54px; height:54px; display:block; margin:8px auto 0; }
+
+    /* Board */
+    #board {
+      background-image: url('ulertangga_versi2.jpeg');
+      background-size: cover;
+      background-position: center;
+      width: min(720px, 96vw);
+      height: min(770px, 96vw);
+      margin: 20px auto;
+      position: relative;
+      border-radius: 12px;
+      box-shadow: 0 6px 28px rgba(2,6,23,0.12);
+      border: 3px solid rgba(14,50,105,0.08);
+      overflow: hidden;
+    }
+
+    .player {
+      width: clamp(20px, 6vw, 36px);
+      height: clamp(20px, 6vw, 36px);
+      border-radius: 50%;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      line-height: clamp(20px, 6vw, 36px);
+      color: white;
+      font-size: clamp(10px, 3.2vw, 14px);
+      font-weight: 800;
+      border: 2px solid #fff;
+      box-shadow: 0 4px 10px rgba(2,6,23,0.18);
+      z-index: 5;
+      transition: left 220ms cubic-bezier(.2,.9,.2,1), top 220ms cubic-bezier(.2,.9,.2,1), transform 200ms;
+      display:flex; align-items:center; justify-content:center;
+    }
+
+    .player.pop {
+      transform: translate(-50%, -50%) scale(1.18);
+      transition: transform 160ms;
+    }
+
+    .pen-mark {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      z-index: 6;
+      color: #fff;
+      font-weight: 900;
+      font-size: clamp(10px, 3.6vw, 14px);
+      display:flex; align-items:center; justify-content:center;
+      background: #ef4444;
+      border-radius: 6px;
+      padding: 4px 6px;
+      border: 2px solid #fff;
+      box-shadow: 0 4px 10px rgba(2,6,23,0.12);
+      pointer-events: none;
+    }
+
+    #log {
+      max-height: 220px;
+      overflow-y: auto;
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #e6eef8;
+      width: min(720px, 96vw);
+      margin: 8px auto 0;
+      text-align: left;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      box-shadow: 0 3px 12px rgba(30,64,175,0.06);
+    }
+
+    /* Setup modal with tabs (non-closable until start) */
+    #setupModal {
+      position: fixed;
+      inset: 0;
+      display: none; /* open on load until configuration complete */
+      align-items: center;
+      justify-content: center;
+      background: rgba(2,6,23,0.45);
+      z-index: 1500;
+    }
+    .setup-card {
+      width: min(720px, 96vw);
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 12px 48px rgba(2,6,23,0.28);
+      max-height: 88vh;
+      overflow: auto;
+    }
+    .tabs { display:flex; gap:8px; margin-bottom: 10px; }
+    .tab-btn { padding:8px 12px; border-radius:8px; border:1px solid #e6eef8; cursor:pointer; background:#fff; font-weight:700; }
+    .tab-btn.active { background: linear-gradient(90deg,#f1f5f9 0%,#fff 100%); border-color: #c7d2fe; color: var(--accent); }
+    .tab-panel { display:none; padding: 8px 0; }
+    .tab-panel.active { display:block; }
+    .pen-input { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+    .pen-input textarea { width:100%; resize:vertical; min-height:42px; max-height:120px; padding:8px; border-radius:8px; border:1px solid #e6eef8; }
+    .small { font-size: 0.9rem; color: #475569; font-weight:600; }
+
+    /* Penalty hit modal */
+    #penaltyHitModal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1600;
+      background: rgba(2,6,23,0.45);
+    }
+    .penalty-card {
+      width: min(420px, 96vw);
+      background: #fff;
+      padding: 18px;
+      border-radius: 12px;
+      box-shadow: 0 12px 48px rgba(2,6,23,0.2);
+      text-align: left;
+    }
+    .penalty-card h3 { margin-top: 0; color: #ef4444; }
+    .penalty-card p { color:#0f172a; font-weight:600; margin:8px 0 12px; }
+    .penalty-card .ok-btn { background: #ef4444; padding:8px 12px; border-radius:8px; color:#fff; cursor:pointer; }
+
+    /* small responsive */
+    @media (max-width:640px) {
+      .tab-btn { font-size:14px; padding:6px 8px; }
+      .pen-input textarea { min-height:56px; }
+    }
+
+  </style>
+</head>
+<body>
+  <h1>Game Ular Tangga — Multiplayer</h1>
+
+  <div id="controls" aria-label="controls">
+    <div class="controls-row" style="justify-content:space-between;">
+      <div style="display:flex;gap:12px;align-items:center;">
+        <div>
+          <label for="playerCount">Jumlah Pemain</label>
+          <input type="number" id="playerCount" min="2" max="6" value="2" disabled>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <div style="display:flex; gap:8px;">
+            <button id="openSetupBtn" class="btn">Konfigurasi</button>
+            <button id="rollBtn" class="btn" disabled>Lempar Dadu</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;">
+        <!-- Atur Hukuman button removed from main controls; only configurable in modal -->
+        <button id="resetBtn" class="btn">Reset</button>
+      </div>
+    </div>
+
+    <div id="playerNames" style="display:flex; flex-direction:column; align-items:center; margin-top:8px;"></div>
+
+    <p id="turnInfo" aria-live="polite"></p>
+    <div id="diceImage" aria-hidden="true"></div>
+    <p id="diceResult" aria-live="polite"></p>
+  </div>
+
+  <div id="board" role="application" aria-label="Papan Ular Tangga"></div>
+  <div id="log" aria-live="polite"></div>
+
+  <!-- Persistent setup modal with tabs (cannot close until Start is pressed) -->
+  <div id="setupModal" role="dialog" aria-modal="true" aria-label="Setup Game">
+    <div class="setup-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <h2 style="margin:0; color:var(--accent)">Konfigurasi Game</h2>
+        <div style="display:flex; gap:8px; align-items:center">
+          <span class="small">Setup harus selesai sebelum bermain</span>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Setup Tabs">
+        <button class="tab-btn active" data-tab="tab1" role="tab" aria-selected="true">Pemain</button>
+        <button class="tab-btn" data-tab="tab2" role="tab" aria-selected="false">Hukuman</button>
+      </div>
+
+      <div id="tab1" class="tab-panel active" role="tabpanel">
+        <label for="playerCountModal">Jumlah Pemain</label>
+        <input type="number" id="playerCountModal" min="2" max="6" value="2" style="width:88px;padding:8px;border-radius:8px;border:1px solid #e6eef8;margin-bottom:8px;">
+        <div id="modalPlayerNames" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+      </div>
+
+      <div id="tab2" class="tab-panel" role="tabpanel">
+        <p class="small">Tambahkan daftar hukuman yang akan ditempatkan secara acak di papan. Setiap hukuman akan ditandai '!!' pada kotak yang dipilih.</p>
+        <div id="modalPenalties" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+          <button id="addModalPenalty" class="btn">+ Tambah Hukuman</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+        <button id="startFromModal" class="btn">Mulai Permainan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Penalty modal used when a player lands on a penalty -->
+  <div id="penaltyHitModal" role="dialog" aria-modal="true" aria-label="Hukuman" >
+    <div class="penalty-card" role="document">
+      <h3>HUKUMAN!!</h3>
+      <p id="penaltyText">Hukuman...</p>
+      <div style="display:flex;justify-content:flex-end">
+        <button id="penaltyOk" class="ok-btn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== state =====
+    let players = [];
+    const colors = ['#ef4444','#2563eb','#16a34a','#f97316','#7c3aed','#0f172a'];
+    let currentPlayer = 0;
+    let positions = [];
+    let names = [];
+    let gameStarted = false;
+    let animating = false;
+    let penalties = []; // list of penalty texts
+    let penaltyPositions = []; // array of {pos, text, el}
+    const penaltyMoveBack = 0; // move back 3 tiles when hit penalty
+
+    // ladders & snakes (original)
+    const ladders = {4:26,8:51,28:46,39:60,44:80,64:85,69:93,73:92,84:98};
+    const snakes = {11:9,36:14,57:19,43:22,66:47,94:48,90:49,81:63,96:65, 99:78};
+
+    // DOM
+    const playerCountEl = document.getElementById('playerCount');
+    const playerNamesWrap = document.getElementById('playerNames');
+    const startBtn = document.getElementById('openSetupBtn'); // repurposed
+    const rollBtn = document.getElementById('rollBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const turnInfo = document.getElementById('turnInfo');
+    const diceResult = document.getElementById('diceResult');
+    const diceImage = document.getElementById('diceImage');
+    const boardEl = document.getElementById('board');
+    const logEl = document.getElementById('log');
+
+    // setup modal elements
+    const setupModal = document.getElementById('setupModal');
+    const playerCountModal = document.getElementById('playerCountModal');
+    const modalPlayerNames = document.getElementById('modalPlayerNames');
+    const modalPenalties = document.getElementById('modalPenalties');
+    const addModalPenalty = document.getElementById('addModalPenalty');
+    const startFromModal = document.getElementById('startFromModal');
+    const tabButtons = document.querySelectorAll('.tab-btn');
+
+    // penalty hit modal
+    const penaltyHitModal = document.getElementById('penaltyHitModal');
+    const penaltyTextEl = document.getElementById('penaltyText');
+    const penaltyOk = document.getElementById('penaltyOk');
+
+    // ===== utilities =====
+    function getPositionCoords(pos) {
+      const rect = boardEl.getBoundingClientRect();
+      const cellW = rect.width / 10;
+      const cellH = rect.height / 10;
+      const row = Math.floor((pos - 1) / 10);
+      const col = (row % 2 === 0) ? (pos - 1) % 10 : 9 - (pos - 1) % 10;
+      const x = col * cellW + cellW / 2;
+      const y = (9 - row) * cellH + cellH / 2;
+      return { x, y, cellW, cellH };
+    }
+
+    /*
+      generateNameInputs(countEl, container, readOnly)
+      - readOnly when true will make the generated inputs disabled (for UI display only)
+      - if names[] has values, fill the input values from names
+    */
+    function generateNameInputs(countEl, container, readOnly = false) {
+      const count = Math.max(2, Math.min(6, parseInt(countEl.value) || 2));
+      container.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Nama Pemain ${i + 1}`;
+        input.className = 'name-input';
+        input.maxLength = 12;
+        input.disabled = !!readOnly;
+        // if names array exists, fill it; otherwise placeholder remains
+        if (names && names[i]) input.value = names[i];
+        container.appendChild(input);
+      }
+    }
+
+    // ===== setup modal (non-closable until start) =====
+    function openSetupModal() {
+      setupModal.style.display = 'flex';
+    }
+    function closeSetupModal() {
+      setupModal.style.display = 'none';
+    }
+
+    // tab switching
+    tabButtons.forEach(b => {
+      b.addEventListener('click', () => {
+        tabButtons.forEach(t => t.classList.remove('active'));
+        b.classList.add('active');
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(b.dataset.tab).classList.add('active');
+      });
+    });
+
+    // modal initial state on page load: always show; user must configure before playing
+    window.addEventListener('load', () => {
+      openSetupModal();
+      // initialize modal counts
+      playerCountModal.value = playerCountEl.value || 2;
+      generateNameInputs(playerCountModal, modalPlayerNames);
+      // load existing penalties to modal
+      loadPenaltiesFromStorage();
+      renderModalPenalties();
+      loadLog();
+    });
+
+    playerCountModal.addEventListener('change', () => generateNameInputs(playerCountModal, modalPlayerNames));
+
+    function renderModalPenalties() {
+      modalPenalties.innerHTML = '';
+      if (!penalties.length) {
+        const emptyText = document.createElement('div');
+        emptyText.style.color = '#475569';
+        emptyText.style.fontWeight = '600';
+        emptyText.textContent = 'Belum ada hukuman. Tambahkan hukuman.';
+        modalPenalties.appendChild(emptyText);
+        return;
+      }
+      penalties.forEach((p, idx) => {
+        const row = document.createElement('div');
+        row.className = 'pen-input';
+        const ta = document.createElement('textarea');
+        ta.value = p;
+        ta.addEventListener('input', (e) => {
+          penalties[idx] = e.target.value;
+        });
+        const del = document.createElement('button');
+        del.className = 'btn';
+        del.textContent = 'Hapus';
+        del.addEventListener('click', () => {
+          penalties.splice(idx, 1);
+          renderModalPenalties();
+        });
+        row.appendChild(ta);
+        row.appendChild(del);
+        modalPenalties.appendChild(row);
+      });
+    }
+
+    addModalPenalty.addEventListener('click', () => {
+      penalties.push('Hukuman baru');
+      renderModalPenalties();
+    });
+
+    // ===== start game flow triggered from modal only =====
+    startFromModal.addEventListener('click', () => {
+      const count = Math.max(2, Math.min(6, parseInt(playerCountModal.value) || 2));
+      const nameInputs = modalPlayerNames.querySelectorAll('input');
+      if (nameInputs.length < 2) return alert('Minimal 2 pemain');
+
+      names = [];
+      nameInputs.forEach((input, i) => names.push((input.value.trim()) || `P${i+1}`));
+
+      // ensure penalties present
+      penalties = penalties.map(p => (p||'').trim()).filter(p => p);
+      if (!penalties.length) {
+        if (!confirm('Belum ada hukuman. Lanjutkan tanpa hukuman?')) return;
+      } else {
+        localStorage.setItem('penalties', JSON.stringify(penalties));
+      }
+
+      // apply names to UI: create disabled inputs showing players
+      playerCountEl.value = count;
+      generateNameInputs(playerCountEl, playerNamesWrap, true);
+      // copy names into main inputs (readonly)
+      const mainInputs = playerNamesWrap.querySelectorAll('input');
+      mainInputs.forEach((i, idx) => i.value = names[idx] || '');
+
+      closeSetupModal();
+      initGameFromSetup(count);
+    });
+
+    function initGameFromSetup(count) {
+      positions = new Array(count).fill(1);
+      players = [];
+      boardEl.innerHTML = '';
+      logEl.innerHTML = '';
+      penaltyPositions = [];
+      players = [];
+      // create markers for players
+      for (let i = 0; i < count; i++) {
+        const div = document.createElement('div');
+        div.className = 'player';
+        div.style.background = colors[i % colors.length];
+        div.textContent = names[i][0]?.toUpperCase() || (i+1);
+        div.title = names[i];
+        boardEl.appendChild(div);
+        players.push(div);
+      }
+      // place penalties randomly on board
+      placePenaltiesRandom();
+      updatePositions();
+      currentPlayer = 0;
+      turnInfo.textContent = `Giliran: ${names[currentPlayer]}`;
+      rollBtn.disabled = false;
+      gameStarted = true;
+      animating = false;
+      saveLog('Game dimulai: ' + names.join(', '));
+      document.getElementById('diceResult').textContent = '';
+    }
+
+    function resetGame() {
+      if (!confirm('Reset permainan? Semua data posisi akan dikosongkan.')) return;
+      names = [];
+      positions = [];
+      players = [];
+      currentPlayer = 0;
+      gameStarted = false;
+      animating = false;
+      boardEl.innerHTML = '';
+      logEl.innerHTML = '';
+      penaltyPositions = [];
+      document.getElementById('turnInfo').textContent = '';
+      document.getElementById('diceResult').textContent = '';
+      document.getElementById('diceImage').innerHTML = '';
+      rollBtn.disabled = true;
+      startBtn.disabled = false;
+      generateNameInputs(playerCountEl, playerNamesWrap, true);
+      saveLog('Game direset');
+      openSetupModal();
+    }
+
+    // ===== penalty placement & handling =====
+    function loadPenaltiesFromStorage() {
+      const p = JSON.parse(localStorage.getItem('penalties') || '[]');
+      if (Array.isArray(p) && p.length) penalties = p;
+    }
+
+    function placePenaltiesRandom() {
+      // clear existing
+      penaltyPositions.forEach(pp => { if (pp.el && pp.el.parentElement) pp.el.remove(); });
+      penaltyPositions = [];
+      if (!penalties.length) return;
+      const safePositions = Array.from({length: 100}, (_, i) => i+1)
+        .filter(pos => pos !== 1 && pos !== 100)
+        .filter(pos => !ladders[pos] && !snakes[pos]); // avoid placing on ladder/snake starts for clarity
+      // shuffle and pick
+      const shuffled = safePositions.slice().sort(() => Math.random() - 0.5);
+      // limit number of penalty positions to number of penalties or available cells
+      const pickCount = Math.min(penalties.length, shuffled.length);
+      for (let i = 0; i < pickCount; i++) {
+        const pos = shuffled[i];
+        const text = penalties[i] || penalties[i % penalties.length];
+        const marker = document.createElement('div');
+        marker.className = 'pen-mark';
+        marker.title = text;
+        marker.innerText = '!!';
+        boardEl.appendChild(marker);
+        penaltyPositions.push({pos, text, el: marker});
+      }
+      // position markers now
+      updatePenaltyMarkers();
+    }
+
+    function updatePenaltyMarkers() {
+      penaltyPositions.forEach(pp => {
+        const {x, y, cellW, cellH} = getPositionCoords(pp.pos);
+        pp.el.style.left = `${x}px`;
+        pp.el.style.top = `${y - cellH * 0.22}px`; // slightly above center
+      });
+    }
+
+    function getPenaltyAt(pos) {
+      return penaltyPositions.find(pp => pp.pos === pos);
+    }
+
+    // show penalty modal with callback invoked on OK
+    function showPenaltyModal(pen, onOk) {
+      penaltyTextEl.textContent = pen;
+      penaltyHitModal.style.display = 'flex';
+      const handler = () => {
+        penaltyOk.removeEventListener('click', handler);
+        penaltyHitModal.style.display = 'none';
+        if (typeof onOk === 'function') onOk();
+      };
+      penaltyOk.addEventListener('click', handler);
+    }
+
+    // ===== dice & movement logic (adapted) =====
+    function rollDice() {
+      if (!gameStarted || players.length === 0 || animating) return;
+      animating = true;
+      diceResult.textContent = 'Mengocok...';
+      diceImage.innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Alea_1.png" width="54" alt="dice">';
+      rollBtn.disabled = true;
+
+      setTimeout(() => {
+        const dice = Math.floor(Math.random() * 6) + 1;
+        diceResult.textContent = `${names[currentPlayer]} mendapatkan ${dice}`;
+        diceImage.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(dice)}" width="54" alt="dice">`;
+
+        // steps with bounce-back near 100
+        const steps = generateSteps(positions[currentPlayer], dice);
+        animateSteps(steps, () => {
+          const finalPos = positions[currentPlayer];
+          // ladders & snakes
+          if (ladders[finalPos]) {
+            logAction(`${names[currentPlayer]} menemukan tangga! Naik dari ${finalPos} ke ${ladders[finalPos]}`);
+            positions[currentPlayer] = ladders[finalPos];
+            popToken(currentPlayer);
+            updatePositions();
+          } else if (snakes[finalPos]) {
+            logAction(`${names[currentPlayer]} terkena ular! Turun dari ${finalPos} ke ${snakes[finalPos]}`);
+            positions[currentPlayer] = snakes[finalPos];
+            popToken(currentPlayer);
+            updatePositions();
+          }
+
+          // penalty handling: if landed on penalty, display modal then move back
+          const penalty = getPenaltyAt(positions[currentPlayer]);
+          if (penalty) {
+            logAction(`${names[currentPlayer]} terkena hukuman di ${positions[currentPlayer]}: ${penalty.text}`);
+            // show modal, then move back when user confirms
+            showPenaltyModal(penalty.text, () => {
+              // move back safely
+              let target = positions[currentPlayer] - penaltyMoveBack;
+              if (target < 1) target = 1;
+              const stepsBack = [];
+              for (let p = positions[currentPlayer] - 1; p >= target; p--) {
+                stepsBack.push(p);
+              }
+              if (stepsBack.length) {
+                animating = true;
+                animateSteps(stepsBack, () => {
+                  // after penalty move, check for ladders/snakes at new spot
+                  const newPos = positions[currentPlayer];
+                  if (ladders[newPos]) {
+                    logAction(`${names[currentPlayer]} menemukan tangga pasca hukuman! Naik dari ${newPos} ke ${ladders[newPos]}`);
+                    positions[currentPlayer] = ladders[newPos];
+                    popToken(currentPlayer);
+                    updatePositions();
+                  } else if (snakes[newPos]) {
+                    logAction(`${names[currentPlayer]} terkena ular pasca hukuman! Turun dari ${newPos} ke ${snakes[newPos]}`);
+                    positions[currentPlayer] = snakes[newPos];
+                    popToken(currentPlayer);
+                    updatePositions();
+                  }
+                  // continue turn flow after penalty move
+                  finalizeTurnAfterRoll(dice);
+                });
+                return;
+              }
+              // if no steps back, immediately finalize turn
+              finalizeTurnAfterRoll(dice);
+            });
+            return;
+          }
+
+          finalizeTurnAfterRoll(dice);
+        });
+
+      }, 350);
+    }
+
+    function finalizeTurnAfterRoll(dice) {
+      if (positions[currentPlayer] === 100) {
+        setTimeout(() => {
+          alert(`${names[currentPlayer]} menang! Semua pemain akan mendapat kesempatan sampai akhir giliran.`);
+          turnInfo.textContent = `${names[currentPlayer]} MENANG!`;
+          rollBtn.disabled = true;
+          gameStarted = false;
+          animating = false;
+          startBtn.disabled = false;
+        }, 250);
+        return;
+      }
+
+      if (dice !== 6) {
+        currentPlayer = (currentPlayer + 1) % players.length;
+      } else {
+        logAction(`${names[currentPlayer]} dapat 6 dan mendapat giliran lagi!`);
+      }
+
+      document.getElementById('turnInfo').textContent = `Giliran: ${names[currentPlayer]}`;
+      document.getElementById('rollBtn').disabled = false;
+      animating = false;
+    }
+
+    function generateSteps(start, dice) {
+      const steps = [];
+      let pos = start;
+      let dir = 1;
+      for (let i = 0; i < dice; i++) {
+        let next = pos + dir;
+        if (next > 100) {
+          dir = -1;
+          next = pos + dir;
+        } else if (next < 1) {
+          dir = 1;
+          next = pos + dir;
+        }
+        pos = next;
+        steps.push(pos);
+      }
+      return steps;
+    }
+
+    function animateSteps(steps, cb) {
+      const delay = 240;
+      let idx = 0;
+      function step() {
+        if (idx >= steps.length) {
+          if (steps.length) positions[currentPlayer] = steps[steps.length - 1];
+          updatePositions();
+          cb();
+          return;
+        }
+        positions[currentPlayer] = steps[idx];
+        updatePositions();
+        logAction(`${names[currentPlayer]} bergerak ke ${steps[idx]}`);
+        idx++;
+        setTimeout(step, delay);
+      }
+      step();
+    }
+
+    function popToken(index) {
+      const el = players[index];
+      if (!el) return;
+      el.classList.add('pop');
+      setTimeout(()=> el.classList.remove('pop'), 260);
+    }
+
+    function getDiceImage(val) {
+      const map = {
+        1: '2/2c/Alea_1.png',
+        2: 'b/b8/Alea_2.png',
+        3: '2/2f/Alea_3.png',
+        4: '8/8d/Alea_4.png',
+        5: '5/55/Alea_5.png',
+        6: 'f/f4/Alea_6.png'
+      };
+      return map[val];
+    }
+
+    function updatePositions() {
+      for (let i = 0; i < players.length; i++) {
+        const { x, y, cellW, cellH } = getPositionCoords(positions[i]);
+        const offset = Math.min(cellW, cellH) * 0.18;
+        const angle = (i / players.length) * Math.PI * 2;
+        const dx = Math.round(Math.cos(angle) * offset);
+        const dy = Math.round(Math.sin(angle) * offset);
+        players[i].style.left = `${x + dx}px`;
+        players[i].style.top = `${y + dy}px`;
+      }
+      updatePenaltyMarkers();
+    }
+
+    // ===== logging =====
+    function logAction(text) {
+      const p = document.createElement('p');
+      p.textContent = text;
+      logEl.prepend(p);
+      saveLog(text);
+    }
+
+    function saveLog(entry) {
+      const existing = JSON.parse(localStorage.getItem('gameLog') || '[]');
+      existing.unshift(entry);
+      localStorage.setItem('gameLog', JSON.stringify(existing.slice(0, 50)));
+    }
+
+    function loadLog() {
+      const existing = JSON.parse(localStorage.getItem('gameLog') || '[]');
+      logEl.innerHTML = '';
+      existing.forEach(entry => {
+        const p = document.createElement('p');
+        p.textContent = entry;
+        logEl.appendChild(p);
+      });
+    }
+
+    // ===== legacy features removed: spinner/wheel, external penalty modal =====
+    // No wheel spinner and no extra penalty modal outside the setup.
+
+    // ===== bindings & init =====
+    startBtn.addEventListener('click', openSetupModal);
+    rollBtn.addEventListener('click', rollDice);
+    resetBtn.addEventListener('click', resetGame);
+
+    window.addEventListener('resize', () => { if (gameStarted) updatePositions(); });
+  </script>
+</body>
+</html>
