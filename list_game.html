@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kumpulan Game — Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-1:#071029;
+      --bg-2:#0b2540;
+      --card1: linear-gradient(135deg,#7dd3fc22,#9f7aea22);
+      --accent:#60a5fa;
+      --glass: rgba(255,255,255,0.04);
+      --muted: #bcd3ea;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; -webkit-font-smoothing:antialiased}
+    body{
+      background: radial-gradient(800px 400px at 10% 10%, rgba(96,165,250,0.06), transparent 8%),
+                  radial-gradient(600px 300px at 90% 90%, rgba(159,122,234,0.04), transparent 6%),
+                  linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color:#e6f0ff;
+      padding:28px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .container{ width:min(980px,96%); }
+
+    header{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      margin-bottom:18px;
+      justify-content:space-between;
+    }
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .logo{
+      width:56px; height:56px; border-radius:10px;
+      display:grid; place-items:center; font-size:22px;
+      background:linear-gradient(135deg,#60a5fa,#7dd3fc); color:#04263a; font-weight:700;
+      box-shadow:0 8px 24px rgba(2,6,23,0.6);
+    }
+    h1{ font-size:20px; margin:0; letter-spacing:-0.2px }
+    p.lead{ margin:0; color:var(--muted); font-size:13px }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:18px;
+      margin-top:18px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border-radius:12px;
+      padding:18px;
+      box-shadow: 0 8px 24px rgba(2,6,23,0.6);
+      border:1px solid rgba(255,255,255,0.04);
+      transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s, opacity .28s;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      cursor:pointer;
+      text-decoration:none;
+      color:inherit;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .card:hover{ transform:translateY(-8px) scale(1.02); box-shadow:0 20px 40px rgba(2,6,23,0.8) }
+    .card:active{ transform:translateY(-2px) }
+
+    .icon{
+      width:64px;height:64px;border-radius:12px; display:grid; place-items:center; font-size:26px;
+      background:var(--card1); color:#04263a; filter:drop-shadow(0 8px 20px rgba(0,0,0,0.25));
+    }
+    .title{ font-weight:700; font-size:16px; margin:0 }
+    .desc{ color:var(--muted); font-size:13px; margin-top:auto; text-align:left }
+
+    .ribbon{
+      position:absolute; right:-6px; top:12px; transform:rotate(20deg);
+      background:linear-gradient(90deg,#7dd3fc,#60a5fa); color:#04263a; padding:6px 34px;
+      font-weight:700; font-size:12px; border-radius:6px; opacity:.95;
+      box-shadow:0 8px 20px rgba(96,165,250,0.12);
+    }
+
+    .footer{
+      margin-top:20px; text-align:center; color:var(--muted); font-size:13px;
+    }
+
+    /* subtle ripple for clicks */
+    .ripple{ position:absolute; inset:0; pointer-events:none; overflow:hidden }
+    .ripple span{ position:absolute; border-radius:50%; transform:translate(-50%,-50%) scale(0.2); opacity:1; background:radial-gradient(circle, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 40%, transparent 60%); transition: transform .6s ease, opacity .6s ease; }
+
+    @media (max-width:520px){
+      .logo{ width:48px; height:48px; font-size:18px }
+      .icon{ width:52px; height:52px; font-size:20px }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="main">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">MG</div>
+        <div>
+          <h1>Kumpulan Game</h1>
+          <p class="lead">Koleksi game ringan & demo. Ketuk kartu untuk membuka.</p>
+        </div>
+      </div>
+      <nav aria-label="main">
+        <a href="index.html" style="color:var(--muted); text-decoration:none; font-weight:600">← Kembali</a>
+      </nav>
+    </header>
+
+    <section class="grid" aria-label="Daftar Game">
+      <a class="card" href="game_uler_tangga.html" aria-label="Game Ular Tangga">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="icon">🎲</div>
+          <div style="flex:1">
+            <div class="title">Ular Tangga</div>
+            <div class="desc">Permainan papan klasik. Main sendiri atau dengan teman.</div>
+          </div>
+        </div>
+        <div class="ribbon">Seru</div>
+        <div class="ripple" aria-hidden="true"></div>
+      </a>
+
+      <a class="card" href="game_mini_moba.html" aria-label="Game Mini Moba">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="icon">⚔️</div>
+          <div style="flex:1">
+            <div class="title">Mini MOBA</div>
+            <div class="desc">Pertandingan cepat berbasis tim dengan kontrol simpel.</div>
+          </div>
+        </div>
+        <div class="ripple" aria-hidden="true"></div>
+      </a>
+
+      <a class="card" href="kartu-24.html" aria-label="Game Kartu 24 Random">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="icon">🃏</div>
+          <div style="flex:1">
+            <div class="title">Kartu 24 (Random)</div>
+            <div class="desc">Susun operasi matematika agar hasilnya 24.</div>
+          </div>
+        </div>
+        <div class="ripple" aria-hidden="true"></div>
+      </a>
+
+      <a class="card" href="costum-kartu-24.html" aria-label="Game Kartu 24 Custom">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="icon">✍️</div>
+          <div style="flex:1">
+            <div class="title">Kartu 24 (Custom)</div>
+            <div class="desc">Buat set kartu sendiri lalu coba selesaikan.</div>
+          </div>
+        </div>
+        <div class="ripple" aria-hidden="true"></div>
+      </a>
+    </section>
+
+    
+  </div>
+
+  <script>
+    // simple ripple + keyboard activation
+    document.querySelectorAll('.card').forEach(card=>{
+      const rippleLayer = card.querySelector('.ripple');
+      function ripple(e){
+        const rect = card.getBoundingClientRect();
+        const x = (e.clientX ?? rect.left + rect.width/2) - rect.left;
+        const y = (e.clientY ?? rect.top + rect.height/2) - rect.top;
+        const el = document.createElement('span');
+        const size = Math.max(rect.width, rect.height) * 1.4;
+        el.style.width = el.style.height = size + 'px';
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        rippleLayer.appendChild(el);
+        requestAnimationFrame(()=> el.style.transform = 'translate(-50%,-50%) scale(1)');
+        setTimeout(()=> el.style.opacity = '0', 260);
+        setTimeout(()=> el.remove(), 700);
+      }
+      card.addEventListener('click', (e)=> { ripple(e); });
+      card.addEventListener('keydown', (e)=> {
+        if(e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          ripple({ clientX: card.getBoundingClientRect().left + card.offsetWidth/2, clientY: card.getBoundingClientRect().top + card.offsetHeight/2 });
+          // follow link after short delay
+          setTimeout(()=> { const a = card.closest('a'); if(a) a.click(); }, 160);
+        }
+      });
+      // make cards focusable when wrapped by anchor (for keyboard)
+      const anchor = card.closest('a');
+      if(anchor) anchor.setAttribute('tabindex','0');
+    });
+  </script>
+</body>
+</html>
