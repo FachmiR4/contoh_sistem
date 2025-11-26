@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Input Produk</title>
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Tambah Produk</h2>
+
+<form id="productForm">
+  <input type="hidden" id="editMode" value="">
+  Nama Produk: <input type="text" id="nama" required><br><br>
+  Harga: <input type="number" id="harga" required><br><br>
+  Jumlah: <input type="number" id="jumlah" required><br><br>
+  <button type="submit" id="submitButton">Tambah ke Daftar</button>
+</form>
+
+<h3>Daftar Produk Sementara</h3>
+<table id="productTable">
+  <thead>
+    <tr>
+      <th>Nama</th>
+      <th>Harga</th>
+      <th>Jumlah</th>
+      <th>Aksi</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<br>
+<button id="saveButton" onclick="submitToDatabase()" style="display: none;">Simpan ke Database</button>
+
+<script>
+  let productList = [];
+
+  const form = document.getElementById("productForm");
+  const namaInput = document.getElementById("nama");
+  const hargaInput = document.getElementById("harga");
+  const jumlahInput = document.getElementById("jumlah");
+  const editModeInput = document.getElementById("editMode");
+  const submitButton = document.getElementById("submitButton");
+  const saveButton = document.getElementById("saveButton");
+  const tbody = document.querySelector("#productTable tbody");
+
+  form.addEventListener("submit", handleFormSubmit);
+
+  function handleFormSubmit(event) {
+    event.preventDefault();
+
+    const nama = namaInput.value.trim();
+    const harga = parseFloat(hargaInput.value);
+    const jumlah = parseInt(jumlahInput.value);
+    const editIndex = editModeInput.value;
+
+    console.log(nama, harga, jumlah, editIndex);
+
+    if (nama === "" || isNaN(harga) || isNaN(jumlah)) return;
+
+    const product = { nama, harga, jumlah };
+
+    if (editIndex !== "") {
+      productList[editIndex] = product;
+    } else {
+      productList.push(product);
+    }
+
+    resetForm();
+    renderTable();
+  }
+
+  function resetForm() {
+    hargaInput.value = "";
+    jumlahInput.value = "";
+    editModeInput.value = "";
+    submitButton.textContent = "Tambah ke Daftar";
+  }
+
+  function renderTable() {
+    tbody.innerHTML = "";
+
+    productList.forEach((product, index) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${product.nama}</td>
+        <td>${product.harga}</td>
+        <td>${product.jumlah}</td>
+        <td>
+          <button onclick="editProduct(${index})">Edit</button>
+          <button onclick="deleteProduct(${index})">Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    saveButton.style.display = productList.length > 0 ? "inline-block" : "none";
+  }
+
+  function editProduct(index) {
+    const product = productList[index];
+    namaInput.value = product.nama;
+    hargaInput.value = product.harga;
+    jumlahInput.value = product.jumlah;
+
+    editModeInput.value = index;
+    submitButton.textContent = "Update Produk";
+  }
+
+  function deleteProduct(index) {
+    productList.splice(index, 1);
+    renderTable();
+    resetForm(); // opsional, biar gak nyangkut di edit mode
+  }
+
+  function submitToDatabase() {
+    console.log("Data siap dikirim:", productList);
+    alert("Data siap dikirim ke database (simulasi)");
+  }
+</script>
+
+</body>
+</html>

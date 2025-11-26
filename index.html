@@ -1,132 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Input Produk</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kumpulan Menu Sistem Saya</title>
+
+  <!-- Font & icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
   <style>
-    table, th, td {
-      border: 1px solid black;
-      border-collapse: collapse;
+    :root{
+      --bg1: #0f172a;
+      --bg2: #0f2a4a;
+      --card: rgba(255,255,255,0.06);
+      --glass: rgba(255,255,255,0.06);
+      --accent: #6ee7b7;
+      --accent-2: #60a5fa;
     }
-    th, td {
-      padding: 8px;
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(96,165,250,0.08), transparent 10%),
+                  radial-gradient(900px 400px at 90% 90%, rgba(110,231,183,0.06), transparent 8%),
+                  linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:#e6eef8;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:36px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:100vh;
     }
+
+    .wrap{
+      width:min(1100px,95%);
+      text-align:center;
+    }
+
+    .title{
+      margin:0 0 18px;
+      font-weight:700;
+      letter-spacing:-0.4px;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+    }
+    .subtitle{
+      color:rgba(230,238,248,0.8);
+      margin:0 0 28px;
+      font-weight:400;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:18px;
+      align-items:stretch;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border-radius:12px;
+      padding:18px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.5);
+      border:1px solid rgba(255,255,255,0.04);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      transform:translateY(0);
+      transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s, border-color .28s;
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .card:focus{outline:none; box-shadow:0 10px 30px rgba(96,165,250,0.12); transform:translateY(-6px);}
+
+    .card:hover{
+      transform:translateY(-8px) scale(1.01);
+      box-shadow: 0 18px 40px rgba(2,6,23,0.7);
+      border-color: rgba(96,165,250,0.12);
+    }
+
+    .icon{
+      width:64px;
+      height:64px;
+      border-radius:12px;
+      display:inline-grid;
+      place-items:center;
+      background: linear-gradient(135deg,var(--accent),var(--accent-2));
+      color:#04263a;
+      font-weight:700;
+      font-size:20px;
+      filter:drop-shadow(0 6px 18px rgba(96,165,250,0.14));
+      transition: transform .28s;
+    }
+
+    .card:hover .icon{ transform:translateY(-6px) rotate(-6deg); }
+
+    .label{
+      font-weight:600;
+      font-size:15px;
+      text-align:left;
+      color:#fff;
+    }
+
+    .desc{
+      font-size:13px;
+      color:rgba(230,238,248,0.78);
+      text-align:left;
+      margin-top:auto;
+    }
+
+    .ripple{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+    }
+
+    /* small animated underline */
+    .underline{
+      height:3px;
+      border-radius:4px;
+      background: linear-gradient(90deg,var(--accent),var(--accent-2));
+      width:40%;
+      margin:14px auto 0;
+      transform-origin:left;
+      animation: slideIn 900ms ease forwards;
+      opacity:0;
+    }
+    @keyframes slideIn{ to{opacity:1; transform:translateY(0);} }
+
+    /* subtle floating animation for whole grid */
+    .card[data-float="true"]{ animation: float 6s ease-in-out infinite; }
+    @keyframes float{
+      0%{transform:translateY(0)}
+      50%{transform:translateY(-6px)}
+      100%{transform:translateY(0)}
+    }
+
+    /* responsive tweaks */
+    @media (max-width:640px){
+      .icon{width:52px;height:52px}
+      .card{padding:14px}
+    }
+
+    /* nice focus for keyboard nav */
+    a.menu-link{ text-decoration:none; color:inherit; display:block; height:100%; }
+    a.menu-link:focus .card{ box-shadow:0 12px 30px rgba(96,165,250,0.16); transform:translateY(-6px); border-color: rgba(96,165,250,0.14); }
   </style>
 </head>
 <body>
+  <div class="wrap" role="main">
+    <h1 class="title">✨ Kumpulan Menu Sistem Saya</h1>
+    <p class="subtitle">Pilih menu untuk masuk. Ketuk / klik untuk navigasi cepat.</p>
 
-<h2>Tambah Produk</h2>
+    <div class="grid" role="list">
+      <a class="menu-link" href="list_game.html" role="listitem" aria-label="Game">
+        <div class="card" tabindex="0" data-float="true">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div class="icon" aria-hidden="true">🎮</div>
+            <div>
+              <div class="label">Game</div>
+              <div class="desc">Kumpulan game sederhana untuk coba-coba dan hiburan.</div>
+            </div>
+          </div>
+          <div class="ripple" aria-hidden="true"></div>
+        </div>
+      </a>
 
-<form id="productForm">
-  <input type="hidden" id="editMode" value="">
-  Nama Produk: <input type="text" id="nama" required><br><br>
-  Harga: <input type="number" id="harga" required><br><br>
-  Jumlah: <input type="number" id="jumlah" required><br><br>
-  <button type="submit" id="submitButton">Tambah ke Daftar</button>
-</form>
+      <a class="menu-link" href="list_contoh_sistem.html" role="listitem" aria-label="Contoh Sistem">
+        <div class="card" tabindex="0" data-float="true">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div class="icon" aria-hidden="true">🧩</div>
+            <div>
+              <div class="label">Contoh Sistem</div>
+              <div class="desc">Sampel sistem & demo antarmuka yang pernah dibuat.</div>
+            </div>
+          </div>
+          <div class="ripple" aria-hidden="true"></div>
+        </div>
+      </a>
 
-<h3>Daftar Produk Sementara</h3>
-<table id="productTable">
-  <thead>
-    <tr>
-      <th>Nama</th>
-      <th>Harga</th>
-      <th>Jumlah</th>
-      <th>Aksi</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+      <a class="menu-link" href="kanban_to_do_list.html" role="listitem" aria-label="Todo list">
+        <div class="card" tabindex="0" data-float="true">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div class="icon" aria-hidden="true">✅</div>
+            <div>
+              <div class="label">Todo list</div>
+              <div class="desc">Kelola tugas harian dengan kanban sederhana.</div>
+            </div>
+          </div>
+          <div class="ripple" aria-hidden="true"></div>
+        </div>
+      </a>
 
-<br>
-<button id="saveButton" onclick="submitToDatabase()" style="display: none;">Simpan ke Database</button>
+      <a class="menu-link" href="flowchart.html" role="listitem" aria-label="Chart">
+        <div class="card" tabindex="0" data-float="true">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div class="icon" aria-hidden="true">📊</div>
+            <div>
+              <div class="label">Chart</div>
+              <div class="desc">Flowchart & diagram alur untuk referensi proses.</div>
+            </div>
+          </div>
+          <div class="ripple" aria-hidden="true"></div>
+        </div>
+      </a>
+    </div>
 
-<script>
-  let productList = [];
+    <div class="underline" aria-hidden="true"></div>
+  </div>
 
-  const form = document.getElementById("productForm");
-  const namaInput = document.getElementById("nama");
-  const hargaInput = document.getElementById("harga");
-  const jumlahInput = document.getElementById("jumlah");
-  const editModeInput = document.getElementById("editMode");
-  const submitButton = document.getElementById("submitButton");
-  const saveButton = document.getElementById("saveButton");
-  const tbody = document.querySelector("#productTable tbody");
+  <script>
+    // Add simple click ripple + keyboard "Enter" support
+    document.querySelectorAll('.menu-link').forEach(link => {
+      const card = link.querySelector('.card');
+      const rippleLayer = card.querySelector('.ripple');
 
-  form.addEventListener("submit", handleFormSubmit);
+      function rippleEffect(e){
+        const rect = card.getBoundingClientRect();
+        const x = (e.clientX ?? (rect.left + rect.width/2)) - rect.left;
+        const y = (e.clientY ?? (rect.top + rect.height/2)) - rect.top;
+        const circle = document.createElement('span');
+        circle.style.position='absolute';
+        circle.style.left = x + 'px';
+        circle.style.top = y + 'px';
+        circle.style.width = circle.style.height = Math.max(rect.width, rect.height) + 'px';
+        circle.style.background = 'radial-gradient(circle, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.05) 40%, transparent 60%)';
+        circle.style.transform = 'translate(-50%,-50%) scale(0.2)';
+        circle.style.borderRadius = '50%';
+        circle.style.pointerEvents = 'none';
+        circle.style.opacity = '1';
+        circle.style.transition = 'transform .6s ease, opacity .6s ease';
+        rippleLayer.appendChild(circle);
+        requestAnimationFrame(()=> circle.style.transform = 'translate(-50%,-50%) scale(1)');
+        setTimeout(()=> { circle.style.opacity = '0'; }, 250);
+        setTimeout(()=> { circle.remove(); }, 700);
+      }
 
-  function handleFormSubmit(event) {
-    event.preventDefault();
+      card.addEventListener('click', (e) => {
+        rippleEffect(e);
+      });
 
-    const nama = namaInput.value.trim();
-    const harga = parseFloat(hargaInput.value);
-    const jumlah = parseInt(jumlahInput.value);
-    const editIndex = editModeInput.value;
-
-    console.log(nama, harga, jumlah, editIndex);
-
-    if (nama === "" || isNaN(harga) || isNaN(jumlah)) return;
-
-    const product = { nama, harga, jumlah };
-
-    if (editIndex !== "") {
-      productList[editIndex] = product;
-    } else {
-      productList.push(product);
-    }
-
-    resetForm();
-    renderTable();
-  }
-
-  function resetForm() {
-    hargaInput.value = "";
-    jumlahInput.value = "";
-    editModeInput.value = "";
-    submitButton.textContent = "Tambah ke Daftar";
-  }
-
-  function renderTable() {
-    tbody.innerHTML = "";
-
-    productList.forEach((product, index) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${product.nama}</td>
-        <td>${product.harga}</td>
-        <td>${product.jumlah}</td>
-        <td>
-          <button onclick="editProduct(${index})">Edit</button>
-          <button onclick="deleteProduct(${index})">Hapus</button>
-        </td>
-      `;
-      tbody.appendChild(row);
+      // keyboard activation
+      card.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          rippleEffect({ clientX: card.getBoundingClientRect().left + card.offsetWidth/2, clientY: card.getBoundingClientRect().top + card.offsetHeight/2 });
+          // follow link after slight delay so ripple visible
+          setTimeout(()=> { link.click(); }, 160);
+        }
+      });
     });
-
-    saveButton.style.display = productList.length > 0 ? "inline-block" : "none";
-  }
-
-  function editProduct(index) {
-    const product = productList[index];
-    namaInput.value = product.nama;
-    hargaInput.value = product.harga;
-    jumlahInput.value = product.jumlah;
-
-    editModeInput.value = index;
-    submitButton.textContent = "Update Produk";
-  }
-
-  function deleteProduct(index) {
-    productList.splice(index, 1);
-    renderTable();
-    resetForm(); // opsional, biar gak nyangkut di edit mode
-  }
-
-  function submitToDatabase() {
-    console.log("Data siap dikirim:", productList);
-    alert("Data siap dikirim ke database (simulasi)");
-  }
-</script>
-
+  </script>
 </body>
 </html>
