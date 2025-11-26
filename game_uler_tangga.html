@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ular Tangga Multiplayer</title>
+  <title>Ular Tangga Multiplayer — Fixed</title>
   <style>
     :root{
       --accent:#1e40af;
@@ -32,7 +32,7 @@
       border-radius: 12px;
       box-shadow: 0 2px 12px rgba(30,64,175,0.08);
       padding: 14px;
-      max-width: 540px;
+      max-width: 720px;
       width: calc(100% - 32px);
     }
     label{ font-weight:600; color:#0f172a; display:block; margin-bottom:6px; }
@@ -40,18 +40,18 @@
     .name-input { margin:6px 0; padding:8px 10px; border-radius:8px; border:1px solid #e2e8f0; width:100%; max-width:360px; }
     .controls-row { display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; margin-bottom:8px; }
 
-    button {
+    .btn {
       padding:10px 16px; margin:6px 4px; font-size:15px; border-radius:8px; border: none;
       background: var(--btn-grad); color:#fff; font-weight:700; cursor:pointer;
       box-shadow: 0 4px 14px rgba(30,64,175,0.12);
     }
-    button:disabled { opacity:0.6; cursor:not-allowed; transform:none; box-shadow:none; }
+    .btn:disabled { opacity:0.6; cursor:not-allowed; transform:none; box-shadow:none; }
 
     #turnInfo { font-size:1rem; color:var(--accent); margin-top:8px; font-weight:600; }
     #diceResult{ font-size:0.95rem; margin:4px 0 0; color:#064e3b; font-weight:700; }
     #diceImage img{ width:54px; height:54px; display:block; margin:8px auto 0; }
 
-    /* Board: responsive square that uses background image */
+    /* Board */
     #board {
       background-image: url('depositphotos_655853034-stock-illustration-ladder-snakes-game-funny-frame.jpg');
       background-size: cover;
@@ -66,13 +66,12 @@
       overflow: hidden;
     }
 
-    /* player tokens: sized relative to board */
     .player {
       width: clamp(20px, 6vw, 36px);
       height: clamp(20px, 6vw, 36px);
       border-radius: 50%;
       position: absolute;
-      transform: translate(-50%, -50%); /* center on cell */
+      transform: translate(-50%, -50%);
       text-align: center;
       line-height: clamp(20px, 6vw, 36px);
       color: white;
@@ -104,33 +103,63 @@
       box-shadow: 0 3px 12px rgba(30,64,175,0.06);
     }
 
-    /* small responsive tweaks */
-    @media (max-width: 520px) {
-      #controls{ padding:12px }
-      .controls-row{ flex-direction:column }
-      button{ width:100%; max-width:360px }
+    /* Penalty modal */
+    .modal-backdrop{
+      position:fixed; inset:0; background:rgba(2,6,23,0.45); display:none; align-items:center; justify-content:center; z-index:1200;
     }
+    .modal {
+      width:min(560px,94vw); background:#fff; border-radius:12px; padding:14px; box-shadow:0 12px 48px rgba(2,6,23,0.28);
+    }
+    .modal h3{ margin:0 0 8px }
+    .pen-list{ display:flex; flex-direction:column; gap:8px; max-height:260px; overflow:auto; padding:6px }
+    .pen-row{ display:flex; gap:8px; }
+    .pen-row input{ flex:1; padding:8px; border-radius:8px; border:1px solid #e6eef8 }
+    .icon-btn{ background:transparent; border:none; color:#ef4444; font-weight:800; cursor:pointer; padding:6px }
+
+    /* Wheel */
+    .wheel-backdrop{ position:fixed; inset:0; background:rgba(2,6,23,0.6); display:none; align-items:center; justify-content:center; z-index:1300 }
+    .wheel-card{ background:#fff; border-radius:14px; padding:18px; display:flex; flex-direction:column; align-items:center; gap:12px }
+    .wheel-wrap{ width:360px; height:360px; position:relative }
+    .wheel{ width:100%; height:100%; border-radius:50%; overflow:hidden; position:relative; transition:transform 4s cubic-bezier(.12,.84,.2,1) }
+    .wheel-canvas{ position:absolute; inset:0 }
+    .spin-btn{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:40; background:linear-gradient(180deg,#fff,#e6eef8); border-radius:50%; width:96px; height:96px; display:flex; align-items:center; justify-content:center; font-weight:800; cursor:pointer; box-shadow:0 10px 30px rgba(2,6,23,0.16) }
+    .pointer{ position:absolute; top:-12px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:14px solid transparent; border-right:14px solid transparent; border-bottom:18px solid #ef4444; z-index:200 }
+
+    /* small responsive */
+    @media (max-width:640px) {
+      .wheel-wrap{ width:260px; height:260px }
+      .name-input{ width:140px }
+      .spin-btn{ width:72px; height:72px }
+    }
+
   </style>
 </head>
 <body>
   <h1>Game Ular Tangga — Multiplayer</h1>
 
   <div id="controls" aria-label="controls">
-    <div class="controls-row">
-      <div>
-        <label for="playerCount">Jumlah Pemain</label>
-        <input type="number" id="playerCount" min="2" max="6" value="2" onchange="generateNameInputs()">
-      </div>
-      <div style="min-width:120px;">
-        <label>&nbsp;</label>
-        <div style="display:flex; gap:8px;">
-          <button id="startBtn" onclick="startGame()">Mulai</button>
-          <button id="rollBtn" onclick="rollDice()" disabled>Lempar Dadu</button>
+    <div class="controls-row" style="justify-content:space-between;">
+      <div style="display:flex;gap:12px;align-items:center;">
+        <div>
+          <label for="playerCount">Jumlah Pemain</label>
+          <input type="number" id="playerCount" min="2" max="6" value="2">
         </div>
+        <div>
+          <label>&nbsp;</label>
+          <div style="display:flex; gap:8px;">
+            <button id="startBtn" class="btn">Mulai</button>
+            <button id="rollBtn" class="btn" disabled>Lempar Dadu</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="openPenaltyBtn" class="btn">Atur Hukuman</button>
+        <button id="resetBtn" class="btn">Reset</button>
       </div>
     </div>
 
-    <div id="playerNames" style="display:flex; flex-direction:column; align-items:center;"></div>
+    <div id="playerNames" style="display:flex; flex-direction:column; align-items:center; margin-top:8px;"></div>
 
     <p id="turnInfo" aria-live="polite"></p>
     <div id="diceImage" aria-hidden="true"></div>
@@ -140,76 +169,124 @@
   <div id="board" role="application" aria-label="Papan Ular Tangga"></div>
   <div id="log" aria-live="polite"></div>
 
+  <!-- Penalty modal -->
+  <div id="penModal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal" role="document">
+      <h3>Atur Hukuman</h3>
+      <p style="color:#475569;font-weight:600;margin:6px 0 10px">Tambahkan hukuman yang akan diberikan kepada pemain kalah.</p>
+      <div class="pen-list" id="penList"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+        <button id="addPenBtn" class="btn">+ Tambah Hukuman</button>
+        <button id="savePenBtn" class="btn">Simpan</button>
+        <button id="cancelPenBtn" class="btn">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wheel spinner modal -->
+  <div id="wheelModal" class="wheel-backdrop">
+    <div class="wheel-card" role="dialog" aria-modal="true">
+      <div class="pointer" aria-hidden="true"></div>
+      <div class="wheel-wrap">
+        <div id="wheel" class="wheel" role="img" aria-label="Roda Pemain">
+          <canvas id="wheelCanvas" class="wheel-canvas"></canvas>
+        </div>
+        <div id="spinBtn" class="spin-btn">SPIN</div>
+      </div>
+      <div id="wheelInfo" style="color:#475569;font-weight:600">Klik <strong>SPIN</strong> untuk memilih pemain yang kalah</div>
+      <div style="display:flex;gap:8px"><button id="closeWheel" class="btn">Tutup</button></div>
+    </div>
+  </div>
+
   <script>
-    const players = [];
+    // ===== state =====
+    let players = [];
     const colors = ['#ef4444','#2563eb','#16a34a','#f97316','#7c3aed','#0f172a'];
     let currentPlayer = 0;
     let positions = [];
     let names = [];
     let gameStarted = false;
     let animating = false;
+    let penalties = [];
 
-    // updated ladders (naik) and snakes (turun) as requested
-    const ladders = {
-      5: 58,
-      14: 49,
-      42: 60,
-      53: 72,
-      64: 83,
-      75: 94
-    };
-    const snakes = {
-      38: 20,
-      45: 7,
-      51: 10,
-      76: 54,
-      91: 73,
-      97: 61
-    };
+    // ladders & snakes (original)
+    const ladders = {5:58,14:49,42:60,53:72,64:83,75:94};
+    const snakes = {38:20,45:7,51:10,76:54,91:73,97:61};
 
-    window.addEventListener('load', generateNameInputs);
-    window.addEventListener('resize', () => { if (gameStarted) updatePositions(); });
+    // DOM
+    const playerCountEl = document.getElementById('playerCount');
+    const playerNamesWrap = document.getElementById('playerNames');
+    const startBtn = document.getElementById('startBtn');
+    const rollBtn = document.getElementById('rollBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const openPenaltyBtn = document.getElementById('openPenaltyBtn');
+    const turnInfo = document.getElementById('turnInfo');
+    const diceResult = document.getElementById('diceResult');
+    const diceImage = document.getElementById('diceImage');
+    const boardEl = document.getElementById('board');
+    const logEl = document.getElementById('log');
 
+    // penalty modal
+    const penModal = document.getElementById('penModal');
+    const penList = document.getElementById('penList');
+    const addPenBtn = document.getElementById('addPenBtn');
+    const savePenBtn = document.getElementById('savePenBtn');
+    const cancelPenBtn = document.getElementById('cancelPenBtn');
+
+    // wheel modal
+    const wheelModal = document.getElementById('wheelModal');
+    const wheel = document.getElementById('wheel');
+    const wheelCanvas = document.getElementById('wheelCanvas');
+    const spinBtn = document.getElementById('spinBtn');
+    const closeWheel = document.getElementById('closeWheel');
+    const wheelInfo = document.getElementById('wheelInfo');
+
+    // ===== utilities =====
     function getPositionCoords(pos) {
-      const board = document.getElementById('board');
-      const rect = board.getBoundingClientRect();
+      const rect = boardEl.getBoundingClientRect();
       const cellW = rect.width / 10;
       const cellH = rect.height / 10;
-
       const row = Math.floor((pos - 1) / 10);
       const col = (row % 2 === 0) ? (pos - 1) % 10 : 9 - (pos - 1) % 10;
-
       const x = col * cellW + cellW / 2;
       const y = (9 - row) * cellH + cellH / 2;
       return { x, y, cellW, cellH };
     }
 
     function generateNameInputs() {
-      const count = parseInt(document.getElementById('playerCount').value) || 2;
-      const container = document.getElementById('playerNames');
-      container.innerHTML = '';
+      const count = Math.max(2, Math.min(6, parseInt(playerCountEl.value) || 2));
+      playerNamesWrap.innerHTML = '';
       for (let i = 0; i < count; i++) {
         const input = document.createElement('input');
         input.type = 'text';
         input.placeholder = `Nama Pemain ${i + 1}`;
         input.className = 'name-input';
         input.maxLength = 12;
-        container.appendChild(input);
+        playerNamesWrap.appendChild(input);
       }
     }
 
+    // ===== start / reset =====
     function startGame() {
-      const count = parseInt(document.getElementById('playerCount').value) || 2;
-      const nameInputs = document.querySelectorAll('#playerNames input');
-      const board = document.getElementById('board');
-      const log = document.getElementById('log');
-      board.innerHTML = '';
-      log.innerHTML = '';
-      players.length = 0;
-      names = [];
-      positions = new Array(count).fill(1);
+      const count = Math.max(2, Math.min(6, parseInt(playerCountEl.value) || 2));
+      const nameInputs = playerNamesWrap.querySelectorAll('input');
+      if (nameInputs.length < 2) return alert('Minimal 2 pemain');
 
-      nameInputs.forEach((input, i) => { names.push((input.value.trim()) || `P${i+1}`); });
+      // collect names
+      names = [];
+      nameInputs.forEach((input, i) => names.push((input.value.trim()) || `P${i+1}`));
+
+      positions = new Array(count).fill(1);
+      players = [];
+      boardEl.innerHTML = '';
+      logEl.innerHTML = '';
+
+      // load penalties from storage if none set
+      loadPenaltiesFromStorage();
+      if (penalties.length === 0) {
+        alert('Silakan atur hukuman terlebih dahulu (klik Atur Hukuman).');
+        return;
+      }
 
       for (let i = 0; i < count; i++) {
         const div = document.createElement('div');
@@ -217,7 +294,7 @@
         div.style.background = colors[i % colors.length];
         div.textContent = names[i][0]?.toUpperCase() || (i+1);
         div.title = names[i];
-        board.appendChild(div);
+        boardEl.appendChild(div);
         players.push(div);
       }
 
@@ -226,27 +303,47 @@
       document.getElementById('turnInfo').textContent = `Giliran: ${names[currentPlayer]}`;
       document.getElementById('rollBtn').disabled = false;
       gameStarted = true;
-      loadLog();
-      document.getElementById('diceResult').textContent = '';
-      document.getElementById('diceImage').innerHTML = '';
+      animating = false;
+      startBtn.disabled = true; // disable start while running
+      saveLog('Game dimulai: ' + names.join(', '));
+      drawWheel(); // prepare wheel (with all names)
     }
 
+    function resetGame() {
+      if (!confirm('Reset permainan? Semua data posisi akan dikosongkan.')) return;
+      names = [];
+      positions = [];
+      players = [];
+      currentPlayer = 0;
+      gameStarted = false;
+      animating = false;
+      boardEl.innerHTML = '';
+      logEl.innerHTML = '';
+      document.getElementById('turnInfo').textContent = '';
+      document.getElementById('diceResult').textContent = '';
+      document.getElementById('diceImage').innerHTML = '';
+      rollBtn.disabled = true;
+      startBtn.disabled = false;
+      generateNameInputs();
+      saveLog('Game direset');
+    }
+
+    // ===== dice & movement (original logic preserved) =====
     function rollDice() {
       if (!gameStarted || players.length === 0 || animating) return;
       animating = true;
-      document.getElementById('diceResult').textContent = 'Mengocok...';
-      document.getElementById('diceImage').innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Alea_1.png" width="54" alt="dice">';
-      document.getElementById('rollBtn').disabled = true;
+      diceResult.textContent = 'Mengocok...';
+      diceImage.innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Alea_1.png" width="54" alt="dice">';
+      rollBtn.disabled = true;
 
       setTimeout(() => {
         const dice = Math.floor(Math.random() * 6) + 1;
-        document.getElementById('diceResult').textContent = `${names[currentPlayer]} mendapatkan ${dice}`;
-        document.getElementById('diceImage').innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(dice)}" width="54" alt="dice">`;
+        diceResult.textContent = `${names[currentPlayer]} mendapatkan ${dice}`;
+        diceImage.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(dice)}" width="54" alt="dice">`;
 
-        // generate step-by-step positions with bounce-back at 100
+        // steps with bounce-back near 100
         const steps = generateSteps(positions[currentPlayer], dice);
         animateSteps(steps, () => {
-          // after stepping, apply ladder or snake if present
           const finalPos = positions[currentPlayer];
           if (ladders[finalPos]) {
             logAction(`${names[currentPlayer]} menemukan tangga! Naik dari ${finalPos} ke ${ladders[finalPos]}`);
@@ -260,21 +357,26 @@
             updatePositions();
           }
 
-          // check win
           if (positions[currentPlayer] === 100) {
             setTimeout(() => {
               alert(`${names[currentPlayer]} menang!`);
               document.getElementById('turnInfo').textContent = `${names[currentPlayer]} MENANG!`;
-              document.getElementById('rollBtn').disabled = true;
+              rollBtn.disabled = true;
               gameStarted = false;
               animating = false;
+              startBtn.disabled = false;
+              // open wheel modal to pick loser among others
+              const candidates = names.filter((_, idx) => idx !== currentPlayer);
+              if (candidates.length) openWheelModal(candidates);
             }, 250);
             return;
           }
 
-          // if dice not 6, next player
-          if (dice !== 6) currentPlayer = (currentPlayer + 1) % players.length;
-          else logAction(`${names[currentPlayer]} dapat 6 dan mendapat giliran lagi!`);
+          if (dice !== 6) {
+            currentPlayer = (currentPlayer + 1) % players.length;
+          } else {
+            logAction(`${names[currentPlayer]} dapat 6 dan mendapat giliran lagi!`);
+          }
 
           document.getElementById('turnInfo').textContent = `Giliran: ${names[currentPlayer]}`;
           document.getElementById('rollBtn').disabled = false;
@@ -285,7 +387,6 @@
     }
 
     function generateSteps(start, dice) {
-      // produce array of intermediate positions (not including start)
       const steps = [];
       let pos = start;
       let dir = 1;
@@ -305,14 +406,10 @@
     }
 
     function animateSteps(steps, cb) {
-      // animate moving token through each step with small delay
       const delay = 240;
       let idx = 0;
       function step() {
         if (idx >= steps.length) {
-          // assign final position to positions array and call callback
-          // last step is current landing
-          // positions[currentPlayer] already set along the way, but ensure final
           if (steps.length) positions[currentPlayer] = steps[steps.length - 1];
           updatePositions();
           cb();
@@ -329,6 +426,7 @@
 
     function popToken(index) {
       const el = players[index];
+      if (!el) return;
       el.classList.add('pop');
       setTimeout(()=> el.classList.remove('pop'), 260);
     }
@@ -357,11 +455,11 @@
       }
     }
 
+    // ===== logging =====
     function logAction(text) {
-      const log = document.getElementById('log');
       const p = document.createElement('p');
       p.textContent = text;
-      log.prepend(p);
+      logEl.prepend(p);
       saveLog(text);
     }
 
@@ -372,15 +470,214 @@
     }
 
     function loadLog() {
-      const log = document.getElementById('log');
       const existing = JSON.parse(localStorage.getItem('gameLog') || '[]');
-      log.innerHTML = '';
+      logEl.innerHTML = '';
       existing.forEach(entry => {
         const p = document.createElement('p');
         p.textContent = entry;
-        log.appendChild(p);
+        logEl.appendChild(p);
       });
     }
+
+    // ===== penalties modal logic (Model A) =====
+    function openPenaltyModal() {
+      penModal.style.display = 'flex';
+      renderPenList();
+    }
+    function closePenaltyModal() {
+      penModal.style.display = 'none';
+    }
+
+    function renderPenList() {
+      penList.innerHTML = '';
+      if (!penalties.length) {
+        const empty = document.createElement('div');
+        empty.style.color = '#475569';
+        empty.style.fontWeight = '600';
+        empty.textContent = 'Belum ada hukuman. Tambahkan hukuman baru.';
+        penList.appendChild(empty);
+        return;
+      }
+      penalties.forEach((p, idx) => {
+        const row = document.createElement('div');
+        row.className = 'pen-row';
+        const input = document.createElement('input');
+        input.value = p;
+        input.addEventListener('input', (e) => penalties[idx] = e.target.value);
+        const del = document.createElement('button');
+        del.className = 'icon-btn';
+        del.textContent = '✖';
+        del.title = 'Hapus';
+        del.addEventListener('click', () => {
+          penalties.splice(idx, 1);
+          renderPenList();
+        });
+        row.appendChild(input);
+        row.appendChild(del);
+        penList.appendChild(row);
+      });
+    }
+
+    function addPenaltyRow() {
+      penalties.push('Hukuman baru');
+      renderPenList();
+    }
+
+    function savePenalties() {
+      // remove empty entries
+      penalties = penalties.map(p => (p||'').trim()).filter(p => p);
+      if (penalties.length === 0) { alert('Tambahkan minimal 1 hukuman'); return; }
+      localStorage.setItem('penalties', JSON.stringify(penalties));
+      closePenaltyModal();
+      alert('Hukuman disimpan');
+    }
+
+    function loadPenaltiesFromStorage() {
+      const p = JSON.parse(localStorage.getItem('penalties') || '[]');
+      if (Array.isArray(p) && p.length) penalties = p;
+    }
+
+    addPenBtn.addEventListener('click', addPenaltyRow);
+    savePenBtn.addEventListener('click', savePenalties);
+    cancelPenBtn.addEventListener('click', () => { closePenaltyModal(); loadPenaltiesFromStorage(); });
+
+    // close modal when clicking backdrop
+    penModal.addEventListener('click', (e) => { if (e.target === penModal) closePenaltyModal(); });
+
+    // ===== wheel drawing & spin (Model A: Wheel) =====
+    function drawWheel(namesToUse) {
+      // default to all players if not provided
+      const namesArr = namesToUse || names;
+      const ctx = wheelCanvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const size = wheel.clientWidth;
+      wheelCanvas.width = size * dpr;
+      wheelCanvas.height = size * dpr;
+      wheelCanvas.style.width = size + 'px';
+      wheelCanvas.style.height = size + 'px';
+      ctx.scale(dpr, dpr);
+
+      const n = Math.max(1, namesArr.length);
+      const cx = size / 2;
+      const cy = size / 2;
+      const r = size / 2 - 2;
+      const seg = 360 / n;
+
+      ctx.clearRect(0, 0, size, size);
+
+      for (let i = 0; i < n; i++) {
+        const start = (i * seg) * Math.PI / 180;
+        const end = ((i + 1) * seg) * Math.PI / 180;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, start, end);
+        ctx.closePath();
+        ctx.fillStyle = i % 2 === 0 ? '#fff' : '#f3f4f6';
+        ctx.fill();
+        ctx.strokeStyle = '#e6eef8';
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        // rotate to middle of segment
+        const mid = (start + end) / 2;
+        ctx.rotate(mid);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#0f172a';
+        // font size responsive
+        ctx.font = (Math.max(12, Math.min(16, size/28))) + 'px Arial';
+        // draw name with ellipsis if long
+        let text = namesArr[i];
+        if (text.length > 18) text = text.slice(0, 15) + '...';
+        ctx.fillText(text, r - 10, 6);
+        ctx.restore();
+      }
+    }
+
+    function openWheelModal(candidates) {
+      if (!Array.isArray(candidates) || candidates.length === 0) return;
+      wheelModal.style.display = 'flex';
+      drawWheel(candidates);
+      wheel.dataset.names = JSON.stringify(candidates);
+      wheel.style.transform = 'rotate(0deg)';
+      wheelInfo.textContent = `Kandidat: ${candidates.join(', ')}`;
+    }
+
+    function closeWheelModal() {
+      wheelModal.style.display = 'none';
+    }
+
+    let spinning = false;
+    spinBtn.addEventListener('click', () => {
+      if (spinning) return;
+      spinning = true;
+      spinBtn.textContent = '...';
+      const namesArr = JSON.parse(wheel.dataset.names || '[]');
+      if (!namesArr.length) {
+        alert('Tidak ada kandidat untuk dipilih');
+        spinning = false;
+        spinBtn.textContent = 'SPIN';
+        return;
+      }
+      const seg = 360 / namesArr.length;
+      // choose random target index
+      const targetIndex = Math.floor(Math.random() * namesArr.length);
+      const full = 6 + Math.floor(Math.random() * 4); // full rotations
+      const segmentCenter = (targetIndex + 0.5) * seg;
+      // small jitter so it doesn't land perfectly center every time
+      const jitter = (Math.random() * (seg - 8)) - (seg / 2 - 4);
+      const finalDeg = full * 360 + segmentCenter + jitter;
+
+      wheel.style.transition = 'transform 4s cubic-bezier(.12,.84,.2,1)';
+      wheel.style.transform = `rotate(${finalDeg}deg)`;
+
+      function onEnd() {
+        wheel.removeEventListener('transitionend', onEnd);
+        // determine chosen index logically using finalDeg
+        const normalized = finalDeg % 360;
+        const angleFromTop = (normalized + 360) % 360;
+        const idx = Math.floor(angleFromTop / seg) % namesArr.length;
+        // because of draw orientation, compute chosen
+        const chosen = namesArr[(namesArr.length - 1 - idx + namesArr.length) % namesArr.length];
+
+        const penalty = penalties.length ? penalties[Math.floor(Math.random() * penalties.length)] : '(tidak ada hukuman)';
+        wheelInfo.innerHTML = `<strong>${chosen}</strong> dipilih — Hukuman: <em>${penalty}</em>`;
+        alert(`${chosen} mendapatkan hukuman: ${penalty}`);
+        spinning = false;
+        spinBtn.textContent = 'SPIN';
+        // close wheel after selection (optional) - keep open so user can see result
+      }
+
+      wheel.addEventListener('transitionend', onEnd);
+    });
+
+    closeWheel.addEventListener('click', closeWheelModal);
+    wheelModal.addEventListener('click', (e) => { if (e.target === wheelModal) closeWheelModal(); });
+
+    // ===== apply penalty directly (compatibility, unused when using wheel) =====
+    function applyPenalty() {
+      const losers = names.filter((_, index) => index !== currentPlayer);
+      if (!losers.length || penalties.length === 0) return;
+      // open wheel to pick among losers
+      openWheelModal(losers);
+    }
+
+    // ===== bindings & init =====
+    playerCountEl.addEventListener('change', generateNameInputs);
+    startBtn.addEventListener('click', startGame);
+    rollBtn.addEventListener('click', rollDice);
+    resetBtn.addEventListener('click', resetGame);
+    openPenaltyBtn.addEventListener('click', openPenaltyModal);
+
+    window.addEventListener('resize', () => { if (gameStarted) updatePositions(); drawWheel(); });
+    window.addEventListener('load', () => {
+      generateNameInputs();
+      loadPenaltiesFromStorage();
+      loadLog();
+      // draw empty wheel
+      drawWheel([]);
+    });
+
   </script>
 </body>
 </html>
