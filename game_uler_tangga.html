@@ -1,183 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ular Tangga Multiplayer</title>
   <style>
+    :root{
+      --accent:#1e40af;
+      --btn-grad: linear-gradient(90deg,#4f8cff 0%,#1e40af 100%);
+    }
+    *{box-sizing:border-box}
     body {
       text-align: center;
       font-family: 'Segoe UI', Arial, sans-serif;
       background: linear-gradient(120deg, #e0e7ff 0%, #f4f4f4 100%);
       margin: 0;
       min-height: 100vh;
+      padding-bottom: 40px;
     }
     h1 {
-      color: #1e40af;
-      margin-top: 24px;
-      margin-bottom: 10px;
+      color: var(--accent);
+      margin-top: 20px;
+      margin-bottom: 8px;
       letter-spacing: 1px;
-      font-size: 2.2rem;
+      font-size: clamp(1.25rem, 2.2vw, 2.2rem);
     }
+
     #controls {
-      margin: 20px auto 10px auto;
+      margin: 16px auto;
       background: #fff;
       border-radius: 12px;
       box-shadow: 0 2px 12px rgba(30,64,175,0.08);
-      padding: 18px 18px 10px 18px;
-      max-width: 420px;
+      padding: 14px;
+      max-width: 500px;
+      width: calc(100% - 32px);
     }
-    label {
-      font-weight: 500;
-      color: #1e293b;
-      margin-right: 8px;
-    }
-    #playerCount {
-      width: 60px;
-      padding: 6px;
-      border-radius: 6px;
-      border: 1px solid #cbd5e1;
-      margin-bottom: 8px;
-      font-size: 1rem;
-    }
-    .name-input {
-      margin: 5px 0;
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: 1px solid #cbd5e1;
-      width: 90%;
-      font-size: 1rem;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-    }
+    label{ font-weight:600; color:#0f172a; display:block; margin-bottom:6px; }
+    #playerCount { width:72px; padding:6px; border-radius:8px; border:1px solid #e2e8f0; font-size:1rem; }
+    .name-input { margin:6px 0; padding:8px 10px; border-radius:8px; border:1px solid #e2e8f0; width:100%; max-width:360px; }
+    .controls-row { display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; margin-bottom:8px; }
+
     button {
-      padding: 10px 20px;
-      margin: 7px 5px 0 5px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: none;
-      background: linear-gradient(90deg, #4f8cff 0%, #1e40af 100%);
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-      box-shadow: 0 2px 8px rgba(79,140,255,0.07);
+      padding:10px 16px; margin:6px 4px; font-size:15px; border-radius:8px; border: none;
+      background: var(--btn-grad); color:#fff; font-weight:700; cursor:pointer;
+      box-shadow: 0 4px 14px rgba(30,64,175,0.12);
     }
-    button:disabled {
-      background: #b6c6e3;
-      cursor: not-allowed;
-    }
-    #turnInfo {
-      font-size: 1.1rem;
-      color: #1e40af;
-      margin: 10px 0 0 0;
-      font-weight: 500;
-    }
-    #diceResult {
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: #0f5132;
-      margin: 0;
-    }
-    #diceImage {
-      width: 60px;
-      height: 60px;
-      margin: 10px auto 0 auto;
-    }
+    button:disabled { opacity:0.6; cursor:not-allowed; transform:none; box-shadow:none; }
+
+    #turnInfo { font-size:1rem; color:var(--accent); margin-top:8px; font-weight:600; }
+    #diceResult{ font-size:0.95rem; margin:4px 0 0; color:#064e3b; font-weight:700; }
+    #diceImage img{ width:54px; height:54px; display:block; margin:8px auto 0; }
+
+    /* Board: responsive square that uses background image */
     #board {
-      background: url('depositphotos_655853034-stock-illustration-ladder-snakes-game-funny-frame.jpg');
-      background-size: contain;
-      background-repeat: no-repeat;
-      width: 768px;
-      height: 816px;
-      margin: 24px auto 0 auto;
+      background-image: url('depositphotos_655853034-stock-illustration-ladder-snakes-game-funny-frame.jpg');
+      background-size: cover;
+      background-position: center;
+      width: min(720px, 96vw);
+      height: min(770px, 96vw);
+      margin: 20px auto;
       position: relative;
-      border-radius: 18px;
-      box-shadow: 0 4px 24px rgba(30,64,175,0.09);
-      border: 2px solid #1e40af;
+      border-radius: 12px;
+      box-shadow: 0 6px 28px rgba(2,6,23,0.12);
+      border: 3px solid rgba(14,50,105,0.08);
+      overflow: hidden;
     }
+
+    /* player tokens: sized relative to board */
     .player {
-      width: 28px;
-      height: 28px;
+      width: clamp(20px, 6vw, 36px);
+      height: clamp(20px, 6vw, 36px);
       border-radius: 50%;
       position: absolute;
+      transform: translate(-50%, -50%); /* center on cell */
       text-align: center;
-      line-height: 28px;
+      line-height: clamp(20px, 6vw, 36px);
       color: white;
-      font-size: 15px;
-      font-weight: bold;
+      font-size: clamp(10px, 3.2vw, 14px);
+      font-weight: 800;
       border: 2px solid #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-      z-index: 2;
+      box-shadow: 0 4px 10px rgba(2,6,23,0.18);
+      z-index: 5;
+      transition: left 300ms cubic-bezier(.2,.9,.2,1), top 300ms cubic-bezier(.2,.9,.2,1);
+      display:flex; align-items:center; justify-content:center;
     }
+
     #log {
       max-height: 200px;
       overflow-y: auto;
       background: #fff;
       padding: 10px;
-      border: 1px solid #cbd5e1;
-      width: 340px;
-      margin: 18px auto 0 auto;
+      border: 1px solid #e6eef8;
+      width: min(720px, 96vw);
+      margin: 8px auto 0;
       text-align: left;
       border-radius: 8px;
-      font-size: 1rem;
-      box-shadow: 0 2px 8px rgba(30,64,175,0.07);
+      font-size: 0.95rem;
+      box-shadow: 0 3px 12px rgba(30,64,175,0.06);
     }
-    @media (max-width: 900px) {
-      #board {
-        width: 98vw;
-        height: 104vw;
-        max-width: 98vw;
-        max-height: 104vw;
-      }
-      #log {
-        width: 96vw;
-      }
-      #controls {
-        max-width: 98vw;
-      }
+
+    /* small responsive tweaks */
+    @media (max-width: 520px) {
+      #controls{ padding:12px }
+      .controls-row{ flex-direction:column }
+      button{ width:100%; max-width:360px }
     }
   </style>
 </head>
 <body>
-  <h1>Game Ular Tangga Multiplayer</h1>
-  <div id="controls">
-    <label>Jumlah Pemain:</label>
-    <input type="number" id="playerCount" min="2" max="6" value="2" onchange="generateNameInputs()">
-    <div id="playerNames"></div>
-    <button id="startBtn" onclick="startGame()">Mulai Game</button>
-    <button id="rollBtn" onclick="rollDice()" disabled>Lempar Dadu</button>
-    <p id="turnInfo"></p>
-    <div id="diceImage"></div>
-    <p id="diceResult"></p>
+  <h1>Game Ular Tangga — Multiplayer</h1>
+
+  <div id="controls" aria-label="controls">
+    <div class="controls-row">
+      <div>
+        <label for="playerCount">Jumlah Pemain</label>
+        <input type="number" id="playerCount" min="2" max="6" value="2" onchange="generateNameInputs()">
+      </div>
+      <div style="min-width:120px;">
+        <label>&nbsp;</label>
+        <div style="display:flex; gap:8px;">
+          <button id="startBtn" onclick="startGame()">Mulai</button>
+          <button id="rollBtn" onclick="rollDice()" disabled>Lempar Dadu</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="playerNames" style="display:flex; flex-direction:column; align-items:center;"></div>
+
+    <p id="turnInfo" aria-live="polite"></p>
+    <div id="diceImage" aria-hidden="true"></div>
+    <p id="diceResult" aria-live="polite"></p>
   </div>
-  <div id="board"></div>
-  <div id="log"></div>
+
+  <div id="board" role="application" aria-label="Papan Ular Tangga"></div>
+  <div id="log" aria-live="polite"></div>
 
   <script>
+    // ...existing code...
     const players = [];
-    const colors = ['red', 'blue', 'green', 'orange', 'purple', 'black'];
+    const colors = ['#ef4444','#2563eb','#16a34a','#f97316','#7c3aed','#0f172a'];
     let currentPlayer = 0;
     let positions = [];
     let names = [];
     let gameStarted = false;
 
+    // example snakes & ladders (adjust as needed)
     const snakes = { 83: 61, 65: 46, 92: 72, 50: 31, 38: 22 };
     const ladders = { 5: 44, 58: 77, 60: 79, 28: 48, 36: 57, 86: 93, 22: 39 };
 
-    window.onload = generateNameInputs;
+    window.addEventListener('load', generateNameInputs);
+    window.addEventListener('resize', () => { if (gameStarted) updatePositions(); });
 
     function getPositionCoords(pos) {
+      // compute based on actual board size so responsive across devices
+      const board = document.getElementById('board');
+      const rect = board.getBoundingClientRect();
+      const cellW = rect.width / 10;
+      const cellH = rect.height / 10;
+
       const row = Math.floor((pos - 1) / 10);
       const col = (row % 2 === 0) ? (pos - 1) % 10 : 9 - (pos - 1) % 10;
-      const x = col * 76.8 + 24;
-      const y = (9 - row) * 81.6 + 12;
-      return { x, y };
+
+      // coordinates relative to board (center of cell)
+      const x = col * cellW + cellW / 2;
+      // row 0 is bottom row in game logic, so invert
+      const y = (9 - row) * cellH + cellH / 2;
+      return { x, y, cellW, cellH };
     }
 
     function generateNameInputs() {
-      const count = parseInt(document.getElementById('playerCount').value);
+      const count = parseInt(document.getElementById('playerCount').value) || 2;
       const container = document.getElementById('playerNames');
       container.innerHTML = '';
       for (let i = 0; i < count; i++) {
@@ -191,7 +183,7 @@
     }
 
     function startGame() {
-      const count = parseInt(document.getElementById('playerCount').value);
+      const count = parseInt(document.getElementById('playerCount').value) || 2;
       const nameInputs = document.querySelectorAll('#playerNames input');
       const board = document.getElementById('board');
       const log = document.getElementById('log');
@@ -199,22 +191,23 @@
       log.innerHTML = '';
       players.length = 0;
       names = [];
-      positions = new Array(count).fill(1);
+      positions = new Array(count).fill(1); // start at square 1
 
-      nameInputs.forEach((input, i) => {
-        names.push(input.value.trim() || `Pemain ${i + 1}`);
-      });
+      nameInputs.forEach((input, i) => { names.push((input.value.trim()) || `P${i+1}`); });
 
+      // create player tokens
       for (let i = 0; i < count; i++) {
         const div = document.createElement('div');
         div.className = 'player';
-        div.style.background = colors[i];
-        div.textContent = names[i][0].toUpperCase();
+        div.style.background = colors[i % colors.length];
+        div.textContent = names[i][0]?.toUpperCase() || (i+1);
         div.title = names[i];
+        // ensure tokens are positioned relative to board
         board.appendChild(div);
         players.push(div);
       }
 
+      // initial placement and UI
       updatePositions();
       currentPlayer = 0;
       document.getElementById('turnInfo').textContent = `Giliran: ${names[currentPlayer]}`;
@@ -228,7 +221,7 @@
     function rollDice() {
       if (!gameStarted || players.length === 0) return;
       document.getElementById('diceResult').textContent = 'Mengocok...';
-      document.getElementById('diceImage').innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Alea_1.png" width="60">';
+      document.getElementById('diceImage').innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Alea_1.png" width="54" alt="dice">';
       document.getElementById('rollBtn').disabled = true;
 
       setTimeout(() => {
@@ -249,7 +242,7 @@
         positions[currentPlayer] = pos;
         updatePositions();
         document.getElementById('diceResult').textContent = `${names[currentPlayer]} dapat ${dice}`;
-        document.getElementById('diceImage').innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(dice)}" width="60">`;
+        document.getElementById('diceImage').innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(dice)}" width="54" alt="dice">`;
         logAction(logText);
 
         if (pos === 100) {
@@ -262,11 +255,8 @@
           return;
         }
 
-        if (dice !== 6) {
-          currentPlayer = (currentPlayer + 1) % players.length;
-        } else {
-          logAction(`${names[currentPlayer]} dapat 6 dan mendapat giliran lagi!`);
-        }
+        if (dice !== 6) currentPlayer = (currentPlayer + 1) % players.length;
+        else logAction(`${names[currentPlayer]} dapat 6 dan mendapat giliran lagi!`);
 
         document.getElementById('turnInfo').textContent = `Giliran: ${names[currentPlayer]}`;
         document.getElementById('rollBtn').disabled = false;
@@ -286,10 +276,16 @@
     }
 
     function updatePositions() {
+      // position each player token to center of its square
       for (let i = 0; i < players.length; i++) {
-        const { x, y } = getPositionCoords(positions[i]);
-        players[i].style.left = `${x + (i * 5)}px`;
-        players[i].style.top = `${y + (i * 5)}px`;
+        const { x, y, cellW, cellH } = getPositionCoords(positions[i]);
+        // Slight offset to separate overlapping tokens inside same cell
+        const offset = Math.min(cellW, cellH) * 0.18;
+        const angle = (i / players.length) * Math.PI * 2;
+        const dx = Math.round(Math.cos(angle) * offset);
+        const dy = Math.round(Math.sin(angle) * offset);
+        players[i].style.left = `${x + dx}px`;
+        players[i].style.top = `${y + dy}px`;
       }
     }
 
