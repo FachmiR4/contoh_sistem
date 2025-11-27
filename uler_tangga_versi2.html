@@ -1,3 +1,4 @@
+<!-- ...existing code... -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -269,7 +270,10 @@
     let animating = false;
     let penalties = []; // list of penalty texts
     let penaltyPositions = []; // array of {pos, text, el}
-    const penaltyMoveBack = 0; // move back 3 tiles when hit penalty
+    const penaltyMoveBack = 0; // move back value when hit penalty
+
+    // track finished players (indices)
+    let finishedPlayers = [];
 
     // ladders & snakes (original)
     const ladders = {4:26,8:51,28:46,39:60,52:68,44:80,64:85,69:93,71:92,84:98};
@@ -313,6 +317,23 @@
       return { x, y, cellW, cellH };
     }
 
+    // Advance currentPlayer to the next not-finished player.
+    function advanceToNextActivePlayer() {
+      if (players.length === 0) return;
+      if (finishedPlayers.length === players.length) {
+        turnInfo.textContent = 'Semua pemain telah mencapai FINISH';
+        rollBtn.disabled = true;
+        gameStarted = false;
+        return;
+      }
+      let tries = 0;
+      do {
+        currentPlayer = (currentPlayer + 1) % players.length;
+        tries++;
+      } while (finishedPlayers.includes(currentPlayer) && tries <= players.length);
+      turnInfo.textContent = `Giliran: ${names[currentPlayer]}`;
+    }
+
     /*
       generateNameInputs(countEl, container, readOnly)
       - readOnly when true will make the generated inputs disabled (for UI display only)
@@ -328,7 +349,6 @@
         input.className = 'name-input';
         input.maxLength = 12;
         input.disabled = !!readOnly;
-        // if names array exists, fill it; otherwise placeholder remains
         if (names && names[i]) input.value = names[i];
         container.appendChild(input);
       }
@@ -355,10 +375,8 @@
     // modal initial state on page load: always show; user must configure before playing
     window.addEventListener('load', () => {
       openSetupModal();
-      // initialize modal counts
       playerCountModal.value = playerCountEl.value || 2;
       generateNameInputs(playerCountModal, modalPlayerNames);
-      // load existing penalties to modal
       loadPenaltiesFromStorage();
       renderModalPenalties();
       loadLog();
@@ -422,7 +440,6 @@
       // apply names to UI: create disabled inputs showing players
       playerCountEl.value = count;
       generateNameInputs(playerCountEl, playerNamesWrap, true);
-      // copy names into main inputs (readonly)
       const mainInputs = playerNamesWrap.querySelectorAll('input');
       mainInputs.forEach((i, idx) => i.value = names[idx] || '');
 
@@ -437,6 +454,7 @@
       logEl.innerHTML = '';
       penaltyPositions = [];
       players = [];
+      finishedPlayers = []; // reset finished players on new game
       // create markers for players
       for (let i = 0; i < count; i++) {
         const div = document.createElement('div');
@@ -470,6 +488,7 @@
       boardEl.innerHTML = '';
       logEl.innerHTML = '';
       penaltyPositions = [];
+      finishedPlayers = [];
       document.getElementById('turnInfo').textContent = '';
       document.getElementById('diceResult').textContent = '';
       document.getElementById('diceImage').innerHTML = '';
@@ -493,10 +512,8 @@
       if (!penalties.length) return;
       const safePositions = Array.from({length: 100}, (_, i) => i+1)
         .filter(pos => pos !== 1 && pos !== 100)
-        .filter(pos => !ladders[pos] && !snakes[pos]); // avoid placing on ladder/snake starts for clarity
-      // shuffle and pick
+        .filter(pos => !ladders[pos] && !snakes[pos]);
       const shuffled = safePositions.slice().sort(() => Math.random() - 0.5);
-      // limit number of penalty positions to number of penalties or available cells
       const pickCount = Math.min(penalties.length, shuffled.length);
       for (let i = 0; i < pickCount; i++) {
         const pos = shuffled[i];
@@ -508,7 +525,6 @@
         boardEl.appendChild(marker);
         penaltyPositions.push({pos, text, el: marker});
       }
-      // position markers now
       updatePenaltyMarkers();
     }
 
@@ -516,7 +532,7 @@
       penaltyPositions.forEach(pp => {
         const {x, y, cellW, cellH} = getPositionCoords(pp.pos);
         pp.el.style.left = `${x}px`;
-        pp.el.style.top = `${y - cellH * 0.22}px`; // slightly above center
+        pp.el.style.top = `${y - cellH * 0.22}px`;
       });
     }
 
@@ -524,7 +540,6 @@
       return penaltyPositions.find(pp => pp.pos === pos);
     }
 
-    // show penalty modal with callback invoked on OK
     function showPenaltyModal(pen, onOk) {
       penaltyTextEl.textContent = pen;
       penaltyHitModal.style.display = 'flex';
@@ -539,6 +554,13 @@
     // ===== dice & movement logic (adapted) =====
     function rollDice() {
       if (!gameStarted || players.length === 0 || animating) return;
+
+      // skip players that already finished
+      if (finishedPlayers.includes(currentPlayer)) {
+        advanceToNextActivePlayer();
+        if (!gameStarted || finishedPlayers.includes(currentPlayer)) return;
+      }
+
       animating = true;
       diceResult.textContent = 'Mengocok...';
       diceImage.innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Alea_1.png" width="54" alt="dice">';
@@ -549,11 +571,9 @@
         diceResult.textContent = `${names[currentPlayer]} mendapatkan ${dice}`;
         diceImage.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(dice)}" width="54" alt="dice">`;
 
-        // steps with bounce-back near 100
         const steps = generateSteps(positions[currentPlayer], dice);
         animateSteps(steps, () => {
           const finalPos = positions[currentPlayer];
-          // ladders & snakes
           if (ladders[finalPos]) {
             logAction(`${names[currentPlayer]} menemukan tangga! Naik dari ${finalPos} ke ${ladders[finalPos]}`);
             positions[currentPlayer] = ladders[finalPos];
@@ -566,23 +586,17 @@
             updatePositions();
           }
 
-          // penalty handling: if landed on penalty, display modal then move back
           const penalty = getPenaltyAt(positions[currentPlayer]);
           if (penalty) {
             logAction(`${names[currentPlayer]} terkena hukuman di ${positions[currentPlayer]}: ${penalty.text}`);
-            // show modal, then move back when user confirms
             showPenaltyModal(penalty.text, () => {
-              // move back safely
               let target = positions[currentPlayer] - penaltyMoveBack;
               if (target < 1) target = 1;
               const stepsBack = [];
-              for (let p = positions[currentPlayer] - 1; p >= target; p--) {
-                stepsBack.push(p);
-              }
+              for (let p = positions[currentPlayer] - 1; p >= target; p--) stepsBack.push(p);
               if (stepsBack.length) {
                 animating = true;
                 animateSteps(stepsBack, () => {
-                  // after penalty move, check for ladders/snakes at new spot
                   const newPos = positions[currentPlayer];
                   if (ladders[newPos]) {
                     logAction(`${names[currentPlayer]} menemukan tangga pasca hukuman! Naik dari ${newPos} ke ${ladders[newPos]}`);
@@ -595,12 +609,10 @@
                     popToken(currentPlayer);
                     updatePositions();
                   }
-                  // continue turn flow after penalty move
                   finalizeTurnAfterRoll(dice);
                 });
                 return;
               }
-              // if no steps back, immediately finalize turn
               finalizeTurnAfterRoll(dice);
             });
             return;
@@ -613,26 +625,38 @@
     }
 
     function finalizeTurnAfterRoll(dice) {
+      // Jika pemain mencapai finish
       if (positions[currentPlayer] === 100) {
-        setTimeout(() => {
-          alert(`${names[currentPlayer]} menang! Semua pemain akan mendapat kesempatan sampai akhir giliran.`);
-          turnInfo.textContent = `${names[currentPlayer]} MENANG!`;
+        if (!finishedPlayers.includes(currentPlayer)) {
+          finishedPlayers.push(currentPlayer);
+          logAction(`${names[currentPlayer]} mencapai FINISH!`);
+          alert(`${names[currentPlayer]} telah mencapai FINISH!`);
+        }
+
+        if (finishedPlayers.length === players.length) {
+          alert("Semua pemain telah mencapai FINISH! Permainan selesai.");
           rollBtn.disabled = true;
           gameStarted = false;
           animating = false;
-          startBtn.disabled = false;
-        }, 250);
+          return;
+        }
+
+        // lanjutkan ke pemain berikutnya yang belum finish
+        advanceToNextActivePlayer();
+        rollBtn.disabled = false;
+        animating = false;
         return;
       }
 
+      // Pemain belum finish
       if (dice !== 6) {
-        currentPlayer = (currentPlayer + 1) % players.length;
+        advanceToNextActivePlayer();
       } else {
         logAction(`${names[currentPlayer]} dapat 6 dan mendapat giliran lagi!`);
       }
 
-      document.getElementById('turnInfo').textContent = `Giliran: ${names[currentPlayer]}`;
-      document.getElementById('rollBtn').disabled = false;
+      turnInfo.textContent = `Giliran: ${names[currentPlayer]}`;
+      rollBtn.disabled = false;
       animating = false;
     }
 
@@ -729,9 +753,6 @@
         logEl.appendChild(p);
       });
     }
-
-    // ===== legacy features removed: spinner/wheel, external penalty modal =====
-    // No wheel spinner and no extra penalty modal outside the setup.
 
     // ===== bindings & init =====
     startBtn.addEventListener('click', openSetupModal);
