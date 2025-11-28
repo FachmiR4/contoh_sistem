@@ -132,6 +132,18 @@
           </div>
         </div>
 
+        <!-- NEW: custom intervals for bomb/card spawn -->
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+          <div>
+            <label for="bombsIntervalModal">Interval Bomb (detik)</label>
+            <input id="bombsIntervalModal" type="number" value="30" min="5" max="600">
+          </div>
+          <div>
+            <label for="cardsIntervalModal">Interval Kartu (detik)</label>
+            <input id="cardsIntervalModal" type="number" value="40" min="5" max="600">
+          </div>
+        </div>
+
         <p class="small">Pilih tipe kartu yang diizinkan (checkbox). Kartu akan dipilih acak dari tipe yang aktif.<br>
         Posisi kartu TIDAK BOLEH berada di 2..20 (diblokir).</p>
 
@@ -215,6 +227,8 @@
 
       // bombs & cards state
       const bombsCountDefault = 10, cardsCountDefault = 20;
+      // NEW: default spawn intervals (seconds)
+      const bombsIntervalDefault = 30, cardsIntervalDefault = 40;
       let bombs = [];   // { pos, strength, el }
       let cards = [];   // { pos, type, delta, el }
       const cardTypesDefinition = {
@@ -251,6 +265,11 @@
       const modalPlayerNames = document.getElementById('modalPlayerNames');
       const bombsCountModal = document.getElementById('bombsCountModal');
       const cardsCountModal = document.getElementById('cardsCountModal');
+
+      // NEW: interval inputs
+      const bombsIntervalModal = document.getElementById('bombsIntervalModal');
+      const cardsIntervalModal = document.getElementById('cardsIntervalModal');
+
       const cardTypesWrap = document.getElementById('cardTypesWrap');
       const resetCardTypes = document.getElementById('resetCardTypes');
       const startFromModal = document.getElementById('startFromModal');
@@ -281,6 +300,9 @@
       // timers
       let cardTimerId = null;
       let bombTimerId = null;
+      // current intervals in ms (updated from modal on start)
+      let bombsIntervalMs = bombsIntervalDefault * 1000;
+      let cardsIntervalMs = cardsIntervalDefault * 1000;
 
       // ===== utilities =====
       function getPositionCoords(pos) {
@@ -541,7 +563,7 @@
           const el = document.createElement('div');
           el.className = 'card-mark';
           el.textContent = `🃏`;
-          el.title = `${def.label}${def.delta !== 0 ? ` (${def.delta > 0 ? '+' : ''}${def.delta})` : ''}`;
+          el.title = `${def.label}${def.delta !== 0 ? ` (${def.delta > 0 ? '+' : ''}${def.delta})` : ''}`; 
           boardEl.appendChild(el);
           cards.push({pos, type, delta: def.delta, el});
           logAction(`Kartu baru ditempatkan di ${pos}`);
@@ -570,16 +592,15 @@
 
       function startTimers(){
         stopTimers();
-        // cards every 40s
+        // use configured intervals (ms)
         cardTimerId = setInterval(() => {
           if (!gameStarted) return;
           addRandomCard(1);
-        }, 40000);
-        // bombs every 30s
+        }, cardsIntervalMs);
         bombTimerId = setInterval(() => {
           if (!gameStarted) return;
           addRandomBomb(1);
-        }, 30000);
+        }, bombsIntervalMs);
       }
       function stopTimers(){
         if (cardTimerId) { clearInterval(cardTimerId); cardTimerId = null; }
@@ -597,6 +618,12 @@
 
         const bombsCount = Math.max(0, Math.min(90, parseInt(bombsCountModal.value) || bombsCountDefault));
         const cardsCount = Math.max(0, Math.min(90, parseInt(cardsCountModal.value) || cardsCountDefault));
+
+        // NEW: read intervals (seconds) and clamp
+        const bombsIntervalSec = Math.max(5, Math.min(600, parseInt(bombsIntervalModal.value) || bombsIntervalDefault));
+        const cardsIntervalSec = Math.max(5, Math.min(600, parseInt(cardsIntervalModal.value) || cardsIntervalDefault));
+        bombsIntervalMs = bombsIntervalSec * 1000;
+        cardsIntervalMs = cardsIntervalSec * 1000;
 
         if (!enabledCardTypes.length){
           if (!confirm('Belum pilih tipe kartu. Lanjutkan tanpa kartu?')) return;
@@ -890,6 +917,9 @@
       renderCardTypeOptions();
       bombsCountModal.value = bombsCountDefault;
       cardsCountModal.value = cardsCountDefault;
+      // set defaults for intervals
+      if (bombsIntervalModal) bombsIntervalModal.value = bombsIntervalDefault;
+      if (cardsIntervalModal) cardsIntervalModal.value = cardsIntervalDefault;
       loadLog();
 
       // open setup modal on load
