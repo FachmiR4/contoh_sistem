@@ -76,7 +76,7 @@
       <div style="display:flex; gap:12px; align-items:center;">
         <div>
           <label for="playerCount">Jumlah Pemain</label>
-          <input id="playerCount" type="number" min="2" max="6" value="2" disabled>
+          <input id="playerCount" type="number" min="1" max="6" value="1" disabled>
         </div>
         <div>
           <label>&nbsp;</label>
@@ -116,7 +116,7 @@
 
       <div id="tab1" class="tab-panel active" role="tabpanel">
         <label for="playerCountModal">Jumlah Pemain</label>
-        <input id="playerCountModal" type="number" min="2" max="6" value="2" style="width:88px;">
+        <input id="playerCountModal" type="number" min="1" max="6" value="1" style="width:88px;">
         <div id="modalPlayerNames" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;"></div>
       </div>
 
@@ -477,7 +477,8 @@
 
       // ===== name inputs helper =====
       function generateNameInputs(countEl, container, readOnly = false) {
-        const count = Math.max(2, Math.min(6, parseInt(countEl.value) || 2));
+        // allow 1..6 players
+        const count = Math.max(1, Math.min(6, parseInt(countEl.value) || 1));
         container.innerHTML = '';
         for (let i = 0; i < count; i++) {
           const input = document.createElement('input');
@@ -587,9 +588,9 @@
 
       // ===== core: init / reset / roll dice etc. =====
       startFromModal.addEventListener('click', () => {
-        const count = Math.max(2, Math.min(6, parseInt(playerCountModal.value) || 2));
+        const count = Math.max(1, Math.min(6, parseInt(playerCountModal.value) || 1));
         const nameInputs = modalPlayerNames.querySelectorAll('input');
-        if (nameInputs.length < 2) return alert('Minimal 2 pemain');
+        if (nameInputs.length < 1) return alert('Minimal 1 pemain');
 
         names = [];
         nameInputs.forEach((input, i) => names.push((input.value.trim()) || `P${i+1}`));
@@ -642,7 +643,7 @@
         if (!confirm('Reset permainan? Semua data posisi akan dikosongkan.')) return;
         names = []; positions = []; players = []; currentPlayer = 0; gameStarted = false; animating = false; skipTurns = [];
         boardEl.innerHTML = ''; logEl.innerHTML = ''; bombs = []; cards = [];
-        playerCountEl.value = 2; generateNameInputs(playerCountEl, playerNamesWrap, true);
+        playerCountEl.value = 1; generateNameInputs(playerCountEl, playerNamesWrap, true);
         saveLog('Game direset'); openSetupModal(); rollBtn.disabled = true;
         stopTimers();
       }
@@ -880,8 +881,11 @@
         });
       });
 
+      // update name inputs when player count in modal changes
+      playerCountModal.addEventListener('input', () => generateNameInputs(playerCountModal, modalPlayerNames));
+
       // initial UI
-      playerCountModal.value = playerCountEl.value || 2;
+      playerCountModal.value = playerCountEl.value || 1;
       generateNameInputs(playerCountModal, modalPlayerNames);
       renderCardTypeOptions();
       bombsCountModal.value = bombsCountDefault;
