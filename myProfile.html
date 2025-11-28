@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CV Profile - Fachmi Ramadhan</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #f4f7fa;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1100px;
+      margin: auto;
+      padding: 40px 0;
+      display: flex;
+      gap: 30px;
+      animation: fadeIn 1.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .left {
+      width: 35%;
+      background: #1d3354;
+      color: white;
+      border-radius: 18px;
+      padding: 30px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      animation: slideLeft 1.2s ease;
+    }
+
+    @keyframes slideLeft {
+      from { transform: translateX(-40px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .photo {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin: auto;
+      border: 5px solid #fff;
+    }
+
+    .photo img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+
+    h2 { text-align: center; margin-top: 15px; letter-spacing: 1px; }
+
+    .section-title {
+      margin-top: 30px;
+      font-weight: bold;
+      border-bottom: 2px solid #fff;
+      padding-bottom: 5px;
+    }
+
+    .right {
+      width: 65%;
+      background: white;
+      border-radius: 18px;
+      padding: 35px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      animation: slideRight 1.2s ease;
+    }
+
+    @keyframes slideRight {
+      from { transform: translateX(40px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .contact-item { margin: 6px 0; }
+    .sub-title { font-weight: bold; margin-top: 20px; }
+    ul { padding-left: 20px; }
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.7s ease;
+    }
+    .fade-up.active { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <div class="photo fade-up"><img src="profile.jpg" alt="Profile"></div>
+      <h2 class="fade-up">Fachmi Ramadhan</h2>
+
+      <div class="section-title fade-up">Tentang Saya</div>
+      <p class="fade-up">Lulusan S1 Tekni Information Universitas Indraprasta PGRI dengan pengetahuan tentang Web dan Applikasi android dan portfolio saya . Memiliki kemampuan analisis, detail, dan problem solving.</p>
+
+      <div class="section-title fade-up">Skill</div>
+      <ul class="fade-up">
+        <li>Python</li>
+        <li>HTML + CSS</li>
+        <li>JavaScript</li>
+        <li>PHP</li>
+        <li>Git&GitHub</li>
+        <li>Laravel</li>
+        <li>SQL</li>
+        <li>Mikrotik Jaringan</li>
+        <li>WordPress</li>
+        <li>MongoPress</li>
+        <li>MongDB</li>
+        <li>NodeJs</li>
+      </ul>
+
+      <div class="section-title fade-up">Bahasa</div>
+      <ul class="fade-up">
+        <li>Indonesia</li>
+        <li>English</li>
+      </ul>
+
+      <div class="section-title fade-up">Prestasi</div>
+      <ul class="fade-up">
+        <li>Juara II Lomba Karya Tulis Ilmiah Tingkat Nasional 2018</li>
+        <li>Juara Umum Lomba Cerdas Cermat Antar Fakultas 2019</li>
+      </ul>
+    </div>
+
+    <div class="right">
+      <h1 class="fade-up">Contact</h1>
+      <div class="contact-item fade-up">📱 +62 882-7679-8743</div>
+      <div class="contact-item fade-up">📧 nurfadhilaxtbg2@gmail.com</div>
+      <div class="contact-item fade-up">📍 Jl. Supriyanto No.133, Kota Jambi</div>
+
+      <h2 class="sub-title fade-up">Pengalaman Organisasi</h2>
+      <ul class="fade-up">
+        <li><b>Ketua BEM (2020-2021)</b> – Universitas Jambi</li>
+        <li><b>Ketua Bidang Expo (2019)</b> – Universitas Jambi</li>
+      </ul>
+
+      <h2 class="sub-title fade-up">Pendidikan Formal</h2>
+      <ul class="fade-up">
+        <li>2006-2012 – MI Al-Mukhlisin</li>
+        <li>2012-2015 – MTs Laboratorium</li>
+        <li>2015-2018 – SMK Negeri 4 Kota Jambi</li>
+        <li>2018-2022 – Universitas Jambi</li>
+      </ul>
+
+      <h2 class="sub-title fade-up">Pendidikan Non Formal</h2>
+      <ul class="fade-up">
+        <li>2010-2012 – Kursus Matematika</li>
+        <li>2010-2012 – Kursus Bahasa Inggris</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const elements = document.querySelectorAll('.fade-up');
+    const showOnScroll = () => {
+      elements.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 50) {
+          el.classList.add('active');
+        }
+      });
+    };
+    window.addEventListener('scroll', showOnScroll);
+    showOnScroll();
+  </script>
+</body>
+</html>

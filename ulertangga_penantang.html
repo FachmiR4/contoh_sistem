@@ -132,7 +132,8 @@
           </div>
         </div>
 
-        <p class="small">Pilih tipe kartu yang diizinkan (checkbox). Kartu akan dipilih acak dari tipe yang aktif.</p>
+        <p class="small">Pilih tipe kartu yang diizinkan (checkbox). Kartu akan dipilih acak dari tipe yang aktif.<br>
+        Posisi kartu TIDAK BOLEH berada di 2..20 (diblokir).</p>
 
         <div class="card-types" id="cardTypesWrap">
           <!-- dynamically render card type checkboxes -->
@@ -201,656 +202,695 @@
   <button id="challengeRestoreBtn" title="Buka Tantangan">Tantangan (Minimized)</button>
 
   <script>
-    // ===== state =====
-    let players = [];
-    const colors = ['#ef4444','#2563eb','#16a34a','#f97316','#7c3aed','#0f172a'];
-    let currentPlayer = 0;
-    let positions = [];
-    let names = [];
-    let skipTurns = []; // number of turns to skip per player
-    let gameStarted = false;
-    let animating = false;
+    document.addEventListener('DOMContentLoaded', () => {
+      // ===== state =====
+      let players = [];
+      const colors = ['#ef4444','#2563eb','#16a34a','#f97316','#7c3aed','#0f172a'];
+      let currentPlayer = 0;
+      let positions = [];
+      let names = [];
+      let skipTurns = []; // number of turns to skip per player
+      let gameStarted = false;
+      let animating = false;
 
-    // bombs & cards state
-    let bombsCountDefault = 10, cardsCountDefault = 20;
-    let bombs = [];   // { pos, strength, el }
-    let cards = [];   // { pos, type, delta, el }
-    const cardTypesDefinition = {
-      back3: { label: 'Mundur 3', delta: -3 },
-      back6: { label: 'Mundur 6', delta: -6 },
-      back7: { label: 'Mundur 7', delta: -7 },
-      forward3: { label: 'Maju 3', delta: +3 },
-      forward4: { label: 'Maju 4', delta: +4 },
-      forward5: { label: 'Maju 5', delta: +5 },
-      forward6: { label: 'Maju 6', delta: +6 },
-      challenge: { label: 'Tantangan (Costum)', delta: 0 } // special handled
-    };
-    let enabledCardTypes = Object.keys(cardTypesDefinition); // default all enabled
+      // bombs & cards state
+      const bombsCountDefault = 10, cardsCountDefault = 20;
+      let bombs = [];   // { pos, strength, el }
+      let cards = [];   // { pos, type, delta, el }
+      const cardTypesDefinition = {
+        back3: { label: 'Mundur 3', delta: -3 },
+        back6: { label: 'Mundur 6', delta: -6 },
+        back7: { label: 'Mundur 7', delta: -7 },
+        forward3: { label: 'Maju 3', delta: +3 },
+        forward4: { label: 'Maju 4', delta: +4 },
+        forward5: { label: 'Maju 5', delta: +5 },
+        forward6: { label: 'Maju 6', delta: +6 },
+        challenge: { label: 'Tantangan (Costum)', delta: 0 } // special handled
+      };
+      let enabledCardTypes = Object.keys(cardTypesDefinition); // default all enabled
 
-    // ladders & snakes (original)
-    const ladders = {4:26,8:51,28:46,39:60,52:68,44:80,64:85,69:93,71:92,84:98};
-    const snakes = {11:9,36:14,57:19,43:22,66:47,94:48,90:49,81:63,96:65, 99:78};
+      // ladders & snakes (original)
+      const ladders = {4:26,8:51,28:46,39:60,52:68,44:80,64:85,69:93,71:92,84:98};
+      const snakes = {11:9,36:14,57:19,43:22,66:47,94:48,90:49,81:63,96:65, 99:78};
 
-    // DOM
-    const playerCountEl = document.getElementById('playerCount');
-    const playerNamesWrap = document.getElementById('playerNames');
-    const openSetupBtn = document.getElementById('openSetupBtn');
-    const rollBtn = document.getElementById('rollBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const turnInfo = document.getElementById('turnInfo');
-    const diceResult = document.getElementById('diceResult');
-    const diceImage = document.getElementById('diceImage');
-    const boardEl = document.getElementById('board');
-    const logEl = document.getElementById('log');
+      // DOM references (now safe)
+      const playerCountEl = document.getElementById('playerCount');
+      const playerNamesWrap = document.getElementById('playerNames');
+      const openSetupBtn = document.getElementById('openSetupBtn');
+      const rollBtn = document.getElementById('rollBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const turnInfo = document.getElementById('turnInfo');
+      const diceResult = document.getElementById('diceResult');
+      const diceImage = document.getElementById('diceImage');
+      const boardEl = document.getElementById('board');
+      const logEl = document.getElementById('log');
 
-    // setup modal elements
-    const setupModal = document.getElementById('setupModal');
-    const playerCountModal = document.getElementById('playerCountModal');
-    const modalPlayerNames = document.getElementById('modalPlayerNames');
-    const bombsCountModal = document.getElementById('bombsCountModal');
-    const cardsCountModal = document.getElementById('cardsCountModal');
-    const cardTypesWrap = document.getElementById('cardTypesWrap');
-    const resetCardTypes = document.getElementById('resetCardTypes');
-    const startFromModal = document.getElementById('startFromModal');
-    const tabButtons = document.querySelectorAll('.tab-btn');
+      // setup modal elements
+      const setupModal = document.getElementById('setupModal');
+      const playerCountModal = document.getElementById('playerCountModal');
+      const modalPlayerNames = document.getElementById('modalPlayerNames');
+      const bombsCountModal = document.getElementById('bombsCountModal');
+      const cardsCountModal = document.getElementById('cardsCountModal');
+      const cardTypesWrap = document.getElementById('cardTypesWrap');
+      const resetCardTypes = document.getElementById('resetCardTypes');
+      const startFromModal = document.getElementById('startFromModal');
+      const tabButtons = document.querySelectorAll('.tab-btn');
 
-    // hit modals
-    const cardHitModal = document.getElementById('cardHitModal');
-    const bombHitModal = document.getElementById('bombHitModal');
-    const cardTextEl = document.getElementById('cardText');
-    const bombTextEl = document.getElementById('bombText');
-    const cardOkBtn = document.getElementById('cardOkBtn');
-    const bombOkBtn = document.getElementById('bombOkBtn');
+      // hit modals
+      const cardHitModal = document.getElementById('cardHitModal');
+      const bombHitModal = document.getElementById('bombHitModal');
+      const cardTextEl = document.getElementById('cardText');
+      const bombTextEl = document.getElementById('bombText');
+      const cardOkBtn = document.getElementById('cardOkBtn');
+      const bombOkBtn = document.getElementById('bombOkBtn');
 
-    // challenge modal elements
-    const challengeModal = document.getElementById('challengeModal');
-    const challengeDesc = document.getElementById('challengeDesc');
-    const challengeTarget = document.getElementById('challengeTarget');
-    const challengeStepsInput = document.getElementById('challengeSteps');
-    const challengeDirForward = document.getElementById('challengeDirForward');
-    const challengeDirBackward = document.getElementById('challengeDirBackward');
-    const challengeOkBtn = document.getElementById('challengeOkBtn');
-    const challengeMinimizeBtn = document.getElementById('challengeMinimizeBtn');
-    const challengeRestoreBtn = document.getElementById('challengeRestoreBtn');
+      // challenge modal elements
+      const challengeModal = document.getElementById('challengeModal');
+      const challengeDesc = document.getElementById('challengeDesc');
+      const challengeTarget = document.getElementById('challengeTarget');
+      const challengeStepsInput = document.getElementById('challengeSteps');
+      const challengeDirForward = document.getElementById('challengeDirForward');
+      const challengeDirBackward = document.getElementById('challengeDirBackward');
+      const challengeOkBtn = document.getElementById('challengeOkBtn');
+      const challengeMinimizeBtn = document.getElementById('challengeMinimizeBtn');
+      const challengeRestoreBtn = document.getElementById('challengeRestoreBtn');
 
-    // internal challenge state
-    let challengePending = false;
+      // internal challenge state
+      let challengePending = false;
 
-    // ===== utilities =====
-    function getPositionCoords(pos) {
-      const rect = boardEl.getBoundingClientRect();
-      const cellW = rect.width / 10;
-      const cellH = rect.height / 10;
-      const row = Math.floor((pos - 1) / 10);
-      const col = (row % 2 === 0) ? (pos - 1) % 10 : 9 - (pos - 1) % 10;
-      const x = col * cellW + cellW / 2;
-      const y = (9 - row) * cellH + cellH / 2;
-      return { x, y, cellW, cellH };
-    }
+      // timers
+      let cardTimerId = null;
+      let bombTimerId = null;
 
-    /*
-      generateNameInputs(countEl, container, readOnly)
-      - readOnly when true will make the generated inputs disabled (for UI display only)
-      - if names[] has values, fill the input values from names
-    */
-    function generateNameInputs(countEl, container, readOnly = false) {
-      const count = Math.max(2, Math.min(6, parseInt(countEl.value) || 2));
-      container.innerHTML = '';
-      for (let i = 0; i < count; i++) {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.placeholder = `Nama Pemain ${i + 1}`;
-        input.className = 'name-input';
-        input.maxLength = 12;
-        input.disabled = !!readOnly;
-        if (names && names[i]) input.value = names[i];
-        container.appendChild(input);
+      // ===== utilities =====
+      function getPositionCoords(pos) {
+        const rect = boardEl.getBoundingClientRect();
+        const cellW = rect.width / 10;
+        const cellH = rect.height / 10;
+        const row = Math.floor((pos - 1) / 10);
+        const col = (row % 2 === 0) ? (pos - 1) % 10 : 9 - (pos - 1) % 10;
+        const x = col * cellW + cellW / 2;
+        const y = (9 - row) * cellH + cellH / 2;
+        return { x, y, cellW, cellH };
       }
-    }
 
-    function openSetupModal(){ setupModal.style.display = 'flex'; }
-    function closeSetupModal(){ setupModal.style.display = 'none'; }
+      function shuffle(arr){ return arr.slice().sort(()=>Math.random()-0.5); }
 
-    // tabs
-    tabButtons.forEach(b => {
-      b.addEventListener('click', () => {
-        tabButtons.forEach(t => t.classList.remove('active'));
-        b.classList.add('active');
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        document.getElementById(b.dataset.tab).classList.add('active');
-      });
-    });
+      // safe cells exclude 1,100 and ladder/snake endpoints
+      function getSafeCells() {
+        const all = Array.from({length: 100}, (_, i) => i+1);
+        return all.filter(pos => pos !== 1 && pos !== 100)
+                  .filter(pos => !ladders[pos] && !snakes[pos]);
+      }
 
-    // render card types checkboxes in modal
-    function renderCardTypeOptions(){
-      cardTypesWrap.innerHTML = '';
-      Object.keys(cardTypesDefinition).forEach(key => {
-        const def = cardTypesDefinition[key];
-        const div = document.createElement('div');
-        div.className = 'card-type';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.id = `ct-${key}`;
-        cb.value = key;
-        cb.checked = enabledCardTypes.includes(key);
-        cb.addEventListener('change', () => {
-          if (cb.checked) {
-            if (!enabledCardTypes.includes(key)) enabledCardTypes.push(key);
-          } else {
-            enabledCardTypes = enabledCardTypes.filter(k => k !== key);
-          }
+      // ===== marker placement & helpers =====
+      function clearBombAndCardMarkers(){
+        bombs.forEach(b => { if (b.el && b.el.parentElement) b.el.remove(); });
+        cards.forEach(c => { if (c.el && c.el.parentElement) c.el.remove(); });
+        bombs = []; cards = [];
+      }
+
+      function placeBombsRandom(count){
+        // don't clear cards; allow both to coexist
+        const safe = shuffle(getSafeCells().filter(p => !cards.some(c=>c.pos===p) && !(p >=2 && p <=20)));
+        const max = Math.min(count, safe.length);
+        for(let i=0;i<max;i++){
+          const pos = safe[i];
+          const strength = Math.floor(Math.random()*3)+1; // 1..3
+          const el = document.createElement('div');
+          el.className = 'bomb-mark';
+          el.textContent = '💣';
+          el.title = `Bomb — Strength ${strength}`;
+          boardEl.appendChild(el);
+          bombs.push({pos, strength, el});
+        }
+        updateAllMarkers();
+      }
+
+      function placeCardsRandom(count){
+        // cards cannot be in positions 2..20 (blocked)
+        const safe = shuffle(getSafeCells().filter(s => !(s >= 2 && s <= 20)).filter(s => !bombs.some(b => b.pos === s)));
+        const max = Math.min(count, safe.length);
+        const types = enabledCardTypes.length ? enabledCardTypes : Object.keys(cardTypesDefinition);
+        for(let i=0;i<max;i++){
+          const pos = safe[i];
+          const type = types[Math.floor(Math.random()*types.length)];
+          const def = cardTypesDefinition[type];
+          const el = document.createElement('div');
+          el.className = 'card-mark';
+          el.textContent = `🃏`;
+          el.title = `${def.label}${def.delta !== 0 ? ` (${def.delta > 0 ? '+' : ''}${def.delta})` : ''}`;
+          boardEl.appendChild(el);
+          cards.push({pos, type, delta: def.delta, el});
+        }
+        updateAllMarkers();
+      }
+
+      function updateAllMarkers(){
+        bombs.forEach(b => {
+          const {x,y,cellH} = getPositionCoords(b.pos);
+          b.el.style.left = `${x}px`;
+          b.el.style.top = `${y - (cellH*0.22)}px`;
         });
-        const label = document.createElement('label');
-        label.htmlFor = `ct-${key}`;
-        label.textContent = `${def.label}${def.delta !== 0 ? ` (${def.delta > 0 ? '+' : ''}${def.delta})` : ''}`;
-        div.appendChild(cb);
-        div.appendChild(label);
-        cardTypesWrap.appendChild(div);
+        cards.forEach(c => {
+          const {x,y,cellH} = getPositionCoords(c.pos);
+          c.el.style.left = `${x}px`;
+          c.el.style.top = `${y + (cellH*0.22)}px`;
+        });
+      }
+
+      function getMarkerAt(pos){
+        const bomb = bombs.find(b => b.pos === pos);
+        if (bomb) return {type: 'bomb', data: bomb};
+        const card = cards.find(c => c.pos === pos);
+        if (card) return {type: 'card', data: card};
+        return null;
+      }
+
+      function removeMarker(marker){
+        if (!marker) return;
+        if (marker.type === 'bomb'){
+          const idx = bombs.indexOf(marker.data);
+          if (idx >= 0) { marker.data.el.remove(); bombs.splice(idx,1); }
+        } else if (marker.type === 'card'){
+          const idx = cards.indexOf(marker.data);
+          if (idx >= 0) { marker.data.el.remove(); cards.splice(idx,1); }
+        }
+      }
+
+      // ===== show modals =====
+      function showCardModal(text, onOk){
+        cardTextEl.textContent = text;
+        cardHitModal.style.display = 'flex';
+        const handler = () => {
+          cardOkBtn.removeEventListener('click', handler);
+          cardHitModal.style.display = 'none';
+          if (onOk) onOk();
+        };
+        cardOkBtn.addEventListener('click', handler);
+      }
+
+      function showBombModal(text, onOk){
+        bombTextEl.textContent = text;
+        bombHitModal.style.display = 'flex';
+        const handler = () => {
+          bombOkBtn.removeEventListener('click', handler);
+          bombHitModal.style.display = 'none';
+          if (onOk) onOk();
+        };
+        bombOkBtn.addEventListener('click', handler);
+      }
+
+      // ===== challenge modal handling =====
+      function showChallengeModal(desc, onOk){
+        challengeTarget.innerHTML = '';
+        for (let i = 0; i < names.length; i++){
+          if (i === currentPlayer) continue; // cannot target self
+          const option = document.createElement('option');
+          option.value = i;
+          option.textContent = names[i];
+          challengeTarget.appendChild(option);
+        }
+        if (challengeTarget.options.length === 0) {
+          alert('Tidak ada pemain lain untuk ditargetkan.');
+          if (typeof onOk === 'function') onOk(null, 0);
+          return;
+        }
+        challengeDesc.textContent = desc || 'Pilih pemain dan langkah (max 12)';
+        challengeStepsInput.value = 1;
+        challengeDirForward.checked = true;
+
+        // mark pending and block dice/turn progression
+        challengePending = true;
+        animating = true;
+        rollBtn.disabled = true;
+
+        // ensure restore btn hidden and show modal
+        challengeRestoreBtn.style.display = 'none';
+        challengeModal.style.display = 'flex';
+
+        // OK handler: confirm challenge selection
+        const okHandler = () => {
+          challengeOkBtn.removeEventListener('click', okHandler);
+          // hide modal & reset restore UI
+          challengeModal.style.display = 'none';
+          challengeRestoreBtn.style.display = 'none';
+          const targetIndex = parseInt(challengeTarget.value, 10);
+          let steps = Math.max(1, Math.min(12, parseInt(challengeStepsInput.value || '1', 10)));
+          const dir = challengeDirBackward.checked ? -1 : 1;
+          challengePending = false;
+
+          if (typeof onOk === 'function') onOk(targetIndex, dir * steps);
+        };
+        challengeOkBtn.addEventListener('click', okHandler);
+      }
+
+      function minimizeChallengeModal(){
+        if (!challengePending) return;
+        challengeModal.style.display = 'none';
+        challengeRestoreBtn.style.display = 'block';
+      }
+
+      function restoreChallengeModal(){
+        if (!challengePending) return;
+        challengeRestoreBtn.style.display = 'none';
+        challengeModal.style.display = 'flex';
+      }
+
+      // ===== generic animation for any player's movement =====
+      function animatePlayerSteps(playerIndex, steps, cb){
+        if (!players[playerIndex]) { if (cb) cb(); return; }
+        const delay = 220; let idx = 0;
+        function step(){
+          if (idx >= steps.length){
+            if (steps.length) positions[playerIndex] = steps[steps.length - 1];
+            updatePositions(); if (cb) cb(); return;
+          }
+          positions[playerIndex] = steps[idx];
+          updatePositions();
+          logAction(`${names[playerIndex]} bergerak ke ${steps[idx]}`);
+          idx++;
+          setTimeout(step, delay);
+        }
+        step();
+      }
+
+      // ===== name inputs helper =====
+      function generateNameInputs(countEl, container, readOnly = false) {
+        const count = Math.max(2, Math.min(6, parseInt(countEl.value) || 2));
+        container.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.placeholder = `Nama Pemain ${i + 1}`;
+          input.className = 'name-input';
+          input.maxLength = 12;
+          input.disabled = !!readOnly;
+          if (names && names[i]) input.value = names[i];
+          container.appendChild(input);
+        }
+      }
+      function openSetupModal(){ setupModal.style.display = 'flex'; }
+      function closeSetupModal(){ setupModal.style.display = 'none'; }
+
+
+      // ===== start game logic =====
+      function renderCardTypeOptions(){
+        cardTypesWrap.innerHTML = '';
+        Object.keys(cardTypesDefinition).forEach(key => {
+          const def = cardTypesDefinition[key];
+          const div = document.createElement('div');
+          div.className = 'card-type';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.id = `ct-${key}`;
+          cb.value = key;
+          cb.checked = enabledCardTypes.includes(key);
+          cb.addEventListener('change', () => {
+            if (cb.checked) {
+              if (!enabledCardTypes.includes(key)) enabledCardTypes.push(key);
+            } else {
+              enabledCardTypes = enabledCardTypes.filter(k => k !== key);
+            }
+          });
+          const label = document.createElement('label');
+          label.htmlFor = `ct-${key}`;
+          label.textContent = `${def.label}${def.delta !== 0 ? ` (${def.delta > 0 ? '+' : ''}${def.delta})` : ''}`;
+          div.appendChild(cb);
+          div.appendChild(label);
+          cardTypesWrap.appendChild(div);
+        });
+      }
+
+      resetCardTypes.addEventListener('click', () => { enabledCardTypes = Object.keys(cardTypesDefinition); renderCardTypeOptions(); });
+
+      // ===== placement & spawn timers =====
+      function addRandomCard(count = 1) {
+        const blockedRange = (p) => (p >= 2 && p <= 20);
+        const candidates = shuffle(getSafeCells())
+          .filter(p => !blockedRange(p))
+          .filter(p => !bombs.some(b => b.pos === p))
+          .filter(p => !cards.some(c => c.pos === p));
+        if (!candidates.length) return;
+        const types = enabledCardTypes.length ? enabledCardTypes : Object.keys(cardTypesDefinition);
+        for (let i=0;i<count && candidates.length;i++){
+          const pos = candidates.shift();
+          const type = types[Math.floor(Math.random()*types.length)];
+          const def = cardTypesDefinition[type];
+          const el = document.createElement('div');
+          el.className = 'card-mark';
+          el.textContent = `🃏`;
+          el.title = `${def.label}${def.delta !== 0 ? ` (${def.delta > 0 ? '+' : ''}${def.delta})` : ''}`;
+          boardEl.appendChild(el);
+          cards.push({pos, type, delta: def.delta, el});
+          logAction(`Kartu baru ditempatkan di ${pos}`);
+        }
+        updateAllMarkers();
+      }
+
+      function addRandomBomb(count = 1) {
+        const candidates = shuffle(getSafeCells())
+          .filter(p => !cards.some(c => c.pos === p))
+          .filter(p => !bombs.some(b => b.pos === p));
+        if (!candidates.length) return;
+        for (let i=0;i<count && candidates.length;i++){
+          const pos = candidates.shift();
+          const strength = Math.floor(Math.random()*3)+1;
+          const el = document.createElement('div');
+          el.className = 'bomb-mark';
+          el.textContent = '💣';
+          el.title = `Bomb — Strength ${strength}`;
+          boardEl.appendChild(el);
+          bombs.push({pos, strength, el});
+          logAction(`Bomb baru ditempatkan di ${pos}`);
+        }
+        updateAllMarkers();
+      }
+
+      function startTimers(){
+        stopTimers();
+        // cards every 40s
+        cardTimerId = setInterval(() => {
+          if (!gameStarted) return;
+          addRandomCard(1);
+        }, 40000);
+        // bombs every 30s
+        bombTimerId = setInterval(() => {
+          if (!gameStarted) return;
+          addRandomBomb(1);
+        }, 30000);
+      }
+      function stopTimers(){
+        if (cardTimerId) { clearInterval(cardTimerId); cardTimerId = null; }
+        if (bombTimerId) { clearInterval(bombTimerId); bombTimerId = null; }
+      }
+
+      // ===== core: init / reset / roll dice etc. =====
+      startFromModal.addEventListener('click', () => {
+        const count = Math.max(2, Math.min(6, parseInt(playerCountModal.value) || 2));
+        const nameInputs = modalPlayerNames.querySelectorAll('input');
+        if (nameInputs.length < 2) return alert('Minimal 2 pemain');
+
+        names = [];
+        nameInputs.forEach((input, i) => names.push((input.value.trim()) || `P${i+1}`));
+
+        const bombsCount = Math.max(0, Math.min(90, parseInt(bombsCountModal.value) || bombsCountDefault));
+        const cardsCount = Math.max(0, Math.min(90, parseInt(cardsCountModal.value) || cardsCountDefault));
+
+        if (!enabledCardTypes.length){
+          if (!confirm('Belum pilih tipe kartu. Lanjutkan tanpa kartu?')) return;
+        }
+
+        playerCountEl.value = count;
+        generateNameInputs(playerCountEl, playerNamesWrap, true);
+        const mainInputs = playerNamesWrap.querySelectorAll('input');
+        mainInputs.forEach((i, idx) => i.value = names[idx] || '');
+
+        closeSetupModal();
+        initGameFromSetup(count, bombsCount, cardsCount);
       });
-    }
 
-    resetCardTypes.addEventListener('click', () => {
-      enabledCardTypes = Object.keys(cardTypesDefinition);
-      renderCardTypeOptions();
-    });
+      function initGameFromSetup(count, bombsCount, cardsCount){
+        positions = new Array(count).fill(1);
+        skipTurns = new Array(count).fill(0);
+        players = [];
+        boardEl.innerHTML = '';
+        logEl.innerHTML = '';
+        bombs = []; cards = [];
+        // create markers for players
+        for (let i=0;i<count;i++){
+          const d = document.createElement('div');
+          d.className = 'player'; d.style.background = colors[i%colors.length];
+          d.textContent = (names[i] && names[i][0]) ? names[i][0].toUpperCase() : (i+1);
+          d.title = names[i] || `P${i+1}`;
+          boardEl.appendChild(d);
+          players.push(d);
+        }
+        // place initial bombs & cards
+        placeBombsRandom(Math.min(bombsCount, 90));
+        placeCardsRandom(Math.min(cardsCount, 90 - bombs.length));
+        updatePositions();
+        currentPlayer = 0;
+        turnInfo.textContent = `Giliran: ${names[currentPlayer]}`;
+        rollBtn.disabled = false; gameStarted = true; animating = false;
+        saveLog('Game dimulai: ' + names.join(', '));
+        diceResult.textContent = '';
+        startTimers();
+      }
 
-    // initialize on load
-    window.addEventListener('load', () => {
-      openSetupModal();
+      function resetGame(){
+        if (!confirm('Reset permainan? Semua data posisi akan dikosongkan.')) return;
+        names = []; positions = []; players = []; currentPlayer = 0; gameStarted = false; animating = false; skipTurns = [];
+        boardEl.innerHTML = ''; logEl.innerHTML = ''; bombs = []; cards = [];
+        playerCountEl.value = 2; generateNameInputs(playerCountEl, playerNamesWrap, true);
+        saveLog('Game direset'); openSetupModal(); rollBtn.disabled = true;
+        stopTimers();
+      }
+
+      // ===== movement, rollDice, finalize etc. (kept same logic) =====
+      function rollDice(){
+        if (!gameStarted || players.length === 0 || animating) return;
+
+        if (skipTurns[currentPlayer] > 0){
+          logAction(`${names[currentPlayer]} terpengaruh bomb — melewatkan ${skipTurns[currentPlayer]} giliran(s)`);
+          skipTurns[currentPlayer]--;
+          currentPlayer = (currentPlayer + 1) % players.length;
+          turnInfo.textContent = `Giliran: ${names[currentPlayer]}`;
+          return;
+        }
+
+        animating = true;
+        diceResult.textContent = 'Mengocok...';
+        diceImage.innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Alea_1.png" width="54" alt="dice">';
+        rollBtn.disabled = true;
+
+        setTimeout(() => {
+          const dice = Math.floor(Math.random()*6)+1;
+          diceResult.textContent = `${names[currentPlayer]} mendapatkan ${dice}`;
+          diceImage.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(dice)}" width="54" alt="dice">`;
+          const steps = generateSteps(positions[currentPlayer], dice);
+          animateSteps(steps, () => {
+            let finalPos = positions[currentPlayer];
+            if (ladders[finalPos]){
+              logAction(`${names[currentPlayer]} menemukan tangga! Naik dari ${finalPos} ke ${ladders[finalPos]}`);
+              positions[currentPlayer] = ladders[finalPos];
+              popToken(currentPlayer);
+              updatePositions();
+              finalPos = positions[currentPlayer];
+            } else if (snakes[finalPos]){
+              logAction(`${names[currentPlayer]} terkena ular! Turun dari ${finalPos} ke ${snakes[finalPos]}`);
+              positions[currentPlayer] = snakes[finalPos];
+              popToken(currentPlayer);
+              updatePositions();
+              finalPos = positions[currentPlayer];
+            }
+
+            const marker = getMarkerAt(finalPos);
+            if (marker){
+              if (marker.type === 'card'){
+                const mtype = marker.data.type;
+                if (mtype === 'challenge'){
+                  logAction(`${names[currentPlayer]} mendapatkan Kartu Tantangan!`);
+                  showChallengeModal('Pilih pemain target dan langkah (maks 12)', (targetIndex, delta) => {
+                    removeMarker(marker);
+                    if (targetIndex === null || isNaN(targetIndex)) {
+                      animating = false;
+                      finalizeTurnAfterRoll(dice);
+                      return;
+                    }
+                    const startPos = positions[targetIndex];
+                    const target = Math.max(1, Math.min(100, startPos + delta));
+                    const tempSteps = [];
+                    if (delta > 0){
+                      for (let i = startPos + 1; i <= target; i++) tempSteps.push(i);
+                    } else if (delta < 0){
+                      for (let i = startPos - 1; i >= target; i--) tempSteps.push(i);
+                    }
+                    if (tempSteps.length){
+                      animating = true;
+                      animatePlayerSteps(targetIndex, tempSteps, () => {
+                        const newPos = positions[targetIndex];
+                        if (ladders[newPos]){
+                          logAction(`${names[targetIndex]} menemukan tangga pasca tantangan! Naik dari ${newPos} ke ${ladders[newPos]}`);
+                          positions[targetIndex] = ladders[newPos];
+                          popToken(targetIndex);
+                          updatePositions();
+                        } else if (snakes[newPos]){
+                          logAction(`${names[targetIndex]} terkena ular pasca tantangan! Turun dari ${newPos} ke ${snakes[newPos]}`);
+                          positions[targetIndex] = snakes[newPos];
+                          popToken(targetIndex);
+                          updatePositions();
+                        }
+                        animating = false;
+                        finalizeTurnAfterRoll(dice);
+                      });
+                      return;
+                    }
+                    animating = false;
+                    finalizeTurnAfterRoll(dice);
+                  });
+                  return;
+                }
+
+                // non-challenge card
+                logAction(`${names[currentPlayer]} mendapatkan kartu: ${cardTypesDefinition[mtype].label}`);
+                showCardModal(cardTypesDefinition[mtype].label, () => {
+                  removeMarker(marker);
+                  const delta = marker.data.delta;
+                  const target = Math.max(1, Math.min(100, positions[currentPlayer] + delta));
+                  const tempSteps = [];
+                  if (delta > 0){
+                    for (let i = positions[currentPlayer] + 1; i <= target; i++) tempSteps.push(i);
+                  } else if (delta < 0){
+                    for (let i = positions[currentPlayer] - 1; i >= target; i--) tempSteps.push(i);
+                  }
+                  if (tempSteps.length){
+                    animating = true;
+                    animateSteps(tempSteps, () => {
+                      const newPos = positions[currentPlayer];
+                      if (ladders[newPos]){
+                        logAction(`${names[currentPlayer]} menemukan tangga pasca kartu! Naik dari ${newPos} ke ${ladders[newPos]}`);
+                        positions[currentPlayer] = ladders[newPos];
+                        popToken(currentPlayer);
+                        updatePositions();
+                      } else if (snakes[newPos]){
+                        logAction(`${names[currentPlayer]} terkena ular pasca kartu! Turun dari ${newPos} ke ${snakes[newPos]}`);
+                        positions[currentPlayer] = snakes[newPos];
+                        popToken(currentPlayer);
+                        updatePositions();
+                      }
+                      finalizeTurnAfterRoll(dice);
+                    });
+                    return;
+                  }
+                  finalizeTurnAfterRoll(dice);
+                });
+                return;
+              } else if (marker.type === 'bomb'){
+                const n = marker.data.strength;
+                logAction(`${names[currentPlayer]} terkena BOM! Melewatkan ${n} giliran`);
+                showBombModal(`Terkena BOM — Melewatkan ${n} giliran.`, () => {
+                  skipTurns[currentPlayer] += n;
+                  removeMarker(marker);
+                  finalizeTurnAfterRoll(dice);
+                });
+                return;
+              }
+            }
+
+            finalizeTurnAfterRoll(dice);
+          });
+        }, 350);
+      }
+
+      function finalizeTurnAfterRoll(dice){
+        if (positions[currentPlayer] === 100){
+          setTimeout(()=> {
+            alert(`${names[currentPlayer]} menang! Semua pemain mendapat giliran sampai akhir ronde.`);
+            turnInfo.textContent = `${names[currentPlayer]} MENANG!`;
+            rollBtn.disabled = true; gameStarted = false; animating = false;
+            stopTimers();
+          }, 250);
+          return;
+        }
+        if (dice !== 6) currentPlayer = (currentPlayer + 1) % players.length;
+        else logAction(`${names[currentPlayer]} dapat 6 dan mendapat giliran lagi!`);
+        turnInfo.textContent = `Giliran: ${names[currentPlayer]}`;
+        rollBtn.disabled = false;
+        animating = false;
+      }
+
+      function generateSteps(start, dice){
+        const steps = []; let pos = start; let dir = 1;
+        for (let i=0;i<dice;i++){
+          let next = pos + dir;
+          if (next > 100){ dir = -1; next = pos + dir; }
+          else if (next < 1){ dir = 1; next = pos + dir; }
+          pos = next; steps.push(pos);
+        }
+        return steps;
+      }
+
+      function animateSteps(steps, cb){
+        const delay = 220; let idx = 0;
+        function step(){
+          if (idx >= steps.length){
+            if (steps.length) positions[currentPlayer] = steps[steps.length - 1];
+            updatePositions(); cb(); return;
+          }
+          positions[currentPlayer] = steps[idx];
+          updatePositions();
+          logAction(`${names[currentPlayer]} bergerak ke ${steps[idx]}`);
+          idx++;
+          setTimeout(step, delay);
+        }
+        step();
+      }
+
+      function popToken(idx){
+        const el = players[idx]; if (!el) return;
+        el.classList.add('pop'); setTimeout(()=>el.classList.remove('pop'),260);
+      }
+
+      function getDiceImage(val){
+        const map = {1:'2/2c/Alea_1.png',2:'b/b8/Alea_2.png',3:'2/2f/Alea_3.png',4:'8/8d/Alea_4.png',5:'5/55/Alea_5.png',6:'f/f4/Alea_6.png'};
+        return map[val];
+      }
+
+      function updatePositions(){
+        for (let i=0;i<players.length;i++){
+          const pos = positions[i];
+          const {x,y,cellW,cellH} = getPositionCoords(pos);
+          const offset = Math.min(cellW, cellH)*0.18;
+          const angle = (i/players.length) * Math.PI * 2;
+          const dx = Math.round(Math.cos(angle)*offset);
+          const dy = Math.round(Math.sin(angle)*offset);
+          players[i].style.left = `${x + dx}px`; players[i].style.top = `${y + dy}px`;
+        }
+        updateAllMarkers();
+      }
+
+      // ===== logging =====
+      function logAction(text){
+        const p = document.createElement('p'); p.textContent = text; logEl.prepend(p); saveLog(text);
+      }
+      function saveLog(entry){
+        const existing = JSON.parse(localStorage.getItem('gameLog') || '[]');
+        existing.unshift(entry); localStorage.setItem('gameLog', JSON.stringify(existing.slice(0,50)));
+      }
+      function loadLog(){
+        const existing = JSON.parse(localStorage.getItem('gameLog') || '[]'); logEl.innerHTML = '';
+        existing.forEach(e => { const p=document.createElement('p'); p.textContent = e; logEl.appendChild(p); });
+      }
+
+      // ===== bindings & init =====
+      openSetupBtn.addEventListener('click', () => setupModal.style.display = 'flex');
+      rollBtn.addEventListener('click', rollDice);
+      resetBtn.addEventListener('click', resetGame);
+      challengeMinimizeBtn.addEventListener('click', minimizeChallengeModal);
+      challengeRestoreBtn.addEventListener('click', restoreChallengeModal);
+
+      // tabs switching
+      tabButtons.forEach(b => {
+        b.addEventListener('click', () => {
+          tabButtons.forEach(t => t.classList.remove('active'));
+          b.classList.add('active');
+          document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+          document.getElementById(b.dataset.tab).classList.add('active');
+        });
+      });
+
+      // initial UI
       playerCountModal.value = playerCountEl.value || 2;
       generateNameInputs(playerCountModal, modalPlayerNames);
       renderCardTypeOptions();
       bombsCountModal.value = bombsCountDefault;
       cardsCountModal.value = cardsCountDefault;
       loadLog();
-    });
 
-    playerCountModal.addEventListener('change', () => generateNameInputs(playerCountModal, modalPlayerNames));
-
-    // ===== Utilities for safe positions & placement =====
-    function getSafeCells() {
-      const all = Array.from({length: 100}, (_, i) => i+1);
-      return all.filter(pos => pos !== 1 && pos !== 100)
-                .filter(pos => !ladders[pos] && !snakes[pos]);
-    }
-
-    function shuffle(arr){ return arr.slice().sort(()=>Math.random()-0.5); }
-
-    // ===== place bombs & cards =====
-    function clearBombAndCardMarkers(){
-      bombs.forEach(b => { if (b.el && b.el.parentElement) b.el.remove(); });
-      cards.forEach(c => { if (c.el && c.el.parentElement) c.el.remove(); });
-      bombs = []; cards = [];
-    }
-
-    function placeBombsRandom(count){
-      // create bombs array with random positions & strength 1-3
-      clearBombAndCardMarkers(); // ensure we don't overlap from previous
-      const safe = shuffle(getSafeCells());
-      const max = Math.min(count, safe.length);
-      for(let i=0;i<max;i++){
-        const pos = safe[i];
-        const strength = Math.floor(Math.random()*3)+1; // 1..3
-        const el = document.createElement('div');
-        el.className = 'bomb-mark';
-        el.textContent = '💣';
-        el.title = `Bomb — Strength ${strength}`;
-        boardEl.appendChild(el);
-        bombs.push({pos, strength, el});
-      }
-      updateAllMarkers();
-    }
-
-    function placeCardsRandom(count){
-      // picks from enabled card types
-      const safe = shuffle(getSafeCells().filter(s => !bombs.some(b => b.pos === s)));
-      const max = Math.min(count, safe.length);
-      const types = enabledCardTypes.length ? enabledCardTypes : Object.keys(cardTypesDefinition);
-      for(let i=0;i<max;i++){
-        const pos = safe[i];
-        const type = types[Math.floor(Math.random()*types.length)];
-        const def = cardTypesDefinition[type];
-        const el = document.createElement('div');
-        el.className = 'card-mark';
-        el.textContent = `🃏`;
-        el.title = `${def.label}${def.delta !== 0 ? ` (${def.delta > 0 ? '+' : ''}${def.delta})` : ''}`;
-        boardEl.appendChild(el);
-        cards.push({pos, type, delta: def.delta, el});
-      }
-      updateAllMarkers();
-    }
-
-    function updateAllMarkers(){
-      bombs.forEach(b => {
-        const {x,y,cellH} = getPositionCoords(b.pos);
-        b.el.style.left = `${x}px`;
-        b.el.style.top = `${y - (cellH*0.22)}px`;
-      });
-      cards.forEach(c => {
-        const {x,y,cellH} = getPositionCoords(c.pos);
-        c.el.style.left = `${x}px`;
-        c.el.style.top = `${y + (cellH*0.22)}px`;
-      });
-    }
-
-    function getMarkerAt(pos){
-      const bomb = bombs.find(b => b.pos === pos);
-      if (bomb) return {type: 'bomb', data: bomb};
-      const card = cards.find(c => c.pos === pos);
-      if (card) return {type: 'card', data: card};
-      return null;
-    }
-
-    function removeMarker(marker){
-      if (!marker) return;
-      if (marker.type === 'bomb'){
-        const idx = bombs.indexOf(marker.data);
-        if (idx >= 0) { marker.data.el.remove(); bombs.splice(idx,1); }
-      } else if (marker.type === 'card'){
-        const idx = cards.indexOf(marker.data);
-        if (idx >= 0) { marker.data.el.remove(); cards.splice(idx,1); }
-      }
-    }
-
-    // ===== show modals for card & bomb =====
-    function showCardModal(text, onOk){
-      cardTextEl.textContent = text;
-      cardHitModal.style.display = 'flex';
-      const handler = () => {
-        cardOkBtn.removeEventListener('click', handler);
-        cardHitModal.style.display = 'none';
-        if (onOk) onOk();
-      };
-      cardOkBtn.addEventListener('click', handler);
-    }
-
-    function showBombModal(text, onOk){
-      bombTextEl.textContent = text;
-      bombHitModal.style.display = 'flex';
-      const handler = () => {
-        bombOkBtn.removeEventListener('click', handler);
-        bombHitModal.style.display = 'none';
-        if (onOk) onOk();
-      };
-      bombOkBtn.addEventListener('click', handler);
-    }
-
-    // ===== challenge modal handling =====
-    function showChallengeModal(desc, onOk){
-      challengeTarget.innerHTML = '';
-      for (let i = 0; i < names.length; i++){
-        if (i === currentPlayer) continue; // cannot target self
-        const option = document.createElement('option');
-        option.value = i;
-        option.textContent = names[i];
-        challengeTarget.appendChild(option);
-      }
-      if (challengeTarget.options.length === 0) {
-        alert('Tidak ada pemain lain untuk ditargetkan.');
-        if (typeof onOk === 'function') onOk(null, 0);
-        return;
-      }
-      challengeDesc.textContent = desc || 'Pilih pemain dan langkah (max 12)';
-      challengeStepsInput.value = 1;
-      challengeDirForward.checked = true;
-
-      // mark pending and block dice/turn progression
-      challengePending = true;
-      animating = true;
-      rollBtn.disabled = true;
-
-      // ensure restore btn hidden and show modal
-      challengeRestoreBtn.style.display = 'none';
-      challengeModal.style.display = 'flex';
-
-      // OK handler: confirm challenge selection
-      const okHandler = () => {
-        challengeOkBtn.removeEventListener('click', okHandler);
-        // hide modal & reset restore UI
-        challengeModal.style.display = 'none';
-        challengeRestoreBtn.style.display = 'none';
-        const targetIndex = parseInt(challengeTarget.value, 10);
-        let steps = Math.max(1, Math.min(12, parseInt(challengeStepsInput.value || '1', 10)));
-        const dir = challengeDirBackward.checked ? -1 : 1;
-        challengePending = false;
-
-        if (typeof onOk === 'function') onOk(targetIndex, dir * steps);
-      };
-      challengeOkBtn.addEventListener('click', okHandler);
-    }
-
-    function minimizeChallengeModal(){
-      if (!challengePending) return;
-      challengeModal.style.display = 'none';
-      challengeRestoreBtn.style.display = 'block';
-    }
-
-    function restoreChallengeModal(){
-      if (!challengePending) return;
-      challengeRestoreBtn.style.display = 'none';
-      challengeModal.style.display = 'flex';
-    }
-
-    // ===== generic animation for any player's movement =====
-    function animatePlayerSteps(playerIndex, steps, cb){
-      if (!players[playerIndex]) { if (cb) cb(); return; }
-      const delay = 220; let idx = 0;
-      function step(){
-        if (idx >= steps.length){
-          if (steps.length) positions[playerIndex] = steps[steps.length - 1];
-          updatePositions(); if (cb) cb(); return;
-        }
-        positions[playerIndex] = steps[idx];
-        updatePositions();
-        logAction(`${names[playerIndex]} bergerak ke ${steps[idx]}`);
-        idx++;
-        setTimeout(step, delay);
-      }
-      step();
-    }
-
-    // ===== start game logic =====
-    startFromModal.addEventListener('click', () => {
-      const count = Math.max(2, Math.min(6, parseInt(playerCountModal.value) || 2));
-      const nameInputs = modalPlayerNames.querySelectorAll('input');
-      if (nameInputs.length < 2) return alert('Minimal 2 pemain');
-
-      names = [];
-      nameInputs.forEach((input, i) => names.push((input.value.trim()) || `P${i+1}`));
-
-      // read bombs/cards count
-      const bombsCount = Math.max(0, Math.min(90, parseInt(bombsCountModal.value) || bombsCountDefault));
-      const cardsCount = Math.max(0, Math.min(90, parseInt(cardsCountModal.value) || cardsCountDefault));
-
-      // ensure at least one card type enabled else warn
-      if (!enabledCardTypes.length){
-        if (!confirm('Belum pilih tipe kartu. Lanjutkan tanpa kartu?')) return;
-      }
-
-      // apply names to UI
-      playerCountEl.value = count;
-      generateNameInputs(playerCountEl, playerNamesWrap, true);
-      const mainInputs = playerNamesWrap.querySelectorAll('input');
-      mainInputs.forEach((i, idx) => i.value = names[idx] || '');
-
-      // init game
-      closeSetupModal();
-      initGameFromSetup(count, bombsCount, cardsCount);
-    });
-
-    function initGameFromSetup(count, bombsCount, cardsCount){
-      positions = new Array(count).fill(1);
-      skipTurns = new Array(count).fill(0);
-      players = [];
-      boardEl.innerHTML = '';
-      logEl.innerHTML = '';
-      bombs = []; cards = [];
-      // create markers for players
-      for (let i=0;i<count;i++){
-        const d = document.createElement('div');
-        d.className = 'player'; d.style.background = colors[i%colors.length];
-        d.textContent = (names[i] && names[i][0]) ? names[i][0].toUpperCase() : (i+1);
-        d.title = names[i] || `P${i+1}`;
-        boardEl.appendChild(d);
-        players.push(d);
-      }
-      // place bombs & cards
-      placeBombsRandom(Math.min(bombsCount, 90));
-      placeCardsRandom(Math.min(cardsCount, 90 - bombs.length));
-      updatePositions();
-      currentPlayer = 0;
-      turnInfo.textContent = `Giliran: ${names[currentPlayer]}`;
-      rollBtn.disabled = false; gameStarted = true; animating = false;
-      saveLog('Game dimulai: ' + names.join(', '));
-      diceResult.textContent = '';
-    }
-
-    function resetGame(){
-      if (!confirm('Reset permainan? Semua data posisi akan dikosongkan.')) return;
-      names = []; positions = []; players = []; currentPlayer = 0; gameStarted = false; animating = false; skipTurns = [];
-      boardEl.innerHTML = ''; logEl.innerHTML = ''; bombs = []; cards = [];
-      playerCountEl.value = 2; generateNameInputs(playerCountEl, playerNamesWrap, true);
-      saveLog('Game direset'); openSetupModal(); rollBtn.disabled = true;
-    }
-
-    // ===== dice & movement logic =====
-    function rollDice(){
-      if (!gameStarted || players.length === 0 || animating) return;
-
-      // Skip turn logic
-      if (skipTurns[currentPlayer] > 0){
-        logAction(`${names[currentPlayer]} terpengaruh bomb — melewatkan ${skipTurns[currentPlayer]} giliran(s)`);
-        skipTurns[currentPlayer]--;
-        // end turn now
-        currentPlayer = (currentPlayer + 1) % players.length;
-        turnInfo.textContent = `Giliran: ${names[currentPlayer]}`;
-        return;
-      }
-
-      animating = true;
-      diceResult.textContent = 'Mengocok...';
-      diceImage.innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Alea_1.png" width="54" alt="dice">';
-      rollBtn.disabled = true;
-
-      setTimeout(() => {
-        const dice = Math.floor(Math.random()*6)+1;
-        diceResult.textContent = `${names[currentPlayer]} mendapatkan ${dice}`;
-        diceImage.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(dice)}" width="54" alt="dice">`;
-        const steps = generateSteps(positions[currentPlayer], dice);
-        animateSteps(steps, () => {
-          let finalPos = positions[currentPlayer];
-          // ladder & snake handling
-          if (ladders[finalPos]){
-            logAction(`${names[currentPlayer]} menemukan tangga! Naik dari ${finalPos} ke ${ladders[finalPos]}`);
-            positions[currentPlayer] = ladders[finalPos];
-            popToken(currentPlayer);
-            updatePositions();
-            finalPos = positions[currentPlayer];
-          } else if (snakes[finalPos]){
-            logAction(`${names[currentPlayer]} terkena ular! Turun dari ${finalPos} ke ${snakes[finalPos]}`);
-            positions[currentPlayer] = snakes[finalPos];
-            popToken(currentPlayer);
-            updatePositions();
-            finalPos = positions[currentPlayer];
-          }
-
-          // check card or bomb
-          const marker = getMarkerAt(finalPos);
-          if (marker){
-            if (marker.type === 'card'){
-              const mtype = marker.data.type;
-              // challenge card special handling
-              if (mtype === 'challenge'){
-                logAction(`${names[currentPlayer]} mendapatkan Kartu Tantangan!`);
-                // show modal — player must resolve it before game proceeds
-                showChallengeModal('Pilih pemain target dan langkah (maks 12)', (targetIndex, delta) => {
-                  removeMarker(marker);
-                  // if no target selected, just proceed
-                  if (targetIndex === null || isNaN(targetIndex)) {
-                    animating = false;
-                    finalizeTurnAfterRoll(dice);
-                    return;
-                  }
-
-                  // animate movement of target player
-                  const startPos = positions[targetIndex];
-                  const target = Math.max(1, Math.min(100, startPos + delta));
-                  const tempSteps = [];
-                  if (delta > 0){
-                    for (let i = startPos + 1; i <= target; i++) tempSteps.push(i);
-                  } else if (delta < 0){
-                    for (let i = startPos - 1; i >= target; i--) tempSteps.push(i);
-                  }
-                  if (tempSteps.length){
-                    animating = true;
-                    animatePlayerSteps(targetIndex, tempSteps, () => {
-                      // after movement, check ladder/snake for the affected player
-                      const newPos = positions[targetIndex];
-                      if (ladders[newPos]){
-                        logAction(`${names[targetIndex]} menemukan tangga pasca tantangan! Naik dari ${newPos} ke ${ladders[newPos]}`);
-                        positions[targetIndex] = ladders[newPos];
-                        popToken(targetIndex);
-                        updatePositions();
-                      } else if (snakes[newPos]){
-                        logAction(`${names[targetIndex]} terkena ular pasca tantangan! Turun dari ${newPos} ke ${snakes[newPos]}`);
-                        positions[targetIndex] = snakes[newPos];
-                        popToken(targetIndex);
-                        updatePositions();
-                      }
-                      animating = false;
-                      finalizeTurnAfterRoll(dice);
-                    });
-                    return;
-                  }
-                  // no movement happened
-                  animating = false;
-                  finalizeTurnAfterRoll(dice);
-                });
-                return;
-              }
-
-              // non-challenge card: display card details and then apply movement
-              logAction(`${names[currentPlayer]} mendapatkan kartu: ${cardTypesDefinition[mtype].label}`);
-              showCardModal(cardTypesDefinition[mtype].label, () => {
-                // remove the card
-                removeMarker(marker);
-                // move player by delta
-                const delta = marker.data.delta;
-                const target = Math.max(1, Math.min(100, positions[currentPlayer] + delta));
-                const tempSteps = [];
-                if (delta > 0){
-                  for (let i = positions[currentPlayer] + 1; i <= target; i++) tempSteps.push(i);
-                } else if (delta < 0){
-                  for (let i = positions[currentPlayer] - 1; i >= target; i--) tempSteps.push(i);
-                }
-                if (tempSteps.length){
-                  animating = true;
-                  animateSteps(tempSteps, () => {
-                    // after card movement, check for ladder/snake again
-                    const newPos = positions[currentPlayer];
-                    if (ladders[newPos]){
-                      logAction(`${names[currentPlayer]} menemukan tangga pasca kartu! Naik dari ${newPos} ke ${ladders[newPos]}`);
-                      positions[currentPlayer] = ladders[newPos];
-                      popToken(currentPlayer);
-                      updatePositions();
-                    } else if (snakes[newPos]){
-                      logAction(`${names[currentPlayer]} terkena ular pasca kartu! Turun dari ${newPos} ke ${snakes[newPos]}`);
-                      positions[currentPlayer] = snakes[newPos];
-                      popToken(currentPlayer);
-                      updatePositions();
-                    }
-                    finalizeTurnAfterRoll(dice);
-                  });
-                  return;
-                }
-                finalizeTurnAfterRoll(dice);
-              });
-              return;
-            } else if (marker.type === 'bomb'){
-              // player hits bomb — skip N turns
-              const n = marker.data.strength;
-              logAction(`${names[currentPlayer]} terkena BOM! Melewatkan ${n} giliran`);
-              showBombModal(`Terkena BOM — Melewatkan ${n} giliran.`, () => {
-                skipTurns[currentPlayer] += n;
-                removeMarker(marker);
-                finalizeTurnAfterRoll(dice);
-              });
-              return;
-            }
-          }
-
-          finalizeTurnAfterRoll(dice);
-        });
-      }, 350);
-    }
-
-    function finalizeTurnAfterRoll(dice){
-      if (positions[currentPlayer] === 100){
-        setTimeout(()=> {
-          alert(`${names[currentPlayer]} menang! Semua pemain mendapat giliran sampai akhir ronde.`);
-          turnInfo.textContent = `${names[currentPlayer]} MENANG!`;
-          rollBtn.disabled = true; gameStarted = false; animating = false;
-        }, 250);
-        return;
-      }
-      if (dice !== 6) currentPlayer = (currentPlayer + 1) % players.length;
-      else logAction(`${names[currentPlayer]} dapat 6 dan mendapat giliran lagi!`);
-      turnInfo.textContent = `Giliran: ${names[currentPlayer]}`;
-      rollBtn.disabled = false;
-      animating = false;
-    }
-
-    function generateSteps(start, dice){
-      const steps = []; let pos = start; let dir = 1;
-      for (let i=0;i<dice;i++){
-        let next = pos + dir;
-        if (next > 100){ dir = -1; next = pos + dir; }
-        else if (next < 1){ dir = 1; next = pos + dir; }
-        pos = next; steps.push(pos);
-      }
-      return steps;
-    }
-
-    function animateSteps(steps, cb){
-      const delay = 220; let idx = 0;
-      function step(){
-        if (idx >= steps.length){
-          if (steps.length) positions[currentPlayer] = steps[steps.length - 1];
-          updatePositions(); cb(); return;
-        }
-        positions[currentPlayer] = steps[idx];
-        updatePositions();
-        logAction(`${names[currentPlayer]} bergerak ke ${steps[idx]}`);
-        idx++;
-        setTimeout(step, delay);
-      }
-      step();
-    }
-
-    function popToken(idx){
-      const el = players[idx]; if (!el) return;
-      el.classList.add('pop'); setTimeout(()=>el.classList.remove('pop'),260);
-    }
-
-    function getDiceImage(val){
-      const map = {1:'2/2c/Alea_1.png',2:'b/b8/Alea_2.png',3:'2/2f/Alea_3.png',4:'8/8d/Alea_4.png',5:'5/55/Alea_5.png',6:'f/f4/Alea_6.png'};
-      return map[val];
-    }
-
-    function updatePositions(){
-      for (let i=0;i<players.length;i++){
-        const pos = positions[i];
-        const {x,y,cellW,cellH} = getPositionCoords(pos);
-        const offset = Math.min(cellW, cellH)*0.18;
-        const angle = (i/players.length) * Math.PI * 2;
-        const dx = Math.round(Math.cos(angle)*offset);
-        const dy = Math.round(Math.sin(angle)*offset);
-        players[i].style.left = `${x + dx}px`; players[i].style.top = `${y + dy}px`;
-      }
-      updateAllMarkers();
-    }
-
-    // ===== logging =====
-    function logAction(text){
-      const p = document.createElement('p'); p.textContent = text; logEl.prepend(p); saveLog(text);
-    }
-    function saveLog(entry){
-      const existing = JSON.parse(localStorage.getItem('gameLog') || '[]');
-      existing.unshift(entry); localStorage.setItem('gameLog', JSON.stringify(existing.slice(0,50)));
-    }
-    function loadLog(){
-      const existing = JSON.parse(localStorage.getItem('gameLog') || '[]'); logEl.innerHTML = '';
-      existing.forEach(e => { const p=document.createElement('p'); p.textContent = e; logEl.appendChild(p); });
-    }
-
-    // ===== bindings & init =====
-    openSetupBtn.addEventListener('click', openSetupModal);
-    rollBtn.addEventListener('click', rollDice);
-    resetBtn.addEventListener('click', resetGame);
-    challengeMinimizeBtn.addEventListener('click', minimizeChallengeModal);
-    challengeRestoreBtn.addEventListener('click', restoreChallengeModal);
-
-    window.addEventListener('resize', () => { if (gameStarted) updatePositions(); });
+      // open setup modal on load
+      setupModal.style.display = 'flex';
+    }); // end DOMContentLoaded
   </script>
 </body>
 </html>
