@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Multiplayer Dice & Card — P2P (WebRTC) + Socket</title>
+  <style>
+    :root{ 
+      --bg:#0b1220; 
+      --card:#0f1724; 
+      --accent:#ffb703; 
+      --muted:#98a2b3;
+      --success:#06d6a0;
+      --danger:#ef476f;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:linear-gradient(180deg,#071020, #0b1726);font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto;color:#e6f0ff;padding:16px}
+    .container{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 360px;gap:12px}
+    @media(max-width:920px){ .container{grid-template-columns:1fr;}}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    h1{margin:0;font-size:20px}
+    .panel{background:rgba(255,255,255,0.02);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.04)}
+    input,select,textarea,button{font-size:14px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#e6f0ff}
+    textarea{min-height:100px;resize:vertical}
+    button{cursor:pointer}
+    .btn-primary{background:var(--accent);color:#081226;border:0}
+    .btn-secondary{background:transparent;color:#e6f0ff;border:1px solid rgba(255,255,255,0.06)}
+    .btn-danger{background:var(--danger);color:#fff;border:0}
+    .section{margin-bottom:12px}
+    .players{display:flex;flex-wrap:wrap;gap:8px}
+    .player{background:rgba(255,255,255,0.03);padding:8px 10px;border-radius:8px;min-width:120px}
+    .game-area{background:linear-gradient(180deg,#07111a,#081523);border-radius:10px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:320px}
+    .dice{width:120px;height:120px;border-radius:12px;background:linear-gradient(135deg,#1a4d6d,#0f2f45);display:flex;align-items:center;justify-content:center;font-size:56px;box-shadow:0 8px 32px rgba(0,0,0,0.3);border:2px solid var(--accent)}
+    .card{width:160px;height:220px;border-radius:12px;background:#fff;color:#081226;display:flex;align-items:center;justify-content:center;font-size:56px;box-shadow:0 8px 32px rgba(0,0,0,0.3);border:3px solid var(--accent)}
+    .chat-log{max-height:260px;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:6px}
+    .chat-bubble{background:rgba(255,255,255,0.03);padding:8px;border-radius:8px}
+    .status{padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);border-left:3px solid var(--accent)}
+    .small{font-size:13px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .hidden{display:none}
+    .control-row{display:flex;gap:8px}
+    pre{white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,0.15);padding:8px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎲 Multiplayer Dice & Card — P2P Ready</h1>
+    <div class="small">Use WebRTC DataChannel to play peer-to-peer (copy/paste signaling)</div>
+  </header>
+
+  <div class="container">
+    <div>
+      <div class="panel section">
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="name" placeholder="Your name" value="Player" style="flex:1" />
+          <button id="btnCreateRoom" class="btn-primary">Create Room (server)</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <input id="joinCode" placeholder="Room code" style="text-transform:uppercase;flex:1" />
+          <button id="btnJoinRoom" class="btn-secondary">Join Room (server)</button>
+        </div>
+
+        <div style="margin-top:10px" class="small">OR play P2P directly without server:</div>
+        <div style="margin-top:8px" class="grid">
+          <div>
+            <div class="small">1) Host / Create Offer</div>
+            <div style="display:flex;gap:8px;margin-top:6px">
+              <button id="btnCreateOffer" class="btn-primary">Create Offer</button>
+              <button id="btnCopyOffer" class="btn-secondary" title="Copy offer text">Copy</button>
+            </div>
+            <div style="margin-top:6px">
+              <div class="small">Offer (send to peer)</div>
+              <textarea id="offerText" placeholder="Offer SDP will appear here"></textarea>
+            </div>
+          </div>
+          <div>
+            <div class="small">2) Join / Paste Offer to create Answer</div>
+            <div style="display:flex;gap:8px;margin-top:6px">
+              <button id="btnCreateAnswer" class="btn-primary">Create Answer</button>
+              <button id="btnCopyAnswer" class="btn-secondary" title="Copy answer text">Copy</button>
+            </div>
+            <div style="margin-top:6px">
+              <div class="small">Answer (send back to host)</div>
+              <textarea id="answerText" placeholder="Paste offer then click Create Answer"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:8px" class="small">3) (Optional) If NAT/firewall present — you can still use this by exchanging texts over chat/QR/local network. Once Answer is pasted on Host side and setRemoteDescription, the DataChannel will open.</div>
+      </div>
+
+      <div class="panel section">
+        <div style="display:flex;gap:8px;align-items:center">
+          <label class="small">Game</label>
+          <select id="gameType" style="flex:1">
+            <option value="dice">🎲 Dice</option>
+            <option value="card">🃏 Cards</option>
+          </select>
+          <button id="btnSetGame" class="btn-secondary">Set</button>
+        </div>
+
+        <div style="margin-top:10px" class="players">
+          <div class="player">Local: <strong id="lblLocalName">—</strong></div>
+          <div class="player">Connection: <strong id="lblConn">Disconnected</strong></div>
+        </div>
+      </div>
+
+      <div class="panel section game-area">
+        <div class="small" id="lblGameState">Waiting</div>
+
+        <div id="widgetArea">
+          <div id="diceBox" class="dice hidden">—</div>
+          <div id="cardBox" class="card hidden">🂠</div>
+        </div>
+
+        <div class="control-row">
+          <button id="btnAction" class="btn-primary hidden">Action</button>
+          <button id="btnStartLocal" class="btn-secondary">Start Local Game</button>
+          <button id="btnReset" class="btn-secondary">Reset</button>
+        </div>
+
+        <div id="result" class="small"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel section">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>Signaling / P2P</strong>
+          <div class="small">Status: <span id="pcStatus">idle</span></div>
+        </div>
+        <div style="margin-top:8px" class="small">Use the fields above to copy/paste Offer & Answer between peers. When the DataChannel opens both sides can play directly.</div>
+      </div>
+
+      <div class="panel section">
+        <div style="display:flex;gap:8px">
+          <input id="serverUrl" placeholder="Socket server URL (optional)" value="" style="flex:1" />
+          <button id="btnConnectServer" class="btn-secondary">Connect</button>
+        </div>
+        <div style="margin-top:8px">
+          <div class="small">Chat</div>
+          <div class="chat-log" id="chatLog"></div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <input id="chatInput" placeholder="Message..." style="flex:1" />
+            <button id="btnSendChat" class="btn-primary">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel section">
+        <strong>Bluetooth (info)</strong>
+        <div class="small" style="margin-top:6px">You can scan nearby BLE devices (note: most browsers can't act as BLE peripheral so two browsers cannot fully P2P over Web Bluetooth). This is informative only.</div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button id="btnScanBT" class="btn-secondary">Scan BLE</button>
+        </div>
+        <div id="btList" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------------------------
+  GAME + P2P Integration Script
+  - WebRTC used for P2P DataChannel
+  - Can also optionally connect to Socket.io server (if you host one)
+  - Game supports 'dice' and 'card' modes
+---------------------------- */
+
+const nameEl = document.getElementById('name');
+const lblLocalName = document.getElementById('lblLocalName');
+const lblConn = document.getElementById('lblConn');
+const gameTypeEl = document.getElementById('gameType');
+const lblGameState = document.getElementById('lblGameState');
+const diceBox = document.getElementById('diceBox');
+const cardBox = document.getElementById('cardBox');
+const btnAction = document.getElementById('btnAction');
+const btnStartLocal = document.getElementById('btnStartLocal');
+const resultEl = document.getElementById('result');
+const chatLog = document.getElementById('chatLog');
+const pcStatus = document.getElementById('pcStatus');
+const offerText = document.getElementById('offerText');
+const answerText = document.getElementById('answerText');
+const btnCopyOffer = document.getElementById('btnCopyOffer');
+const btnCopyAnswer = document.getElementById('btnCopyAnswer');
+
+lblLocalName.innerText = nameEl.value;
+
+let localName = nameEl.value || 'Player';
+nameEl.oninput = ()=> { localName = nameEl.value || 'Player'; lblLocalName.innerText = localName; };
+
+let localGame = gameTypeEl.value || 'dice';
+gameTypeEl.onchange = ()=> { localGame = gameTypeEl.value; renderWidget(localGame); sendSignalIfOpen({type:'setGame', game: localGame}); };
+
+document.getElementById('btnSetGame').onclick = ()=> {
+  localGame = gameTypeEl.value;
+  renderWidget(localGame);
+  addChat('System', `Local game set to ${localGame}`);
+  sendSignalIfOpen({type:'setGame', game: localGame});
+};
+
+// ---------- WebRTC Peer Connection ----------
+let pc = null;
+let dataChannel = null;
+const pcConfig = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' }
+  ]
+};
+
+function logPC(s){
+  pcStatus.innerText = s;
+}
+
+// create peer connection and data channel (for host)
+async function createOffer(){
+  createPeerConnection();
+  // create data channel as host
+  dataChannel = pc.createDataChannel('game');
+  setupDataChannel();
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  // wait for ICE candidates to gather briefly
+  await waitForIceGatheringComplete(pc, 1000);
+  offerText.value = JSON.stringify(pc.localDescription);
+  logPC('offer-created');
+  addChat('System','Offer created. Copy and send to peer.');
+}
+
+// when joining: paste offer, create answer
+async function createAnswerFromOffer(){
+  const raw = offerText.value.trim();
+  if(!raw) return alert('Paste the offer into the left "Offer" box first.');
+  createPeerConnection();
+  pc.ondatachannel = (ev)=>{
+    dataChannel = ev.channel;
+    setupDataChannel();
+  };
+  const offer = JSON.parse(raw);
+  await pc.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  await waitForIceGatheringComplete(pc, 1000);
+  answerText.value = JSON.stringify(pc.localDescription);
+  logPC('answer-created');
+  addChat('System','Answer created. Copy and send back to host.');
+}
+
+// host receives answer: paste into Answer textarea then call setAnswer()
+async function setAnswerOnHost(){
+  const raw = answerText.value.trim();
+  if(!raw) return alert('Paste the answer from peer into the Answer box.');
+  const answer = JSON.parse(raw);
+  await pc.setRemoteDescription(new RTCSessionDescription(answer));
+  logPC('connected? waiting for channel');
+  addChat('System','Answer set on host. Waiting DataChannel open...');
+}
+
+// helper: setup RTCPeerConnection events
+function createPeerConnection(){
+  if(pc){ pc.close(); pc=null; }
+  pc = new RTCPeerConnection(pcConfig);
+  pc.onicecandidate = (ev)=> {
+    // we already waited for gathering before outputting SDP; ignore
+  };
+  pc.onconnectionstatechange = ()=> {
+    logPC(pc.connectionState);
+    if(pc.connectionState === 'connected'){
+      lblConn.innerText = 'Connected (peer)';
+    } else if(pc.connectionState === 'disconnected' || pc.connectionState === 'failed'){
+      lblConn.innerText = 'Disconnected';
+    }
+  };
+  pc.oniceconnectionstatechange = ()=> {
+    logPC(pc.iceConnectionState);
+  };
+}
+
+function setupDataChannel(){
+  if(!dataChannel) return;
+  dataChannel.onopen = ()=> {
+    addChat('System', '✅ DataChannel open — you are now P2P connected!');
+    lblConn.innerText = 'Connected (peer)';
+    btnAction.classList.remove('hidden');
+    pcStatus.innerText = 'datachannel-open';
+    // announce presence
+    sendSignalIfOpen({type:'hello', name: localName});
+  };
+  dataChannel.onmessage = (ev)=>{
+    try{
+      const msg = JSON.parse(ev.data);
+      handlePeerMessage(msg);
+    }catch(e){
+      addChat('Peer', ev.data);
+    }
+  };
+  dataChannel.onclose = ()=> {
+    addChat('System','DataChannel closed');
+    lblConn.innerText = 'Disconnected';
+    btnAction.classList.add('hidden');
+  };
+}
+
+// small helper to wait for ICE gathering
+function waitForIceGatheringComplete(pcInstance, timeout=1000){
+  return new Promise(resolve=>{
+    if(pcInstance.iceGatheringState === 'complete') return resolve();
+    function check(){
+      if(pcInstance.iceGatheringState === 'complete') {
+        pcInstance.removeEventListener('icegatheringstatechange', check);
+        resolve();
+      }
+    }
+    pcInstance.addEventListener('icegatheringstatechange', check);
+    setTimeout(()=>resolve(), timeout);
+  });
+}
+
+function sendSignalIfOpen(obj){
+  if(dataChannel && dataChannel.readyState === 'open'){
+    dataChannel.send(JSON.stringify(obj));
+  }
+  // also send to server if connected (socket path)
+  if(socket && socketConnected) {
+    socket.emit('game:signal', {room: currentRoom, payload: obj});
+  }
+}
+
+// handle messages from peer
+function handlePeerMessage(msg){
+  if(!msg || !msg.type) return;
+  if(msg.type === 'hello'){
+    addChat('Peer', `${msg.name} joined P2P`);
+  } else if(msg.type === 'setGame'){
+    // peer changed game type
+    gameTypeEl.value = msg.game;
+    localGame = msg.game;
+    renderWidget(localGame);
+    addChat('System', `Peer set game to ${msg.game}`);
+  } else if(msg.type === 'dice:roll'){
+    // peer rolled dice — show
+    showDice(msg.value);
+    addChat('Peer', `rolled a ${msg.value}`);
+  } else if(msg.type === 'card:drawn'){
+    showCard(msg.card);
+    addChat('Peer', `drew ${msg.card}`);
+  } else if(msg.type === 'chat'){
+    addChat(msg.name || 'Peer', msg.text);
+  }
+}
+
+/* --------------------------
+  UI: Offer/Answer buttons
+--------------------------- */
+document.getElementById('btnCreateOffer').onclick = async ()=>{
+  await createOffer();
+};
+document.getElementById('btnCreateAnswer').onclick = async ()=>{
+  await createAnswerFromOffer();
+};
+document.getElementById('btnCopyOffer').onclick = async ()=>{
+  if(!offerText.value) return alert('No offer to copy');
+  await navigator.clipboard.writeText(offerText.value);
+  addChat('System','Offer copied to clipboard');
+};
+document.getElementById('btnCopyAnswer').onclick = async ()=>{
+  if(!answerText.value) return alert('No answer to copy');
+  await navigator.clipboard.writeText(answerText.value);
+  addChat('System','Answer copied to clipboard');
+};
+// Host sets answer (paste into Answer then run this):
+// We provide a helper button flow: user pastes answer into Answer field AND calls setAnswerOnHost
+// For convenience, enable clicking answer textarea to paste AND then Host should click "Create Offer" -> receive answer -> call Set Answer
+// We'll bind Enter key on answer textarea to set answer as well
+document.getElementById('answerText').addEventListener('keypress', (e)=>{ if(e.key==='Enter' && e.ctrlKey){ setAnswerOnHost(); } });
+
+/* --------------------------
+  Game logic (local & P2P)
+--------------------------- */
+function renderWidget(type){
+  diceBox.classList.add('hidden');
+  cardBox.classList.add('hidden');
+  if(type === 'dice') diceBox.classList.remove('hidden');
+  if(type === 'card') cardBox.classList.remove('hidden');
+  lblGameState.innerText = `Mode: ${type}`;
+}
+renderWidget(localGame);
+
+function randomDice(){
+  return Math.floor(Math.random()*6)+1;
+}
+
+/* Simple card deck generation: ranks + suits representation */
+function createDeck(){
+  const suits = ['♠','♥','♦','♣'];
+  const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+  const deck = [];
+  for(const s of suits) for(const r of ranks) deck.push(r + s);
+  // shuffle
+  for(let i=deck.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; }
+  return deck;
+}
+let localDeck = createDeck();
+
+btnStartLocal.onclick = ()=>{
+  localDeck = createDeck();
+  addChat('System', 'Local game started (deck reset).');
+  sendSignalIfOpen({type:'setGame', game: localGame});
+  btnAction.classList.remove('hidden');
+};
+
+document.getElementById('btnAction').onclick = ()=> {
+  if(localGame === 'dice'){
+    const v = randomDice();
+    showDice(v);
+    addChat('You', `rolled ${v}`);
+    sendSignalIfOpen({type:'dice:roll', value: v});
+  } else if(localGame === 'card'){
+    if(localDeck.length === 0) localDeck = createDeck();
+    const card = localDeck.pop();
+    showCard(card);
+    addChat('You', `drew ${card}`);
+    sendSignalIfOpen({type:'card:drawn', card});
+  }
+};
+
+document.getElementById('btnReset').onclick = ()=> {
+  localDeck = createDeck();
+  addChat('System','Deck reset locally.');
+  sendSignalIfOpen({type:'resetDeck'});
+};
+
+/* UI helpers to show dice/card */
+function showDice(v){
+  diceBox.innerText = v;
+  diceBox.animate([{transform:'scale(1)'}, {transform:'scale(1.2)'}, {transform:'scale(1)'}], {duration:400});
+}
+function showCard(card){
+  cardBox.innerText = card;
+  cardBox.animate([{transform:'rotateY(0deg)'},{transform:'rotateY(90deg)'},{transform:'rotateY(0deg)'}], {duration:500});
+}
+
+/* Chat local send + over DataChannel if open */
+document.getElementById('btnSendChat').onclick = ()=> {
+  const txt = document.getElementById('chatInput').value.trim();
+  if(!txt) return;
+  addChat(localName, txt);
+  if(dataChannel && dataChannel.readyState === 'open'){
+    dataChannel.send(JSON.stringify({type:'chat', name: localName, text: txt}));
+  }
+  // also via socket if present
+  if(socket && socketConnected && currentRoom) {
+    socket.emit('chat:msg', {code: currentRoom, text: txt, name: localName});
+  }
+  document.getElementById('chatInput').value = '';
+};
+
+function addChat(who, text){
+  const d = document.createElement('div');
+  d.className = 'chat-bubble';
+  d.innerHTML = `<strong>${who}:</strong> ${escapeHtml(text)}`;
+  chatLog.appendChild(d);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* -----------------------------
+  Optional: Socket.io server path
+  (kept optional: if you want server fallback)
+------------------------------ */
+let socket = null;
+let socketConnected = false;
+let currentRoom = null;
+
+document.getElementById('btnConnectServer').onclick = ()=>{
+  const url = document.getElementById('serverUrl').value.trim();
+  if(!url) return alert('Enter Socket server URL (e.g. https://example.com) or leave blank');
+  // dynamic script load of socket.io client if needed
+  if(typeof io === 'undefined'){
+    alert('This demo assumes socket.io client script is not present. Use serverless P2P or include socket.io.js separately.');
+    return;
+  }
+  socket = io(url);
+  socket.on('connect', ()=>{ socketConnected = true; addChat('System','Connected to server'); document.getElementById('lblConn').innerText = 'Connected (server)'; });
+  socket.on('disconnect', ()=>{ socketConnected = false; addChat('System','Disconnected from server'); document.getElementById('lblConn').innerText = 'Disconnected'; });
+  // Bind server events if you implement server side signals
+  socket.on('chat:msg', ({name,text})=> addChat(name, text));
+  socket.on('dice:rolled', (payload)=> { showDice(payload.value); addChat('Server', `rolled ${payload.value}`); });
+};
+
+/* -----------------------------
+  Bluetooth scan (informational)
+  Note: two browsers normally cannot be true P2P via Web Bluetooth.
+------------------------------ */
+document.getElementById('btnScanBT').onclick = async ()=>{
+  if(!navigator.bluetooth) { addChat('System','Web Bluetooth not supported here'); return; }
+  try{
+    const device = await navigator.bluetooth.requestDevice({acceptAllDevices:true});
+    const div = document.createElement('div');
+    div.innerHTML = `<div class="small">Found: ${device.name || 'Unknown'} — id: ${device.id}</div>`;
+    document.getElementById('btList').appendChild(div);
+    addChat('System', 'Found device: ' + (device.name || device.id));
+  }catch(err){
+    addChat('System', 'Bluetooth scan cancelled or blocked');
+  }
+};
+
+/* Utility: copy/paste helpers to make it easier */
+offerText.addEventListener('dblclick', ()=>{ try{ navigator.clipboard.writeText(offerText.value); addChat('System','Offer copied'); }catch(e){} });
+answerText.addEventListener('dblclick', ()=>{ try{ navigator.clipboard.writeText(answerText.value); addChat('System','Answer copied'); }catch(e){} });
+
+/* initial UI */
+addChat('System', 'Ready. To play P2P: 1) Host clicks Create Offer -> copies text -> sends to Peer. 2) Peer pastes Offer -> clicks Create Answer -> gets Answer -> sends back to Host. 3) Host pastes Answer into Answer box and press Ctrl+Enter or click a helper (see instructions). DataChannel will open and you can click Action to play.');
+</script>
+</body>
+</html>
