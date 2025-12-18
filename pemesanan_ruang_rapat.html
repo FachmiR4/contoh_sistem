@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistem Pemesanan Ruang Rapat (Horizontal)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #1f2933, #111827);
+            color: #fff;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        table {
+            background: #fff;
+            color: #000;
+            border-radius: 12px;
+        }
+        th, td {
+            text-align: center;
+            vertical-align: middle;
+            min-width: 100px;
+            cursor: pointer;
+        }
+        .room-name {
+            background: #0d6efd;
+            color: #fff;
+            font-weight: bold;
+            position: sticky;
+            left: 0;
+            z-index: 2;
+        }
+        .time-header {
+            background: #e9ecef;
+            font-weight: bold;
+        }
+        .selected {
+            background: #198754 !important;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <label class="form-label text-white">Tanggal Pemesanan</label>
+            <input type="date" id="bookingDate" class="form-control">
+            <div class="btn-group mt-2">
+                <button class="btn btn-sm btn-outline-light" id="prevDay">◀ Kemarin</button>
+                <button class="btn btn-sm btn-outline-light" id="nextDay">Besok ▶</button>
+            </div>
+        </div>
+        <button class="btn btn-warning mt-4" id="manualBookingBtn">➕ Tambah Manual</button>
+    </div>
+    <h3 class="text-center mb-2">📊 Pemesanan Ruang Rapat (Geser ke Samping)</h3>
+    <p class="text-center text-light mb-4">Tanggal: <span id="labelTanggal"></span></p>
+
+    <div class="table-wrapper">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th class="room-name">Ruang</th>
+                    <th class="time-header">08.00</th>
+                    <th class="time-header">09.00</th>
+                    <th class="time-header">10.00</th>
+                    <th class="time-header">11.00</th>
+                    <th class="time-header">12.00</th>
+                    <th class="time-header">13.00</th>
+                    <th class="time-header">14.00</th>
+                    <th class="time-header">15.00</th>
+                    <th class="time-header">16.00</th>
+                    <th class="time-header">17.00</th>
+                </tr>
+            </thead>
+            <tbody id="roomTable">
+                <tr>
+                    <td class="room-name">Ruang A</td>
+                    <td data-room="Ruang A" data-hour="8"></td>
+                    <td data-room="Ruang A" data-hour="9"></td>
+                    <td data-room="Ruang A" data-hour="10"></td>
+                    <td data-room="Ruang A" data-hour="11"></td>
+                    <td data-room="Ruang A" data-hour="12"></td>
+                    <td data-room="Ruang A" data-hour="13"></td>
+                    <td data-room="Ruang A" data-hour="14"></td>
+                    <td data-room="Ruang A" data-hour="15"></td>
+                    <td data-room="Ruang A" data-hour="16"></td>
+                    <td data-room="Ruang A" data-hour="17"></td>
+                </tr>
+                <tr>
+                    <td class="room-name">Ruang B</td>
+                    <td data-room="Ruang B" data-hour="8"></td>
+                    <td data-room="Ruang B" data-hour="9"></td>
+                    <td data-room="Ruang B" data-hour="10"></td>
+                    <td data-room="Ruang B" data-hour="11"></td>
+                    <td data-room="Ruang B" data-hour="12"></td>
+                    <td data-room="Ruang B" data-hour="13"></td>
+                    <td data-room="Ruang B" data-hour="14"></td>
+                    <td data-room="Ruang B" data-hour="15"></td>
+                    <td data-room="Ruang B" data-hour="16"></td>
+                    <td data-room="Ruang B" data-hour="17"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Drag Booking -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Form Pemesanan</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2"><b>Ruangan:</b> <span id="mRoom"></span></div>
+                <div class="mb-2"><b>Jam:</b> <span id="mTime"></span></div>
+                <div class="mb-3">
+                    <label class="form-label">Jumlah Peserta</label>
+                    <input type="number" id="peserta" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Konsumsi</label>
+                    <input type="text" id="konsumsi" class="form-control" readonly>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button class="btn btn-success" id="saveBooking">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Manual Booking -->
+<div class="modal fade" id="manualModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Tambah Manual Pemesanan</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Ruangan</label>
+                    <select id="manualRoom" class="form-select">
+                        <option>Ruang A</option>
+                        <option>Ruang B</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Jam Mulai</label>
+                        <select id="manualStart" class="form-select">
+                            <option value="8">08.00</option>
+                            <option value="9">09.00</option>
+                            <option value="10">10.00</option>
+                            <option value="11">11.00</option>
+                            <option value="12">12.00</option>
+                            <option value="13">13.00</option>
+                            <option value="14">14.00</option>
+                            <option value="15">15.00</option>
+                            <option value="16">16.00</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Jam Selesai</label>
+                        <select id="manualEnd" class="form-select">
+                            <option value="9">09.00</option>
+                            <option value="10">10.00</option>
+                            <option value="11">11.00</option>
+                            <option value="12">12.00</option>
+                            <option value="13">13.00</option>
+                            <option value="14">14.00</option>
+                            <option value="15">15.00</option>
+                            <option value="16">16.00</option>
+                            <option value="17">17.00</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Jumlah Peserta</label>
+                    <input type="number" id="manualPeserta" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Konsumsi</label>
+                    <input type="text" id="manualKonsumsi" class="form-control" readonly>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button class="btn btn-success" id="saveManual">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let isDragging = false;
+    let bookings = JSON.parse(localStorage.getItem('bookings')) || {};
+
+    const bookingDateInput = document.getElementById('bookingDate');
+    const labelTanggal = document.getElementById('labelTanggal');
+
+    const today = new Date().toISOString().split('T')[0];
+    bookingDateInput.value = today;
+    updateTanggalLabel();
+    loadBookings();
+
+    document.getElementById('prevDay').onclick = () => changeDay(-1);
+    document.getElementById('nextDay').onclick = () => changeDay(1);
+    bookingDateInput.onchange = () => {
+        updateTanggalLabel();
+        loadBookings();
+    };
+    let selectedCells = [];
+    let currentRoom = null;
+
+    const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
+
+    document.querySelectorAll('td[data-hour]').forEach(cell => {
+        cell.addEventListener('mousedown', () => {
+            isDragging = true;
+            selectedCells = [];
+            currentRoom = cell.dataset.room;
+            selectCell(cell);
+        });
+
+        cell.addEventListener('mouseover', () => {
+            if (isDragging && cell.dataset.room === currentRoom) {
+                selectCell(cell);
+            }
+        });
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (selectedCells.length > 0) {
+            const hours = selectedCells.map(c => parseInt(c.dataset.hour));
+            const start = Math.min(...hours);
+            const end = Math.max(...hours);
+            const duration = end - start;
+
+            let konsumsi = 'Snack';
+            if (duration > 5) konsumsi = 'Makan Berat + Snack';
+            else if (start <= 9 && end >= 12) konsumsi = 'Makan Berat';
+            else if (duration <= 2) konsumsi = 'Snack';
+
+            document.getElementById('mRoom').innerText = currentRoom;
+            document.getElementById('mTime').innerText = start + '.00 - ' + end + '.00';
+            document.getElementById('konsumsi').value = konsumsi;
+
+            modal.show();
+        }
+        isDragging = false;
+    });
+
+    function updateTanggalLabel() {
+        const d = new Date(bookingDateInput.value);
+        labelTanggal.innerText = d.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    }
+
+    function changeDay(step) {
+        const d = new Date(bookingDateInput.value);
+        d.setDate(d.getDate() + step);
+        bookingDateInput.value = d.toISOString().split('T')[0];
+        updateTanggalLabel();
+        loadBookings();
+    }
+
+    function loadBookings() {
+        document.querySelectorAll('td[data-hour]').forEach(td => {
+            td.classList.remove('selected');
+            td.innerText = '';
+        });
+
+        const dateKey = bookingDateInput.value;
+        if (!bookings[dateKey]) return;
+
+        bookings[dateKey].forEach(b => {
+            document.querySelectorAll(`td[data-room="${b.room}"]`).forEach(td => {
+                const h = parseInt(td.dataset.hour);
+                if (h >= b.start && h < b.end) {
+                    td.classList.add('selected');
+                    td.innerText = 'BOOKED';
+                }
+            });
+        });
+    }
+
+    function selectCell(cell) {
+        if (!selectedCells.includes(cell)) {
+            cell.classList.add('selected');
+            selectedCells.push(cell);
+        }
+    }
+
+    document.getElementById('manualBookingBtn').addEventListener('click', () => {
+        new bootstrap.Modal(document.getElementById('manualModal')).show();
+    });
+
+    document.getElementById('manualStart').addEventListener('change', hitungManual);
+    document.getElementById('manualEnd').addEventListener('change', hitungManual);
+
+    function hitungManual() {
+        const start = parseInt(document.getElementById('manualStart').value);
+        const end = parseInt(document.getElementById('manualEnd').value);
+        const durasi = end - start;
+        let konsumsi = 'Snack';
+        if (durasi > 5) konsumsi = 'Makan Berat + Snack';
+        else if (start <= 9 && end >= 12) konsumsi = 'Makan Berat';
+        document.getElementById('manualKonsumsi').value = konsumsi;
+    }
+
+    document.getElementById('saveBooking').addEventListener('click', () => {
+        modal.hide();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bomb Waktu → Kirim ke Laravel + Telegram + WhatsApp</title>
+<style>
+  body{font-family:Inter,system-ui,Arial;margin:20px;background:#f4f6f8;color:#111}
+  .card{background:#fff;padding:18px;border-radius:10px;max-width:980px;margin:auto;box-shadow:0 8px 30px rgba(20,20,40,0.06)}
+  label{display:block;margin-top:8px}
+  input,select,textarea{padding:8px;border-radius:6px;border:1px solid #ccc;width:100%;box-sizing:border-box}
+  .row{display:flex;gap:12px}
+  .col{flex:1}
+  .timer{font-size:40px;font-weight:700;margin-top:12px}
+  button{padding:8px 12px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer}
+  button.ghost{background:#e6e6e6;color:#111}
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+  .log{white-space:pre-wrap;background:#0f172a;color:#f8fafc;padding:10px;border-radius:6px;max-height:220px;overflow:auto;margin-top:12px}
+  .success{color:#16a34a;font-weight:700}
+  .danger{color:#dc2626;font-weight:700}
+  .small{font-size:13px;color:#6b7280}
+</style>
+
+<!-- IMPORTANT: Laravel blade: include csrf meta tag in your layout:
+<meta name="csrf-token" content="{{ csrf_token() }}">
+-->
+<meta name="csrf-token" content="YOUR_LARAVEL_CSRF_TOKEN_HERE">
+
+</head>
+<body>
+  <div class="card">
+    <h2>Bomb Waktu (Tanggal & Waktu) — Kirim ke Laravel + Telegram + WhatsApp</h2>
+    <p class="small">Isi konfigurasi di bawah (ganti placeholder dengan nilai asli). Ketika waktu target tercapai, halaman akan mengirim payload ke server Laravel lalu mengirim notifikasi Telegram + WhatsApp.</p>
+
+    <div style="display:flex;gap:12px;align-items:center;">
+      <input type="datetime-local" id="targetDateTime" value="">
+      <button id="startBtn">Mulai</button>
+      <button id="stopBtn" class="ghost">Hentikan</button>
+      <label style="margin-left:auto" class="small">Auto-start <input type="checkbox" id="autoStart"></label>
+    </div>
+
+    <div class="timer" id="display">--:--:--</div>
+    <div style="margin-top:12px;">
+      <strong>Opsi aksi saat waktu habis</strong>
+      <div class="row" style="margin-top:8px;">
+        <label class="col"><input type="checkbox" id="doLaravel" checked> Kirim ke Laravel (API update DB)</label>
+        <label class="col"><input type="checkbox" id="doTelegram" checked> Kirim Notifikasi Telegram</label>
+        <label class="col"><input type="checkbox" id="doWhatsApp" checked> Kirim Notifikasi WhatsApp</label>
+      </div>
+    </div>
+
+    <hr>
+
+    <h3>Konfigurasi Laravel (API)</h3>
+    <div class="row">
+      <div class="col">
+        <label>URL API Laravel (POST) — contoh: <span class="small">/api/update-after-timer</span></label>
+        <input id="laravelUrl" placeholder="/api/update-after-timer" value="/api/update-after-timer">
+      </div>
+      <div class="col">
+        <label>Method</label>
+        <select id="laravelMethod"><option>POST</option><option>PUT</option></select>
+      </div>
+    </div>
+
+    <h3>Konfigurasi Telegram</h3>
+    <div class="row">
+      <div class="col">
+        <label>Bot Token (botXXXXXXXX:YYYYYYYY)</label>
+        <input id="tgToken" placeholder="YOUR_TELEGRAM_BOT_TOKEN">
+      </div>
+      <div class="col">
+        <label>Chat ID (user or group)</label>
+        <input id="tgChatId" placeholder="YOUR_CHAT_ID">
+      </div>
+    </div>
+
+    <h3>Konfigurasi WhatsApp (Cloud API / Webhook)</h3>
+    <div class="row">
+      <div class="col">
+        <label>WhatsApp Endpoint (contoh Cloud API)</label>
+        <input id="waEndpoint" placeholder="https://graph.facebook.com/v17.0/PHONE_NUMBER_ID/messages">
+      </div>
+      <div class="col">
+        <label>Access Token (Bearer)</label>
+        <input id="waToken" placeholder="YOUR_WHATSAPP_TOKEN">
+      </div>
+    </div>
+
+    <hr>
+
+    <h3>Data (Contoh) — akan dikirim ke server</h3>
+    <table id="dataTable" aria-live="polite">
+      <thead><tr><th>#</th><th>Nama</th><th>Nilai</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr data-id="1"><td>1</td><td>Asep</td><td class="value">100</td><td class="status">Aktif</td></tr>
+        <tr data-id="2"><td>2</td><td>Siti</td><td class="value">150</td><td class="status">Aktif</td></tr>
+        <tr data-id="3"><td>3</td><td>Doni</td><td class="value">200</td><td class="status">Aktif</td></tr>
+      </tbody>
+    </table>
+
+    <label style="margin-top:10px">Payload tambahan bebas (opsional JSON)</label>
+    <textarea id="extraPayload" rows="4" placeholder='{"note":"contoh catatan"}'></textarea>
+
+    <h3>Log</h3>
+    <div class="log" id="logBox"></div>
+  </div>
+
+<script>
+/* ======= Utility ======= */
+const logBox = document.getElementById('logBox');
+function log(...args){
+  const time = new Date().toLocaleString();
+  logBox.textContent = `[${time}] ` + args.map(a => (typeof a === 'object' ? JSON.stringify(a,null,2) : String(a))).join(' ') + '\n' + logBox.textContent;
+}
+
+/* ======= Timer ======= */
+let interval = null;
+const display = document.getElementById('display');
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function updateDisplayFromDiff(diffMs){
+  if (diffMs <= 0) { display.textContent = '00:00:00'; return; }
+  const s = Math.floor(diffMs/1000);
+  const h = Math.floor(s/3600);
+  const m = Math.floor((s%3600)/60);
+  const sec = s%60;
+  display.textContent = `${pad(h)}:${pad(m)}:${pad(sec)}`;
+}
+
+function startCountdown(){
+  const input = document.getElementById('targetDateTime').value;
+  if (!input) { alert('Pilih tanggal & waktu target terlebih dahulu'); return; }
+  const target = new Date(input).getTime();
+  if (isNaN(target)) { alert('Format tanggal tidak valid'); return; }
+
+  if (interval) clearInterval(interval);
+  interval = setInterval(() => {
+    const now = Date.now();
+    const diff = target - now;
+    if (diff <= 0) {
+      clearInterval(interval);
+      interval = null;
+      updateDisplayFromDiff(0);
+      onTimeUp(); // trigger actions immediately
+      return;
+    }
+    updateDisplayFromDiff(diff);
+  }, 250);
+  log('Countdown dimulai hingga', new Date(target).toString());
+}
+
+function stopCountdown(){
+  if (interval) clearInterval(interval);
+  interval = null;
+  log('Countdown dihentikan');
+}
+
+/* ======= Actions on Time Up ======= */
+async function onTimeUp(){
+  log('Waktu tercapai! Menjalankan aksi sesuai konfigurasi.');
+
+  // build payload from table
+  const rows = Array.from(document.querySelectorAll('#dataTable tbody tr')).map(tr => {
+    return {
+      id: tr.dataset.id,
+      nama: tr.cells[1]?.textContent?.trim(),
+      nilai: tr.querySelector('.value')?.textContent?.trim(),
+      status: tr.querySelector('.status')?.textContent?.trim()
+    };
+  });
+
+  // example: modify local DOM before sending (optional)
+  rows.forEach((r, idx) => {
+    const tr = document.querySelector(`#dataTable tbody tr[data-id="${r.id}"]`);
+    if (tr){
+      tr.querySelector('.status').textContent = 'Kadaluarsa';
+      // add class for color (simple)
+      tr.querySelector('.status').classList.add('danger');
+    }
+  });
+
+  const extra = (() => {
+    try { return JSON.parse(document.getElementById('extraPayload').value || '{}'); } catch(e) { return { raw: document.getElementById('extraPayload').value }; }
+  })();
+
+  const payload = { rows, timestamp: new Date().toISOString(), extra };
+
+  // Perform actions in sequence, but DON'T block UI for long time.
+  // 1) Laravel
+  if (document.getElementById('doLaravel').checked) {
+    try {
+      await sendToLaravel(payload);
+    } catch(e){
+      log('Error kirim ke Laravel:', e);
+    }
+  }
+
+  // 2) Telegram
+  if (document.getElementById('doTelegram').checked) {
+    try {
+      await sendTelegramNotification(payload);
+    } catch(e){
+      log('Error kirim ke Telegram:', e);
+    }
+  }
+
+  // 3) WhatsApp
+  if (document.getElementById('doWhatsApp').checked) {
+    try {
+      await sendWhatsAppNotification(payload);
+    } catch(e){
+      log('Error kirim ke WhatsApp:', e);
+    }
+  }
+
+  log('Semua aksi selesai (cek log untuk detail).');
+}
+
+/* ======= Send to Laravel (with CSRF) ======= */
+async function sendToLaravel(payload){
+  const url = document.getElementById('laravelUrl').value.trim();
+  const method = document.getElementById('laravelMethod').value || 'POST';
+  if (!url) { log('Laravel URL kosong — skip'); return; }
+
+  // CSRF token: read from meta tag (Laravel blade: <meta name="csrf-token" content="{{ csrf_token() }}" />)
+  const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+  const csrf = csrfMeta ? csrfMeta.content : null;
+
+  log('Kirim ke Laravel:', url, 'method:', method, 'csrf:', csrf ? 'FOUND' : 'MISSING');
+
+  const res = await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
+      // if you need to send Authorization bearer for API, uncomment and fill token in UI and header here
+      // 'Authorization': 'Bearer YOUR_API_TOKEN'
+    },
+    body: JSON.stringify(payload),
+    credentials: 'same-origin' // include cookies when same origin
+  });
+
+  const text = await res.text();
+  if (!res.ok) {
+    log('Laravel response error:', res.status, text);
+    throw new Error('Laravel API error: ' + res.status);
+  }
+  log('Laravel response OK:', res.status, text);
+}
+
+/* ======= Telegram (Bot API) ======= */
+async function sendTelegramNotification(payload){
+  const token = document.getElementById('tgToken').value.trim();
+  const chatId = document.getElementById('tgChatId').value.trim();
+  if (!token || !chatId) { log('Token/ChatID Telegram kosong — skip'); return; }
+
+  const api = `https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`;
+  // Compose message text (short)
+  let text = `⏰ Waktu tercapai (${new Date().toLocaleString()})\n`;
+  text += `Rows: ${payload.rows.length}\n`;
+  text += payload.rows.map(r => `• ${r.nama} (${r.nilai}) — ${r.status}`).join('\n');
+
+  log('Kirim Telegram ke chat:', chatId);
+  const res = await fetch(api, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
+  });
+  const data = await res.json();
+  if (!res.ok || data.ok === false) {
+    log('Telegram API respons error:', data);
+    throw new Error('Telegram API error: ' + JSON.stringify(data));
+  }
+  log('Telegram terkirim:', JSON.stringify(data));
+}
+
+/* ======= WhatsApp (Cloud API example) ======= */
+async function sendWhatsAppNotification(payload){
+  const endpoint = document.getElementById('waEndpoint').value.trim();
+  const token = document.getElementById('waToken').value.trim();
+  if (!endpoint || !token) { log('WhatsApp endpoint/token kosong — skip'); return; }
+
+  // NOTE: WhatsApp Cloud API expects a specific JSON structure.
+  // Here kita mencoba mengirim pesan teks ke nomor yang dikonfigurasi di endpoint (PHONE_NUMBER_ID).
+  // Pastikan endpoint dan token sesuai dokumentasi WhatsApp Cloud API.
+  let text = `*Waktu tercapai* (${new Date().toLocaleString()})\n`;
+  text += `Rows: ${payload.rows.length}\n`;
+  text += payload.rows.map(r => `• ${r.nama} (${r.nilai}) — ${r.status}`).join('\n');
+
+  log('Kirim WhatsApp via endpoint:', endpoint);
+  // Example Cloud API body — adjust sesuai implementasimu.
+  const body = {
+    messaging_product: "whatsapp",
+    // "to": "PHONE_NUMBER_TO_SEND", // if endpoint is for sending to specific phone
+    "type": "text",
+    "text": { "body": text }
+  };
+
+  // Some setups require phone number in path (endpoint includes it) and body without "to", others require "to".
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.text();
+  log('WhatsApp response raw:', data);
+  if (!res.ok) {
+    throw new Error('WhatsApp API returned ' + res.status + ' — ' + data);
+  }
+  log('WhatsApp sent (raw response):', data);
+}
+
+/* ======= UI wiring ======= */
+startBtn.addEventListener('click', startCountdown);
+stopBtn.addEventListener('click', stopCountdown);
+
+// Auto-start if checkbox and input value present
+window.addEventListener('load', () => {
+  const auto = document.getElementById('autoStart');
+  // If browser pre-fills datetime-local via value attr, keep. Otherwise you can set default.
+  if (auto.checked && document.getElementById('targetDateTime').value) startCountdown();
+});
+
+// small helper: when pressing Enter inside extraPayload, do nothing harmful
+document.getElementById('extraPayload').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); onTimeUp(); }
+});
+
+</script>
+</body>
+</html>
