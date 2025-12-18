@@ -23,8 +23,12 @@
         th, td {
             text-align: center;
             vertical-align: middle;
-            min-width: 100px;
+            min-width: 90px;
+            height: 56px;
             cursor: pointer;
+            touch-action: pan-x;
+            user-select: none;
+        }
         }
         .room-name {
             background: #0d6efd;
@@ -226,6 +230,24 @@
     const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
 
     document.querySelectorAll('td[data-hour]').forEach(cell => {
+        // Desktop
+        cell.addEventListener('mousedown', () => startSelect(cell));
+        cell.addEventListener('mouseover', () => dragSelect(cell));
+
+        // Mobile (Touch)
+        cell.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startSelect(cell);
+        }, { passive: false });
+
+        cell.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (target && target.dataset && target.dataset.hour) {
+                dragSelect(target);
+            }
+        }, { passive: false });
+    });(cell => {
         cell.addEventListener('mousedown', () => {
             isDragging = true;
             selectedCells = [];
@@ -240,11 +262,48 @@
         });
     });
 
-    document.addEventListener('mouseup', () => {
+    document.addEventListener('mouseup', finishSelect);
+    document.addEventListener('touchend', finishSelect);
+
+    function startSelect(cell) {
+        isDragging = true;
+        selectedCells = [];
+        currentRoom = cell.dataset.room;
+        selectCell(cell);
+    }
+
+    function dragSelect(cell) {
+        if (isDragging && cell.dataset.room === currentRoom) {
+            selectCell(cell);
+        }
+    }
+
+    function finishSelect() {
+        if (!isDragging || selectedCells.length === 0) {
+            isDragging = false;
+            return;
+        }
+
+        const hours = selectedCells.map(c => parseInt(c.dataset.hour));
+        const start = Math.min(...hours);
+        const end = Math.max(...hours) + 1;
+        const duration = end - start;
+
+        let konsumsi = 'Snack';
+        if (duration > 5) konsumsi = 'Makan Berat + Snack';
+        else if (start <= 9 && end >= 12) konsumsi = 'Makan Berat';
+
+        document.getElementById('mRoom').innerText = currentRoom;
+        document.getElementById('mTime').innerText = start + '.00 - ' + end + '.00';
+        document.getElementById('konsumsi').value = konsumsi;
+
+        modal.show();
+        isDragging = false;
+    }, () => {
         if (selectedCells.length > 0) {
             const hours = selectedCells.map(c => parseInt(c.dataset.hour));
             const start = Math.min(...hours);
-            const end = Math.max(...hours);
+            const end = Math.max(...hours) + 1;
             const duration = end - start;
 
             let konsumsi = 'Snack';
