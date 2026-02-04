@@ -15,35 +15,60 @@
 
         body {
             background: #0f0f0f;
+            background-attachment: fixed;
             color: #fff;
             overflow-x: hidden;
         }
 
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            filter: blur(60px) brightness(0.4);
+            z-index: -1;
+            transition: background-image 1.5s ease-in-out;
+        }
+
         .hero {
             text-align: center;
-            padding: 70px 20px;
-            background: linear-gradient(to bottom, #1a1a1a, #0f0f0f);
+            padding: 60px 20px;
+            background: rgba(26, 26, 26, 0.6);
+            position: relative;
+            z-index: 1;
         }
 
         .hero h1 {
             font-size: 3rem;
             margin-bottom: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
         .hero p {
-            color: #ccc;
+            color: #ddd;
             font-size: 1.1rem;
+            font-weight: 300;
         }
 
         .hero small {
             display: block;
             margin-top: 10px;
-            color: #888;
+            color: #aaa;
+            font-size: 0.9rem;
         }
 
         .slider-container {
             overflow: hidden;
-            padding: 50px 0;
+            padding: 40px 0;
+            position: relative;
+            z-index: 1;
         }
 
         .slider {
@@ -61,16 +86,25 @@
             width: 100%;
             height: 500px;
             object-fit: cover;
-            border-radius: 22px;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .slide img:hover {
+            transform: scale(1.02);
         }
 
         .caption {
-            margin-top: 22px;
+            margin-top: 20px;
             font-size: 1.15rem;
-            color: #ddd;
-            line-height: 1.6;
+            color: #eee;
+            line-height: 1.7;
             animation: fadeInUp 1s ease-out;
+            font-weight: 300;
+            background: rgba(20, 20, 20, 0.7);
+            padding: 15px 20px;
+            border-radius: 10px;
         }
 
         @keyframes fadeInUp {
@@ -86,35 +120,49 @@
 
         .controls {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 25px;
+            position: relative;
+            z-index: 1;
         }
 
         .controls button {
-            background: #333;
+            background: rgba(51, 51, 51, 0.8);
             color: #fff;
-            border: none;
-            padding: 10px 20px;
-            margin: 0 10px;
-            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 24px;
+            margin: 0 8px;
+            border-radius: 25px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
 
         .controls button:hover {
-            background: #555;
+            background: rgba(100, 100, 100, 0.8);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .controls button:active {
+            transform: translateY(0);
         }
 
         @media (max-width: 768px) {
             .hero {
-                padding: 50px 20px;
+                padding: 40px 20px;
             }
 
             .hero h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
 
             .hero p {
                 font-size: 1rem;
+            }
+
+            .hero small {
+                font-size: 0.85rem;
             }
 
             .slide {
@@ -123,21 +171,27 @@
 
             .slide img {
                 height: 300px;
+                border-radius: 12px;
             }
 
             .caption {
-                font-size: 1rem;
-                margin-top: 15px;
+                font-size: 0.95rem;
+                margin-top: 12px;
+                padding: 12px 15px;
+            }
+
+            .slider-container {
+                padding: 30px 0;
             }
 
             .controls {
-                margin-top: 15px;
+                margin-top: 20px;
             }
 
             .controls button {
-                padding: 8px 16px;
-                font-size: 0.9rem;
-                margin: 0 5px;
+                padding: 10px 18px;
+                font-size: 0.85rem;
+                margin: 5px 4px;
             }
         }
     </style>
@@ -255,108 +309,136 @@
 </div>
 
 <footer>
-    <p>© 2026 • Cerita Kita</p>
+    <p style="position: relative; z-index: 1; text-align: center; padding: 20px; color: #888; font-size: 0.9rem;">© 2026 • Cerita Kita</p>
 </footer>
 
 <script>
     const slider = document.getElementById("slider");
-const slides = document.querySelectorAll(".slide");
-const bgMusic = document.getElementById("bgMusic");
+    const slides = document.querySelectorAll(".slide");
+    const bgMusic = document.getElementById("bgMusic");
 
-let index = 0;
-let musicStarted = false;
-const slideInterval = 4000;
-let touchStartX = 0;
-let touchEndX = 0;
+    let index = 0;
+    let isMusicPlaying = true;
+    const slideInterval = 10000; // 10 detik
+    let touchStartX = 0;
+    let touchEndX = 0;
 
-function changeSlide(newIndex) {
-    index = newIndex;
-    slider.style.transform = `translateX(-${index * 100}%)`;
-    // Reset animation for current caption
-    const currentCaption = slides[index].querySelector('.caption');
-    currentCaption.style.animation = 'none';
-    setTimeout(() => {
-        currentCaption.style.animation = 'fadeInUp 1s ease-out';
-    }, 10);
-}
+    // Get image paths untuk background
+    const imagePaths = [
+        "foto_kita/1.png",
+        "foto_kita/2.png",
+        "foto_kita/3.png",
+        "foto_kita/4.jpg",
+        "foto_kita/5.jpg",
+        "foto_kita/6.jpg",
+        "foto_kita/7.jpg",
+        "foto_kita/8.jpg",
+        "foto_kita/9.jpg",
+        "foto_kita/10.jpg",
+        "foto_kita/11.jpg",
+        "foto_kita/12.jpg",
+        "foto_kita/13.jpg",
+        "foto_kita/14.jpg",
+        "foto_kita/15.jpg",
+        "foto_kita/16.jpg",
+        "foto_kita/17.jpg",
+        "foto_kita/18.jpg",
+        "foto_kita/19.jpg",
+        "foto_kita/20.jpg",
+        "foto_kita/21.jpg",
+        "foto_kita/22.jpg"
+    ];
 
-// Auto slide setiap 4 detik
-setInterval(() => {
-    const nextIndex = (index + 1) % slides.length;
-    changeSlide(nextIndex);
-}, slideInterval);
-
-// Mulai musik setelah interaksi pertama
-function startMusic() {
-    if (!musicStarted) {
-        bgMusic.volume = 0.4; // lembut
-        bgMusic.play();
-        musicStarted = true;
+    function updateBackground(slideIndex) {
+        document.body.style.backgroundImage = `url('${imagePaths[slideIndex]}')`;
     }
-}
 
-window.addEventListener("click", startMusic);
-window.addEventListener("wheel", startMusic);
-window.addEventListener("touchstart", startMusic);
+    function changeSlide(newIndex) {
+        index = newIndex;
+        slider.style.transform = `translateX(-${index * 100}%)`;
+        updateBackground(index);
+        
+        // Reset animation for current caption
+        const currentCaption = slides[index].querySelector('.caption');
+        currentCaption.style.animation = 'none';
+        setTimeout(() => {
+            currentCaption.style.animation = 'fadeInUp 1s ease-out';
+        }, 10);
+    }
 
-// Swipe untuk navigasi di mobile
-slider.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-});
-
-slider.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-});
-
-function handleSwipe() {
-    if (touchEndX < touchStartX - 50) {
-        // swipe left, next
-        const nextIndex = Math.min(index + 1, slides.length - 1);
+    // Auto slide setiap 10 detik
+    setInterval(() => {
+        const nextIndex = (index + 1) % slides.length;
         changeSlide(nextIndex);
+    }, slideInterval);
+
+    // Auto play music saat page load
+    window.addEventListener('load', () => {
+        bgMusic.volume = 0.4;
+        bgMusic.play().catch(err => console.log('Audio play failed:', err));
+        updateBackground(0);
+    });
+
+    // Swipe untuk navigasi di mobile
+    slider.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
+    slider.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        if (touchEndX < touchStartX - 50) {
+            // swipe left, next
+            const nextIndex = Math.min(index + 1, slides.length - 1);
+            changeSlide(nextIndex);
+        }
+        if (touchEndX > touchStartX + 50) {
+            // swipe right, prev
+            const prevIndex = Math.max(index - 1, 0);
+            changeSlide(prevIndex);
+        }
     }
-    if (touchEndX > touchStartX + 50) {
-        // swipe right, prev
+
+    // Scroll manual antar slide
+    window.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        if (e.deltaY > 0) {
+            const nextIndex = Math.min(index + 1, slides.length - 1);
+            changeSlide(nextIndex);
+        } else {
+            const prevIndex = Math.max(index - 1, 0);
+            changeSlide(prevIndex);
+        }
+    });
+
+    const prevBtn = document.getElementById("prev");
+    const nextBtn = document.getElementById("next");
+
+    prevBtn.addEventListener("click", () => {
         const prevIndex = Math.max(index - 1, 0);
         changeSlide(prevIndex);
-    }
-}
+    });
 
-// Scroll manual antar slide
-window.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    if (e.deltaY > 0) {
+    nextBtn.addEventListener("click", () => {
         const nextIndex = Math.min(index + 1, slides.length - 1);
         changeSlide(nextIndex);
-    } else {
-        const prevIndex = Math.max(index - 1, 0);
-        changeSlide(prevIndex);
-    }
-});
+    });
 
-const prevBtn = document.getElementById("prev");
-const nextBtn = document.getElementById("next");
-
-prevBtn.addEventListener("click", () => {
-    const prevIndex = Math.max(index - 1, 0);
-    changeSlide(prevIndex);
-});
-
-nextBtn.addEventListener("click", () => {
-    const nextIndex = Math.min(index + 1, slides.length - 1);
-    changeSlide(nextIndex);
-});
-
-const musicBtn = document.getElementById("musicBtn");
-musicBtn.addEventListener("click", () => {
-    if (bgMusic.paused) {
-        bgMusic.play();
-        musicBtn.textContent = "Pause Music";
-    } else {
-        bgMusic.pause();
-        musicBtn.textContent = "Play Music";
-    }
-});
+    const musicBtn = document.getElementById("musicBtn");
+    musicBtn.addEventListener("click", () => {
+        if (bgMusic.paused) {
+            bgMusic.play();
+            musicBtn.textContent = "⏸ Pause Music";
+            isMusicPlaying = true;
+        } else {
+            bgMusic.pause();
+            musicBtn.textContent = "▶ Play Music";
+            isMusicPlaying = false;
+        }
+    });
 </script>
 </body>
 </html>
