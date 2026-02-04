@@ -206,7 +206,7 @@
 <section class="hero">
     <h1>Dokumenter Kita</h1>
     <p>Bersama pasangan yang paling setia menemani setiap langkah</p>
-    <small>(Sentuh layar atau scroll untuk memulai musik 🎵)</small>
+    <small>(Sentuh Play Music untuk memulai musik 🎵)</small>
 </section>
 
 <section class="slider-container">
@@ -305,7 +305,7 @@
 <div class="controls">
     <button id="prev">Previous</button>
     <button id="next">Next</button>
-    <button id="musicBtn">Pause Music</button>
+    <button id="musicBtn">Play Music</button>
 </div>
 
 <footer>
@@ -320,6 +320,7 @@
     let index = 0;
     let isMusicPlaying = true;
     const slideInterval = 10000; // 10 detik
+    let slideTimer = null;
     let touchStartX = 0;
     let touchEndX = 0;
 
@@ -353,7 +354,7 @@
         document.body.style.backgroundImage = `url('${imagePaths[slideIndex]}')`;
     }
 
-    function changeSlide(newIndex) {
+    function changeSlide(newIndex, manual = false) {
         index = newIndex;
         slider.style.transform = `translateX(-${index * 100}%)`;
         updateBackground(index);
@@ -364,19 +365,29 @@
         setTimeout(() => {
             currentCaption.style.animation = 'fadeInUp 1s ease-out';
         }, 10);
+
+        if (manual) resetSlideTimer();
     }
 
-    // Auto slide setiap 10 detik
-    setInterval(() => {
-        const nextIndex = (index + 1) % slides.length;
-        changeSlide(nextIndex);
-    }, slideInterval);
+    // Slide timer control
+    function startSlideTimer() {
+        clearInterval(slideTimer);
+        slideTimer = setInterval(() => {
+            const nextIndex = (index + 1) % slides.length;
+            changeSlide(nextIndex, false);
+        }, slideInterval);
+    }
+
+    function resetSlideTimer() {
+        startSlideTimer();
+    }
 
     // Auto play music saat page load
     window.addEventListener('load', () => {
         bgMusic.volume = 0.4;
         bgMusic.play().catch(err => console.log('Audio play failed:', err));
         updateBackground(0);
+        startSlideTimer();
     });
 
     // Swipe untuk navigasi di mobile
@@ -393,12 +404,12 @@
         if (touchEndX < touchStartX - 50) {
             // swipe left, next
             const nextIndex = Math.min(index + 1, slides.length - 1);
-            changeSlide(nextIndex);
+            changeSlide(nextIndex, true);
         }
         if (touchEndX > touchStartX + 50) {
             // swipe right, prev
             const prevIndex = Math.max(index - 1, 0);
-            changeSlide(prevIndex);
+            changeSlide(prevIndex, true);
         }
     }
 
@@ -407,10 +418,10 @@
         e.preventDefault();
         if (e.deltaY > 0) {
             const nextIndex = Math.min(index + 1, slides.length - 1);
-            changeSlide(nextIndex);
+            changeSlide(nextIndex, true);
         } else {
             const prevIndex = Math.max(index - 1, 0);
-            changeSlide(prevIndex);
+            changeSlide(prevIndex, true);
         }
     });
 
@@ -419,12 +430,12 @@
 
     prevBtn.addEventListener("click", () => {
         const prevIndex = Math.max(index - 1, 0);
-        changeSlide(prevIndex);
+        changeSlide(prevIndex, true);
     });
 
     nextBtn.addEventListener("click", () => {
         const nextIndex = Math.min(index + 1, slides.length - 1);
-        changeSlide(nextIndex);
+        changeSlide(nextIndex, true);
     });
 
     const musicBtn = document.getElementById("musicBtn");
