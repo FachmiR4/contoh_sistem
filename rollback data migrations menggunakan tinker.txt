@@ -1,0 +1,20 @@
+1. php artisan tinker
+
+2. $migration = include database_path('migrations/2025_10_17_031027_create_ams_tbl_unit_kerja.php');
+
+3. $migration->down();
+
+4. DB::table('migrations')->where('migration', '2025_10_17_031027_create_ams_tbl_unit_kerja')->delete();
+
+5. php artisan migrate
+
+
+'qty_makanan'       => $request->jumlah_makanan,
+                'qty_snack'         => $request->jumlah_snack,
+                'qty_snack_ringan'         => $request->jumlah_snack_ringan,
+                'qty_snack_berat'         => $request->jumlah_snack_berat,
+                'qty_makanan_malam'         => $request->jumlah_makanan_malam,
+                'qty_makanan_external'         => $request->jumlah_makanan_external,
+                'biaya_makanan'     => $request->biaya_makanan,
+                'biaya_snack'      => $request->biaya_snack,
+'request_makan_malam'    => $request->request_makanan_malam,

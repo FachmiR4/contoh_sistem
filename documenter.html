@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="id">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokumenter Kita</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #0f0f0f;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 70px 20px;
+            background: linear-gradient(to bottom, #1a1a1a, #0f0f0f);
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            color: #ccc;
+            font-size: 1.1rem;
+        }
+
+        .hero small {
+            display: block;
+            margin-top: 10px;
+            color: #888;
+        }
+
+        .slider-container {
+            overflow: hidden;
+            padding: 50px 0;
+        }
+
+        .slider {
+            display: flex;
+            transition: transform 1.2s ease-in-out;
+        }
+
+        .slide {
+            min-width: 100%;
+            padding: 0 10%;
+            text-align: center;
+        }
+
+        .slide img {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+            border-radius: 22px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+        }
+
+        .caption {
+            margin-top: 22px;
+            font-size: 1.15rem;
+            color: #ddd;
+            line-height: 1.6;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .controls button {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .controls button:hover {
+            background: #555;
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                padding: 50px 20px;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .slide {
+                padding: 0 5%;
+            }
+
+            .slide img {
+                height: 300px;
+            }
+
+            .caption {
+                font-size: 1rem;
+                margin-top: 15px;
+            }
+
+            .controls {
+                margin-top: 15px;
+            }
+
+            .controls button {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+                margin: 0 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- AUDIO -->
+<audio id="bgMusic" loop>
+    <source src="foto_kita/music.mp3" type="audio/mpeg">
+</audio>
+
+<section class="hero">
+    <h1>Dokumenter Kita</h1>
+    <p>Bersama pasangan yang paling setia menemani setiap langkah</p>
+    <small>(Sentuh layar atau scroll untuk memulai musik 🎵)</small>
+</section>
+
+<section class="slider-container">
+    <div class="slider" id="slider">
+        <div class="slide">
+            <img src="foto_kita/1.png">
+            <div class="caption">Hari pertama, awal cerita sederhana yang penuh harapan.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/2.png">
+            <div class="caption">Langkah kecil yang selalu ditemani tanpa ragu.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/3.png">
+            <div class="caption">Tawa yang menjadi rumah paling nyaman.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/4.jpg">
+            <div class="caption">Momen kebersamaan di bawah langit senja, di mana waktu seakan berhenti.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/5.jpg">
+            <div class="caption">Petualangan kecil yang membuat hati berdegup kencang.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/6.jpg">
+            <div class="caption">Senyuman yang selalu menjadi cahaya di hari gelap.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/7.jpg">
+            <div class="caption">Bersama menjelajah dunia, tangan dalam tangan.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/8.jpg">
+            <div class="caption">Kenangan manis di tepi pantai, ombak sebagai saksi.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/9.jpg">
+            <div class="caption">Tawa riang yang mengisi ruang kosong dalam jiwa.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/10.jpg">
+            <div class="caption">Masa lalu yang indah, fondasi masa depan kita.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/11.jpg">
+            <div class="caption">Pelukan hangat yang selalu pulang ke rumah.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/12.jpg">
+            <div class="caption">Bersama menghadapi badai, lebih kuat dari sebelumnya.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/13.jpg">
+            <div class="caption">Momen tenang di tengah keramaian dunia.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/14.jpg">
+            <div class="caption">Cinta yang tumbuh subur di tanah yang sama.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/15.jpg">
+            <div class="caption">Petualangan malam yang penuh bintang dan impian.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/16.jpg">
+            <div class="caption">Tangan yang saling genggam, janji yang tak tergoyahkan.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/17.jpg">
+            <div class="caption">Senyuman yang selalu membuat hari lebih cerah.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/18.jpg">
+            <div class="caption">Kenangan yang terukir dalam setiap detik bersama.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/19.jpg">
+            <div class="caption">Bersama, kita adalah dunia kita sendiri.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/20.jpg">
+            <div class="caption">Masa depan yang cerah, dibangun dari hari ini.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/21.jpg">
+            <div class="caption">Cinta yang tak pernah pudar, meski waktu berlalu.</div>
+        </div>
+        <div class="slide">
+            <img src="foto_kita/22.jpg">
+            <div class="caption">Akhir cerita yang indah, awal dari yang baru.</div>
+        </div>
+    </div>
+</section>
+
+<div class="controls">
+    <button id="prev">Previous</button>
+    <button id="next">Next</button>
+    <button id="musicBtn">Pause Music</button>
+</div>
+
+<footer>
+    <p>© 2026 • Cerita Kita</p>
+</footer>
+
+<script>
+    const slider = document.getElementById("slider");
+const slides = document.querySelectorAll(".slide");
+const bgMusic = document.getElementById("bgMusic");
+
+let index = 0;
+let musicStarted = false;
+const slideInterval = 4000;
+let touchStartX = 0;
+let touchEndX = 0;
+
+function changeSlide(newIndex) {
+    index = newIndex;
+    slider.style.transform = `translateX(-${index * 100}%)`;
+    // Reset animation for current caption
+    const currentCaption = slides[index].querySelector('.caption');
+    currentCaption.style.animation = 'none';
+    setTimeout(() => {
+        currentCaption.style.animation = 'fadeInUp 1s ease-out';
+    }, 10);
+}
+
+// Auto slide setiap 4 detik
+setInterval(() => {
+    const nextIndex = (index + 1) % slides.length;
+    changeSlide(nextIndex);
+}, slideInterval);
+
+// Mulai musik setelah interaksi pertama
+function startMusic() {
+    if (!musicStarted) {
+        bgMusic.volume = 0.4; // lembut
+        bgMusic.play();
+        musicStarted = true;
+    }
+}
+
+window.addEventListener("click", startMusic);
+window.addEventListener("wheel", startMusic);
+window.addEventListener("touchstart", startMusic);
+
+// Swipe untuk navigasi di mobile
+slider.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+});
+
+slider.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+});
+
+function handleSwipe() {
+    if (touchEndX < touchStartX - 50) {
+        // swipe left, next
+        const nextIndex = Math.min(index + 1, slides.length - 1);
+        changeSlide(nextIndex);
+    }
+    if (touchEndX > touchStartX + 50) {
+        // swipe right, prev
+        const prevIndex = Math.max(index - 1, 0);
+        changeSlide(prevIndex);
+    }
+}
+
+// Scroll manual antar slide
+window.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    if (e.deltaY > 0) {
+        const nextIndex = Math.min(index + 1, slides.length - 1);
+        changeSlide(nextIndex);
+    } else {
+        const prevIndex = Math.max(index - 1, 0);
+        changeSlide(prevIndex);
+    }
+});
+
+const prevBtn = document.getElementById("prev");
+const nextBtn = document.getElementById("next");
+
+prevBtn.addEventListener("click", () => {
+    const prevIndex = Math.max(index - 1, 0);
+    changeSlide(prevIndex);
+});
+
+nextBtn.addEventListener("click", () => {
+    const nextIndex = Math.min(index + 1, slides.length - 1);
+    changeSlide(nextIndex);
+});
+
+const musicBtn = document.getElementById("musicBtn");
+musicBtn.addEventListener("click", () => {
+    if (bgMusic.paused) {
+        bgMusic.play();
+        musicBtn.textContent = "Pause Music";
+    } else {
+        bgMusic.pause();
+        musicBtn.textContent = "Play Music";
+    }
+});
+</script>
+</body>
+</html>
