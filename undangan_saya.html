@@ -10,7 +10,6 @@
     padding: 0;
     font-family: 'Poppins', 'Segoe UI', sans-serif;
 }
-
 body {
     background: linear-gradient(135deg, #faf5f0 0%, #f5ede3 100%);
     overflow-x: hidden;
@@ -311,6 +310,131 @@ body {
     }
 }
 
+/* Map Wrapper */
+.map-wrapper {
+    width: 100%;
+    max-width: 600px;
+    margin: 30px auto;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+}
+
+.map-wrapper:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+}
+
+.map-wrapper iframe {
+    width: 100%;
+    height: 350px;
+    border: none;
+    display: block;
+}
+
+/* Button Map */
+.btn-map {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 14px 30px;
+    background: linear-gradient(135deg, #d4af37 0%, #c9a227 100%);
+    color: #000;
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+}
+
+.btn-map:hover {
+    background: linear-gradient(135deg, #e5c158 0%, #d4af37 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+}
+
+/* Barcode Section */
+.barcode {
+    background: rgba(212, 175, 55, 0.08);
+    border-radius: 20px;
+    padding: 40px 20px;
+    margin: 60px auto;
+    max-width: 400px;
+    border: 2px solid rgba(212, 175, 55, 0.2);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.barcode:hover {
+    background: rgba(212, 175, 55, 0.12);
+    border-color: rgba(212, 175, 55, 0.4);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.15);
+}
+
+.barcode h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #8b6914 0%, #d4af37 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.barcode img {
+    width: 250px;
+    height: 250px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.barcode img:hover {
+    transform: scale(1.05);
+}
+
+/* Gift Section */
+.gift {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
+    border-radius: 20px;
+    padding: 40px 30px;
+    margin: 60px auto;
+    max-width: 500px;
+    border-left: 5px solid #d4af37;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+.gift:hover {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.1) 100%);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+}
+
+.gift h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 25px;
+    background: linear-gradient(135deg, #8b6914 0%, #d4af37 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.gift p {
+    font-size: 16px;
+    color: #666;
+    line-height: 2;
+    margin: 12px 0;
+    font-weight: 500;
+}
+
 @keyframes slideDown {
     from {
         opacity: 0;
@@ -409,7 +533,7 @@ body {
     <video id="bgVideo" autoplay muted playsinline class="bg-video">
         <source src="assets/bg-video.mp4" type="video/mp4">
     </video>
-    <!-- Last Frame Image -->
+      <!-- Last Frame Image -->
     <div class="bg-last-frame" id="bgLastFrame">
         <img src="assets/bg-foto3.jpeg" alt="Background Last Frame">
     </div>
@@ -431,8 +555,8 @@ body {
 <!-- Main Content -->
 <section class="main hidden" id="main">
     
+       
     
-
     <!-- Background Decorations -->
     <div class="bg-decorations">
         <!-- Clouds -->
@@ -476,6 +600,35 @@ body {
         <p class="quote">
             "Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan pasangan-pasangan untukmu…"
         </p>
+    </div>
+
+    <section class="section fade-up">
+        <h2>Lokasi Acara</h2>
+
+        <div class="map-wrapper">
+            <iframe 
+                src="https://www.google.com/maps?q=-6.228651,106.828920&hl=id&z=16&output=embed"
+                allowfullscreen=""
+                loading="lazy">
+            </iframe>
+        </div>
+
+        <a 
+            href="https://www.google.com/maps?q=-6.228651,106.828920"
+            target="_blank"
+            class="btn-map">
+            Buka di Google Maps
+        </a>
+    </section>
+    <div class="barcode fade-up" id="barcode">
+        <h2>QRIS</h2>
+        <img src="assets/qrcode.png" alt="QR Code">
+    </div>
+
+    <div class="gift fade-up">
+        <h2>Amplop Digital</h2>
+        <p><strong>BCA</strong><br>1234567890<br>a.n Fachmi Ramadhan</p>
+        <p><strong>BRI</strong><br>012114321<br>a.n Fachmi Ramadhan</p>
     </div>
 </section>
 
