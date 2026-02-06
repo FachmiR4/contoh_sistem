@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Undangan Snap Scroll</title>
+
+<style>
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+}
+
+/* SNAP SCROLL */
+.snap-wrapper {
+    height: 100vh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+}
+
+.snap-section {
+    height: 100vh;
+    width: 100%;
+    scroll-snap-align: start;
+    position: relative;
+}
+
+/* ========== SCENE 1 : COVER ========== */
+.scene-cover {
+    background: url('assets/cover.jpg') center/cover no-repeat;
+}
+
+.cover-content {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    text-align: center;
+}
+
+.cover-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.cover-content button {
+    margin-top: 20px;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 30px;
+    background: #fff;
+    color: #000;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* ========== SCENE 2 : VIDEO ========== */
+.scene-video {
+    background: #000;
+}
+
+.scene-video video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ========== SCENE 3 : MAIN ========== */
+.scene-main {
+    background: linear-gradient(135deg, #faf5f0, #f5ede3);
+    padding: 40px 20px;
+}
+
+.main {
+    max-width: 900px;
+    margin: auto;
+    text-align: center;
+}
+
+.main h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.main p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="snap-wrapper" id="snapWrapper">
+
+    <!-- SCENE 1 -->
+    <section class="snap-section scene-cover" id="scene-cover">
+        <div class="cover-content">
+            <h1>Fachmi & Feby</h1>
+            <p>Happy Wedding</p>
+            <button onclick="openInvitation()">Buka Undangan</button>
+        </div>
+    </section>
+
+    <!-- SCENE 2 -->
+    <section class="snap-section scene-video" id="scene-video">
+        <video id="bgSecoundFrame2" muted playsinline loop>
+            <source src="assets/bg-video6.mp4" type="video/mp4">
+        </video>
+    </section>
+
+    <!-- SCENE 3 -->
+    <section class="snap-section scene-main" id="scene-main">
+        <!-- Main Content -->
+        <section class="main hidden" id="main">
+            
+            <!-- Background Decorations -->
+            <div class="bg-decorations">
+                <!-- Clouds -->
+                <img src="assets/hiasan/awan-remove.png" class="cloud cloud-1" alt="Awan">
+                <img src="assets/hiasan/awan-remove.png" class="cloud cloud-2" alt="Awan">
+                <img src="assets/hiasan/awan-remove.png" class="cloud cloud-3" alt="Awan">
+                
+                <!-- Top Flowers & Branches -->
+                <img src="assets/hiasan/bunga.png" class="floral-top flower-top" alt="Bunga">
+                <img src="assets/hiasan/bunga.png" class="floral-top flower-top-left" alt="Bunga">
+                <img src="assets/hiasan/dahan-kanan.png" class="floral-top branch-right" alt="Dahan">
+                <img src="assets/hiasan/dahan-kiri.png" class="floral-top branch-left" alt="Dahan">
+                <img src="assets/hiasan/daun-bunga.png" class="floral-top leaf-accent-1" alt="Daun">
+                <img src="assets/hiasan/daun-bunga.png" class="floral-top leaf-accent-2" alt="Daun">
+            </div>
+
+            <!-- Bottom Flowers -->
+            <div class="floral-bottom">
+                <img src="assets/hiasan/bunga.png" class="flower-bottom-left" alt="Bunga">
+                <img src="assets/hiasan/bunga.png" class="flower-bottom-right" alt="Bunga">
+            </div>
+
+            <div class="section fade-up">
+                <h1>Fachmi & Feby</h1>
+                <p>Akan melangsungkan pernikahan</p>
+            </div>
+
+            <div class="wedding-card">
+                <!-- FOTO -->
+                <div class="photo-wrapper">
+                    <img src="foto_kita/4.jpg" alt="Foto Pengantin">
+                </div>
+
+                <!-- CARD BAWAH -->
+                <div class="card-content">
+                    <h3 class="initials">F <span>&</span> F</h3>
+
+                    <p class="quote">
+                        “Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan
+                        pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung
+                        dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa
+                        kasih dan sayang.”
+                    </p>
+                </div>
+            </div>
+
+
+            <div class="section photo-slide">
+                <img src="foto_kita/1.png">
+                <img src="foto_kita/2.png">
+                <img src="foto_kita/3.png">
+            </div>
+
+            <div class="section fade-up">
+                <h2>Save The Date</h2>
+
+                <div class="countdown">
+                    <div class="time-box">
+                        <span id="days">00</span>
+                        <small>Hari</small>
+                    </div>
+                    <div class="time-box">
+                        <span id="hours">00</span>
+                        <small>Jam</small>
+                    </div>
+                    <div class="time-box">
+                        <span id="minutes">00</span>
+                        <small>Menit</small>
+                    </div>
+                    <div class="time-box">
+                        <span id="seconds">00</span>
+                        <small>Detik</small>
+                    </div>
+                </div>
+
+                <p>Minggu, 27 Agustus 2026</p>
+                <p>08.00 - 22.00 WIB</p>
+                <p>Hotel Ritz Carlton – Depok</p>
+            </div>
+
+
+            <div class="section fade-up">
+                <p class="quote">
+                    "Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan pasangan-pasangan untukmu…"
+                </p>
+            </div>
+
+            <section class="section fade-up">
+                <h2>Lokasi Acara</h2>
+
+                <div class="map-wrapper">
+                    <iframe 
+                        src="https://www.google.com/maps?q=-6.228651,106.828920&hl=id&z=16&output=embed"
+                        allowfullscreen=""
+                        loading="lazy">
+                    </iframe>
+                </div>
+
+                <a 
+                    href="https://www.google.com/maps?q=-6.228651,106.828920"
+                    target="_blank"
+                    class="btn-map">
+                    Buka di Google Maps
+                </a>
+            </section>
+            <div class="barcode fade-up" id="barcode">
+                <h2>QRIS</h2>
+                <img src="assets/qrcode.png" alt="QR Code">
+            </div>
+
+            <div class="gift fade-up">
+                <div class="gift-header">
+                    <div class="gift-icon">🎁</div>
+                    <h2>Love Gift</h2>
+                    <p class="gift-desc">
+                        Tanpa mengurangi rasa hormat, bagi Bapak/Ibu/Saudara/i yang ingin
+                        memberikan tanda kasih kepada kami dapat melalui:
+                    </p>
+                </div>
+
+                <!-- CARD BANK 1 -->
+                <div class="gift-card">
+                    <div class="gift-card-header">
+                        <span class="bank-name">Bank Mandiri</span>
+                        <img src="mandiri-logo.png" alt="Mandiri">
+                    </div>
+
+                    <div class="gift-card-body">
+                        <div>
+                            <small>Nomor Rekening</small>
+                            <p class="rekening"><span id="rek-mandiri">123 321 1234</span>
+                                <button class="copy-btn" onclick="copyRekening(this, 'rek-mandiri')" aria-label="Salin nomor rekening Mandiri">
+                                    Salin
+                                </button>
+                            </p>
+                            
+
+                            <small>Atas Nama</small>
+                            <p class="nama">Fachmi Ramadhan</p>
+                        </div>
+
+                        <div class="gift-info">
+                            <small>Pernikahan</small>
+                            <p>27/08/2026</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD BANK 2 -->
+                <div class="gift-card">
+                    <div class="gift-card-header">
+                        <span class="bank-name">Bank BCA</span>
+                        <img src="bca-logo.png" alt="BCA">
+                    </div>
+
+                    <div class="gift-card-body">
+                        <div>
+                            <small>Nomor Rekening</small>
+                            <p class="rekening"><span id="rek-bca">123 321 1234</span>
+                                <button class="copy-btn" onclick="copyRekening(this, 'rek-bca')" aria-label="Salin nomor rekening BCA">
+                                    Salin
+                                </button>
+                            </p>
+                            
+
+                            <small>Atas Nama</small>
+                            <p class="nama">Fachmi Ramadhan</p>
+                        </div>
+
+                        <div class="gift-info">
+                            <small>Pernikahan</small>
+                            <p>27/08/2026</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </section>
+
+</div>
+
+<script>
+const video = document.getElementById('bgSecoundFrame2');
+const sceneVideo = document.getElementById('scene-video');
+
+/* SNAP OBSERVER */
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.target.id === 'scene-video') {
+            if (entry.isIntersecting) {
+                video.play().catch(()=>{});
+            } else {
+                video.pause();
+                video.currentTime = 0;
+            }
+        }
+    });
+}, {
+    threshold: 0.6
+});
+
+observer.observe(sceneVideo);
+
+/* BUTTON */
+function openInvitation() {
+    document
+        .getElementById('scene-video')
+        .scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>

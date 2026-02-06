@@ -14,6 +14,7 @@
     body {
         background: linear-gradient(135deg, #faf5f0 0%, #f5ede3 100%);
         overflow-x: hidden;
+        user-select: none;
     }
     .initials {
         font-family: 'Playfair Display', serif;
@@ -155,17 +156,51 @@
         z-index: 1;
     }
 
-    /* Last Frame */
-    .bg-last-frame {
+    /* Background Image */
+    .bg-image {
         position: fixed;
         inset: 0;
-        z-index: -1;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bg-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    /* Second Frame (absolute background) */
+    .bg-secound-frame {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        object-fit: cover;
+        z-index: 0;
+        display: none;
+    }
+
+    /* Last Frame */
+    .bg-last-frame {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
         opacity: 0;
-        transition: opacity 2s ease-in-out;
+        transition: opacity 0.3s ease-in-out;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
+        object-fit: cover;
+        display: none;
     }
 
     .bg-last-frame img {
@@ -177,10 +212,34 @@
     /* Saat aktif */
     .bg-last-frame.show {
         opacity: 1;
+        display: block;
+    }
+
+    .bg-secound-frame.show {
+        display: block;
+    }
+
+    /* Section 1 - Second Frame Container */
+    .section-1 {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        z-index: 1;
+        overflow: hidden;
+        display: none;
+    }
+
+    /* Ensure main content sits above the second-frame */
+    .main {
+        position: relative;
+        z-index: 3;
+        background: linear-gradient(135deg, #faf5f0 0%, #f5ede3 100%);
     }
 
     /* Konten */
-    .cover-content {
+    /* .cover-content {
         position: relative;
         z-index: 2;
         height: 100%;
@@ -192,10 +251,39 @@
         justify-content: center;
         text-align: center;
         backdrop-filter: blur(3px);
+    } */
+    .cover-content {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    /* background: rgba(0, 0, 0, 0.35); */
+    color: #fff;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;      /* horizontal center */
+    justify-content: flex-end;/* posisi ke bawah */
+    bottom: 28px;
+
+    text-align: center;
+    padding-bottom: 40px;     /* jarak dari bawah (atur sesuai selera) */
+}
+
+    /* Animasi fade-out untuk cover-content saat tombol diklik */
+    .cover-content.fade-out {
+        opacity: 0;
+        transition: opacity 0.6s ease;
+        pointer-events: none;
     }
 
+    /* Class untuk menyembunyikan seluruh cover (digunakan saat main terlihat) */
+    .cover-hidden {
+        display: none !important;
+    }
+
+
     .cover-content h3 {
-        font-size: 14px;
+        font-size: 11px;
         letter-spacing: 3px;
         text-transform: uppercase;
         margin-bottom: 10px;
@@ -465,6 +553,17 @@
         }
     }
 
+    @keyframes slideUpMain {
+        from {
+            opacity: 0;
+            transform: translateY(60px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     @keyframes float {
         0%, 100% {
             transform: translateX(0) translateY(0);
@@ -509,12 +608,13 @@
     .photo-slide img {
         scroll-snap-align: center;
         flex-shrink: 0;
+        z-index: 1;
     }
 
     /* Responsive */
     @media (max-width: 768px) {
         .cover-content h2 {
-            font-size: 36px;
+            font-size: 24px;
         }
         
         .section h1 {
@@ -704,22 +804,28 @@
         background: #2ecc71;
         box-shadow: 0 6px 18px rgba(46,204,113,0.18);
     }
-
+    .no-copy {
+        -webkit-user-select: none; /* Chrome, Safari */
+        -moz-user-select: none;    /* Firefox */
+        -ms-user-select: none;     /* IE/Edge */
+        user-select: none;
+    }
     </style>
 </head>
 <body>
 
+
 <!-- Cover -->
 <section class="cover" id="cover">
-
-    <!-- Video -->
-    <video id="bgVideo" autoplay muted playsinline class="bg-video">
-        <source src="assets/bg-video.mp4" type="video/mp4">
-    </video>
-      <!-- Last Frame Image -->
-    <div class="bg-last-frame" id="bgLastFrame">
-        <img src="assets/bg-foto3.jpeg" alt="Background Last Frame">
+    
+    <!-- bg-image image -->
+     <div class="bg-image" id="bgImage">
+        <img src="assets/bg-foto6.png" alt="Background Last Frame">
     </div>
+    <!-- Video -->
+    <video id="bgVideo" muted playsinline class="bg-video" style="display:none;">
+        <source src="assets/bg-video7.mp4" type="video/mp4">
+    </video>
 
     <!-- Content -->
     <div class="cover-content">
@@ -727,18 +833,25 @@
         <h2 id="namaTamu">Tamu Undangan</h2>
         <button onclick="openInvitation()">Buka Undangan</button>
     </div>
-
+    <p class="no-copy">
+        Teks ini tidak bisa di copy
+    </p>
 </section>
 
 <!-- Music -->
 <audio id="musik" loop style="display: none;">
-    <source src="assets/musik.mp3" type="audio/mp3">
+    <source src="foto_kita/music.mp3" type="audio/mp3">
 </audio>
+
+<section class="section-1" id="section-vidio">
+    <!-- Second Frame Video 2 (Loop) -->
+    <video id="bgSecoundFrame2" muted playsinline class="bg-secound-frame" loop>
+        <source src="assets/bg-video6.mp4" type="video/mp4">
+    </video>
+</section>
 
 <!-- Main Content -->
 <section class="main hidden" id="main">
-    
-    
     
     <!-- Background Decorations -->
     <div class="bg-decorations">
@@ -920,24 +1033,13 @@
 </section>
 
 <script>
-    const video = document.getElementById("bgVideo");
-    const lastFrame = document.getElementById("bgLastFrame");
+    const bgVideo = document.getElementById("bgVideo");
+    const bgSecoundFrame2 = document.getElementById("bgSecoundFrame2");
+    const bgImage = document.getElementById("bgImage");
     const cover = document.getElementById("cover");
+    const coverContent = document.querySelector(".cover-content");
     const musik = document.getElementById("musik");
-
-    // Setelah video selesai
-    video.addEventListener("ended", () => {
-        lastFrame.classList.add("show");
-        video.style.display = "none";
-    });
-
-    // Fallback (kalau autoplay gagal di device tertentu) - set ke frame terakhir setelah 10 detik
-    setTimeout(() => {
-        if (video.paused && !lastFrame.classList.contains("show")) {
-            lastFrame.classList.add("show");
-            video.style.display = "none";
-        }
-    }, 10000);
+    const mainSection = document.getElementById("main");
 
     // Ambil nama tamu dari URL
     const params = new URLSearchParams(window.location.search);
@@ -947,24 +1049,65 @@
         document.getElementById("namaTamu").innerText = nama;
     }
 
+    // Pastikan initial state: only bgImage visible
+    if (bgVideo) bgVideo.style.display = 'none';
+    if (bgSecoundFrame2) bgSecoundFrame2.style.display = 'none';
+
+    // Flag untuk tracking video state
+    let isSecondFramePlaying = false;
+
+    // Ketika tombol diklik: sembunyikan cover-content dengan animasi, tampilkan bgVideo lalu mainkan
     function openInvitation() {
-        cover.style.opacity = "0";
-        cover.style.pointerEvents = "none";
+        // animasi fade-out pada cover-content
+        coverContent.classList.add('fade-out');
+
+        // setelah sedikit delay, tampilkan bgVideo dan sembunyikan bgImage
         setTimeout(() => {
-            cover.style.display = "none";
-        }, 300);
+            if (bgImage) bgImage.style.display = 'none';
+            if (bgVideo) {
+                bgVideo.style.display = 'block';
+                bgVideo.currentTime = 0;
+                bgVideo.play().catch(err => console.log('bgVideo play blocked:', err));
+            }
+        }, 350);
+    }
+
+    // Function untuk menampilkan main dengan animasi slide-up setelah 5 detik
+    function showMainAfterDelay() {
+        isSecondFramePlaying = true;
+        // allow scroll through cover by disabling pointer events on cover
+        cover.style.pointerEvents = 'none';
         
-        document.getElementById("main").classList.remove("hidden");
-        
-        // Trigger fade-up animations
-        const sections = document.querySelectorAll(".section");
-        sections.forEach((section, index) => {
-            const delay = index * 0.3;
-            section.style.animation = `fadeUp 1s ease-out ${delay}s forwards`;
-            section.style.opacity = "0";
+        // Tunggu 5 detik, kemudian tampilkan main dengan animasi slide-up selama 5 detik
+        setTimeout(() => {
+            mainSection.classList.remove('hidden');
+            mainSection.style.animation = 'slideUpMain 5s ease forwards';
+            // Setelah animasi selesai, set animation ke none agar tidak diulang
+            setTimeout(() => {
+                mainSection.style.animation = 'none';
+            }, 5000);
+        }, 5000);
+    }
+
+    // Setelah bgVideo selesai, tampilkan second-frame yang loop
+    if (bgVideo) {
+        bgVideo.addEventListener('ended', () => {
+            bgVideo.style.display = 'none';
+            if (bgSecoundFrame2) {
+                // Show section-1 container (absolute positioning)
+                const section1 = document.getElementById('section-vidio');
+                if (section1) section1.style.display = 'block';
+                
+                bgSecoundFrame2.style.display = 'block';
+                bgSecoundFrame2.classList.add('show');
+                // hide cover-content to avoid overlap
+                coverContent.style.display = 'none';
+                bgSecoundFrame2.play().catch(e => console.log('secound play blocked', e));
+                
+                // Tampilkan main setelah delay
+                showMainAfterDelay();
+            }
         });
-        
-        musik.play().catch(err => console.log("Autoplay musik terhalang:", err));
     }
 
     // Smooth scroll untuk foto
@@ -1051,9 +1194,19 @@
         }
     }
 
-    // document.addEventListener('contextmenu', function(e) {
-    //    e.preventDefault();
-    // }); 
+        // document.addEventListener('contextmenu', function(e) {
+        // e.preventDefault();
+        // }); 
+        document.addEventListener('keydown', function(e) {
+            if (
+                (e.ctrlKey && e.key === 'c') ||
+                (e.ctrlKey && e.key === 'a') ||
+                (e.ctrlKey && e.key === 'u') ||
+                (e.ctrlKey && e.key === 's')
+            ) {
+                e.preventDefault();
+            }
+        });
 </script>
 </body>
 </html>
