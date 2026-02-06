@@ -714,6 +714,67 @@
             display: none; /* simplify decorations on small screens */
         }
     }
+
+    /* Fine-tune video & image sizing for mobile */
+    @media (max-width: 768px) {
+        /* Ensure background images and videos cover viewport without overflow */
+        .bg-image img,
+        .bg-video,
+        .bg-secound-frame {
+            width: 100%;
+            height: 100vh;
+            max-height: 100vh;
+            object-fit: cover;
+            object-position: center top;
+        }
+
+        /* Section images scale neatly inside content */
+        .section img {
+            width: 100%;
+            max-width: 360px;
+            height: auto;
+            margin: 0 auto;
+            border-radius: 16px;
+        }
+
+        /* Photo slide items should be large but not overflow screen */
+        .photo-slide img {
+            max-width: 78%;
+            height: auto;
+        }
+
+        .photo-wrapper img {
+            max-height: 420px;
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .bg-image img,
+        .bg-video,
+        .bg-secound-frame {
+            width: 100%;
+            height: 60vh; /* reduce vertical footprint on very small screens */
+            max-height: 60vh;
+            object-fit: cover;
+            object-position: center top;
+        }
+
+        .section img {
+            max-width: 95%;
+        }
+
+        .photo-slide img {
+            max-width: 85%;
+        }
+
+        .photo-wrapper img {
+            max-height: 280px;
+        }
+    }
+
     .countdown {
         display: flex;
         justify-content: center;
@@ -1153,6 +1214,16 @@
                 bgVideo.style.display = 'block';
                 bgVideo.currentTime = 0;
                 bgVideo.play().catch(err => console.log('bgVideo play blocked:', err));
+            }
+            // Play background music on user interaction (click)
+            try {
+                if (musik) {
+                    musik.currentTime = 0;
+                    musik.volume = 0.8;
+                    musik.play().catch(err => console.log('musik play blocked:', err));
+                }
+            } catch (e) {
+                console.log('musik play error', e);
             }
         }, 350);
     }
