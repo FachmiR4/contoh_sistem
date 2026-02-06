@@ -629,6 +629,91 @@
             font-size: 16px;
         }
     }
+
+    /* Additional responsive tweaks */
+    @media (max-width: 768px) {
+        .cover {
+            height: 100vh;
+        }
+        .cover-content {
+            justify-content: center;
+            top: 244px;
+        }
+        .cover-content h2 {
+            font-size: 28px;
+            line-height: 1.1;
+            opacity: 1; /* ensure visible after animation */
+        }
+        .cover-content h3 {
+            font-size: 12px;
+        }
+        .cover-content button {
+            padding: 12px 22px;
+            font-size: 14px;
+            border-radius: 36px;
+        }
+
+        .bg-video, .bg-secound-frame {
+            object-position: center;
+            height: 100vh;
+        }
+
+        .main {
+            padding: 40px 16px;
+            box-sizing: border-box;
+        }
+
+        .wedding-card {
+            max-width: 320px;
+            margin: 20px auto;
+        }
+
+        .photo-slide img {
+            max-width: 240px;
+            border-radius: 18px;
+        }
+
+        .map-wrapper iframe {
+            height: 260px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .cover-content h2 {
+            font-size: 20px;
+        }
+        .cover-content h3 {
+            font-size: 11px;
+        }
+        .cover-content button {
+            padding: 10px 18px;
+            font-size: 13px;
+        }
+
+        .section h1 {
+            font-size: 28px;
+        }
+
+        .main {
+            padding: 28px 12px;
+        }
+
+        .photo-slide {
+            gap: 12px;
+            padding: 12px 0;
+        }
+
+        .floral-bottom .flower-bottom-left,
+        .floral-bottom .flower-bottom-right {
+            width: 140px;
+        }
+
+        .bg-decorations .cloud-1,
+        .bg-decorations .cloud-2,
+        .bg-decorations .cloud-3 {
+            display: none; /* simplify decorations on small screens */
+        }
+    }
     .countdown {
         display: flex;
         justify-content: center;
@@ -976,8 +1061,8 @@
         <!-- CARD BANK 1 -->
         <div class="gift-card">
             <div class="gift-card-header">
-                <span class="bank-name">Bank Mandiri</span>
-                <img src="mandiri-logo.png" alt="Mandiri">
+                <span class="bank-name">Bank BRI</span>
+                <img src="assets/bri.png" alt="Mandiri">
             </div>
 
             <div class="gift-card-body">
@@ -1005,7 +1090,7 @@
         <div class="gift-card">
             <div class="gift-card-header">
                 <span class="bank-name">Bank BCA</span>
-                <img src="bca-logo.png" alt="BCA">
+                <img src="assets/bca.jpg" alt="BCA">
             </div>
 
             <div class="gift-card-body">
