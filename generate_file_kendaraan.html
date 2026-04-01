@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Extract Form PDF Kendaraan</title>
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      width: 500px;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      margin: 15px 0;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .output {
+      margin-top: 15px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
+      min-height: 120px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Extract Form Kendaraan</h2>
+
+  <input type="file" id="fileInput" accept="application/pdf">
+  <button onclick="extractFormData()">Extract Data</button>
+
+  <div class="output" id="output">
+    Hasil akan muncul di sini...
+  </div>
+</div>
+
+<script>
+async function extractFormData() {
+  const file = document.getElementById('fileInput').files[0];
+  const output = document.getElementById('output');
+
+  if (!file) {
+    alert('Upload PDF dulu!');
+    return;
+  }
+
+  output.innerHTML = "Memproses PDF...";
+
+  const buffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+
+  let fullText = '';
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const text = content.items.map(item => item.str).join(' ');
+    fullText += text + '\n';
+  }
+
+  const data = parseForm(fullText);
+
+  output.innerHTML = `
+    <b>No Form:</b> ${data.no_form}<br><br>
+    <b>Pengemudi:</b> ${data.pengemudi}<br><br>
+    <b>No Polisi:</b> ${data.no_polisi}<br><br>
+    <b>KM Awal:</b> ${data.km_awal}<br><br>
+    <b>KM Akhir:</b> ${data.km_akhir}
+  `;
+}
+
+// PARSE FORM
+function parseForm(text) {
+  return {
+    no_form: getValue(text, /No\\.?\\s*Form[:\\s]*([A-Za-z0-9\\/\\-]+)/i),
+    pengemudi: getValue(text, /Pengemudi[:\\s]*([A-Za-z\\s]+)/i),
+    no_polisi: getValue(text, /(No\\.?\\s*Polisi|Nopol)[:\\s]*([A-Za-z0-9\\s]+)/i, 2),
+    km_awal: getValue(text, /(KM Awal|Kilometer Awal)[:\\s]*([0-9]+)/i, 2),
+    km_akhir: getValue(text, /(KM Akhir|Kilometer Akhir)[:\\s]*([0-9]+)/i, 2),
+  };
+}
+
+// HELPER AMBIL VALUE
+function getValue(text, regex, group = 1) {
+  const match = text.match(regex);
+  return match ? match[group].trim() : '-';
+}
+</script>
+
+</body>
+</html>
