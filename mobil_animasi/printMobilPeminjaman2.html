@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Form Pemakaian Kendaraan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        .container {
+            width: 100%;
+            padding: 10px;
+        }
+
+        h2, P {
+            text-align: center;
+            margin: 2px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td, th {
+            border: 1px solid #000;
+            padding: 5px;
+            vertical-align: top;
+        }
+        .form-kendaraan {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed; /* 🔥 penting: biar kolom tidak berubah */
+        }
+
+        .form-kendaraan td {
+            border: 1px solid #000;
+            padding: 5px;
+            vertical-align: top;
+            font-size: 12px;
+        }
+
+        /* supaya text turun ke bawah (wrap) */
+        .form-kendaraan .wrap {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* supaya tanggal & jam tetap 1 baris */
+        .form-kendaraan .nowrap {
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        /* rata tengah */
+        .form-kendaraan .center {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        /* tinggi row fix */
+        .form-kendaraan .row-fixed td {
+            height: 100px;
+        }
+
+        .no-border td {
+            border: none;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .small {
+            font-size: 10px;
+        }
+
+        .section-title {
+            background: #000000;
+            color: #fff;
+            font-weight: bold;
+            padding: 5px;
+        }
+
+        .car-image {
+            /* center image */
+            display: block;
+            margin: auto;
+            width: 63%;
+            height: auto;
+        }
+
+        .signature-box {
+            height: 50px;
+        }
+        td.center {
+        text-align: center;
+        padding: 0; /* penting biar gambar bisa maksimal */
+            }
+
+        .img-bbm {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: auto;
+        }
+        .kendaraan table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        .header-form {
+            display: flex;
+            width: 60%;
+            align-items: center; /* sejajar vertikal */
+            gap: 10px; /* jarak logo & teks */
+        }
+
+        .logo {
+            height: 68px;
+        }
+
+        .title {
+            font-size: 19px;
+            margin: 0;
+            padding-top: 40px;
+        }
+    </style>
+    <style media="print">
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        body {
+            font-size: 10px;
+            margin: 0;
+        }
+        .container {
+            width: auto;
+            max-width: none;
+            padding: 5px;
+        }
+        table {
+            font-size: 10px;
+            page-break-inside: avoid;
+        }
+        .form-kendaraan td {
+            padding: 3px;
+        }
+        .signature-box {
+            height: 70px;
+        }
+        .car-image {
+            max-width: 100%;
+            height: auto;
+        }
+        .img-bbm {
+            max-width: 100%;
+            height: auto;
+        }
+        h2, h3 {
+            font-size: 12px;
+        }
+        .chk {
+            accent-color: black; /* 🔥 ubah warna di sini */
+        }
+        .kendaraan-td {
+            width: 20%;
+            font-size: 9px;
+        }
+    </style>
+</head>
+<body onload="window.print()">
+<!-- <body> -->
+<div class="container">
+    <!-- image logo -->
+    <div class="header-form">
+        <img src="kendaraan blue print/logo.png" class="logo">
+        <h3 class="title">Citra Marga Nusaphala Persada Tbk</h3>
+    </div>
+    <hr style="border: 1px solid #000; margin: 5px 0;">
+    <hr style="border: 1px solid #000; margin: 5px 0;">
+
+    <h2>FORM PEMAKAIAN KENDARAAN</h2>
+    <p><B>DEPARTEMEN PELAYANAN KANTOR - DIVISI UMUM</B></p>
+    <!-- number form -->
+    <h3 class="center"><b>No. Form :</b> 01</h3>
+    <table class="form-kendaraan" style="table-layout: fixed; border-collapse: collapse;">
+
+        <colgroup>
+            <col style="width: 20%">
+            <col style="width: 10%">
+            <col style="width: 8%">  
+            <col style="width: 10%"> 
+            <col style="width: 8%">  
+            <col style="width: 24%"> 
+        </colgroup>
+        <tr>
+            <td width="40%" class="center" colspan="6">
+                <!-- checkbox color black -->
+                <input type="checkbox" id="dalam" class="chk" name="dalam" value="dalam" checked>
+                <label for="dalam">Dinas Dalam kota</label>
+                <input type="checkbox" id="luar" class="chk" name="luar" value="luar">
+                <label for="luar">Dinas Luar Kota</label>
+            </td>
+        </tr>    
+        <tr>
+            <td rowspan="2" class="wrap">
+                <b>Nama :</b><br>
+                fahmi ramadhan
+            </td>
+
+            <td colspan="2" class="center"><b>Pengambilan</b></td>
+
+            <td rowspan="2"><b>Tanda Tangan Pemohon</b></td>
+            <td rowspan="2" width="20%"><b>Atasan Pemohon</b></td>
+            <td rowspan="2" width="20%" style="text-align: center;"><b>Manajer Pemohon</b></td>
+        </tr>
+
+        <tr class="center">
+            <td>Tanggal</td>
+            <td>Jam</td>
+        </tr>
+
+        <tr class="row-fixed">
+            <td class="wrap">
+                <b>Divisi :</b> Divisi Manajemen Gerbang Tol & TI
+            </td>
+
+            <td class="nowrap">27-10-2026</td>
+            <td class="nowrap">12.00</td>
+            
+            <td class="signature-box"></td>
+            <td class="signature-box"></td>
+            <td class="signature-box"></td>
+        </tr>
+    </table>
+
+    <br>
+    <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+        <tr>
+            <td style="width: 50%;"><b>Keperluan</b></td>
+            <td style="width: 50%;"><b>Tujuan</b></td>
+        </tr>
+        <tr>
+            <td style="height: 70px;"></td>
+            <td style="height: 70px;"></td>
+        </tr>
+    </table>
+    <br>
+
+    <table>
+        <tr class="center">
+            <td>Kasie RTK</td>
+            <td>Ka. Dep Pelayanan Kantor</td>
+            <td>Manajer Divisi Umum</td>
+        </tr>
+        <tr>
+            <td class="signature-box"></td>
+            <td class="signature-box"></td>
+            <td class="signature-box"></td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table class="kendaraan">
+        <tr>
+            <td width="30%">
+                <table style="width: 100%; table-layout: fixed;">
+                    <tr>
+                        <td class="kendaraan-td"><b>Pengemudi :</b></td>
+                        <td class="kendaraan-td"><b>NoPol :</b></td>
+                    </tr>
+                </table>
+                <table style="margin-top: 10px;">
+                    <tr>
+                        <td width="40%" class="center">
+                            <!-- checkbox color black -->
+                            <input type="checkbox" id="dalam" name="dalam">
+                            <label for="dalam">Tidak ada Kerusakan</label>
+                            <input type="checkbox" id="luar" name="luar">
+                            <label for="luar">Ada Kerusakan</label>
+                        </td>
+                    </tr>
+                </table>
+                <!-- catatan kerusakan -->
+                <table style="border: none; border-collapse: collapse;">
+                    <tr>
+                        <td style="border: none;">
+                            <b>Catatan Kerusakan :</b>
+                        </td>
+                    </tr>
+                </table>
+
+            </td>
+            <td width="50%">
+                <table>
+                    <tr class="center">
+                        <td colspan="2"><b>Pengembalian</b></td>
+                        <td colspan="2"><b>Posisi Kilometer</b></td>
+                        <td colspan="2"><b>Posisi BBM</b></td>
+                    </tr>
+                    <tr class="center">
+                        <td>Tanggal</td>
+                        <td>Jam</td>
+                        <td>Awal</td>
+                        <td>Akhir</td>
+                        <td>Diserahkan</td>
+                        <td>Diterima</td>
+                    </tr>
+                    <tr>
+                        <td height="50px"></td>
+                        <td height="50px"></td>
+                        <td height="50px"></td>
+                        <td height="50px"></td>
+                        <td class="center">
+                            <img src="kendaraan blue print/indikator2.jpg" class="img-bbm">
+                        </td>
+                        <td class="center">
+                            <img src="kendaraan blue print/indikator2.jpg" class="img-bbm">
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <div class="section-title">KONDISI KENDARAAN</div>
+
+    <table>
+        <tr>
+            <td width="50%">
+                <b>Sisi Pengemudi ( kanan )</b>
+                <table>
+                    <tr>
+                        <th>Bagian</th>
+                        <th>Baik</th>
+                        <th>Penyok</th>
+                        <th>Gores</th>
+                        <th>Pecah</th>
+                    </tr>
+                    <tr>
+                        <td>1. Spakbor Depan</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>2. Pintu Depan</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>3. Pintu Belakang</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>4. Spakbor Belakang</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>5. Ban Depan</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr><tr>
+                        <td>6. Ban Belakang</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                </table>
+                <br>
+                <b>Sisi Pengemudi ( Kiri )</b>
+                <table>
+                    <tr>
+                        <th>Bagian</th>
+                        <th>Baik</th>
+                        <th>Penyok</th>
+                        <th>Gores</th>
+                        <th>Pecah</th>
+                    </tr>
+                    <tr>
+                        <td>7. Spakbor Depan</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>8. Pintu Depan</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>9. Pintu Belakang</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>10. Spakbor Belakang</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>11. Ban Depan</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr><tr>
+                        <td>12. Ban Belakang</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                </table>
+            </td>
+
+            <td width="50%" >
+                <br>
+                <b>Bagian Depan</b>
+                <table>
+                    <tr>
+                        <th>Bagian</th>
+                        <th>Baik</th>
+                        <th>Penyok</th>
+                        <th>Gores</th>
+                        <th>Pecah</th>
+                    </tr>
+                    <tr>
+                        <td>13. Kap Mesin</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>14. Bemper Depan</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>15. Kaca Depan</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>16. Atap Mobil</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                </table>
+                <br>
+                <b>Bagian Belakang</b>
+                <table>
+                    <tr>
+                        <th>Bagian</th>
+                        <th>Baik</th>
+                        <th>Penyok</th>
+                        <th>Gores</th>
+                        <th>Pecah</th>
+                    </tr>
+                    <tr>
+                        <td>17. Tutup Bagasi</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>18. Bemper Belakang</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td>19. Kaca Belakang</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                </table>
+                 <!-- GAMBAR MOBIL (gambar 2) -->
+                <img src="kendaraan blue print/cover-full.png" class="car-image">
+            </td>
+        </tr>
+    </table>
+
+    <!-- <br>
+
+    <table class="small">
+        <tr>
+            <td>Catatan:</td>
+        </tr>
+        <tr>
+            <td>1. Lembar Putih : Departemen Pelayanan Kantor</td>
+        </tr>
+        <tr>
+            <td>2. Lembar Kuning : Satuan Pengamanan</td>
+        </tr>
+    </table> -->
+
+</div>
+
+</body>
+</html>

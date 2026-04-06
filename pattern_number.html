@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Game Pola Angka</title>
+<style>
+    :root {
+        --bg-primary: #1b1f3b;
+        --bg-secondary: rgba(255, 255, 255, 0.12);
+        --accent: #ffca28;
+        --accent-strong: #f5b700;
+        --text-light: #f4f7ff;
+        --text-muted: #c9d1ff;
+        --shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Poppins', Arial, sans-serif;
+        background: radial-gradient(circle at top left, #7b61ff 0%, transparent 30%),
+                    radial-gradient(circle at bottom right, #24d7ff 0%, transparent 25%),
+                    linear-gradient(135deg, #0f1325 0%, #171a38 60%, #2d3161 100%);
+        color: var(--text-light);
+        text-align: center;
+        padding: 30px;
+    }
+
+    .game-card {
+        width: min(520px, 100%);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 32px;
+        backdrop-filter: blur(18px);
+        box-shadow: var(--shadow);
+        padding: 36px 32px;
+    }
+
+    .game-card h1 {
+        margin: 0 0 16px;
+        font-size: clamp(2rem, 3vw, 2.8rem);
+        letter-spacing: 0.05em;
+    }
+
+    .game-card p {
+        margin: 0 0 28px;
+        color: var(--text-muted);
+        font-size: 1rem;
+    }
+
+    #pattern {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 96px;
+        margin: 0 auto 24px;
+        padding: 18px 24px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: clamp(1.4rem, 2vw, 2rem);
+        letter-spacing: 0.12em;
+        color: var(--text-light);
+    }
+
+    .controls {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 14px;
+        margin-bottom: 22px;
+    }
+
+    input {
+        width: 140px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-light);
+        font-size: 1rem;
+        text-align: center;
+        outline: none;
+        transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    input:focus {
+        border-color: rgba(255, 202, 40, 0.85);
+        box-shadow: 0 0 0 6px rgba(255, 202, 40, 0.12);
+        transform: translateY(-1px);
+    }
+
+    button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 140px;
+        padding: 14px 22px;
+        border-radius: 18px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 30px rgba(26, 88, 255, 0.18);
+    }
+
+    button:active {
+        transform: translateY(0);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #7f5cff, #4487ff);
+        color: white;
+        box-shadow: 0 14px 28px rgba(62, 96, 255, 0.28);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-light);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    #info {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        flex-wrap: wrap;
+        color: var(--text-muted);
+        font-size: 1rem;
+    }
+
+    .status-chip {
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        min-width: 140px;
+    }
+
+    @media (max-width: 420px) {
+        .controls {
+            flex-direction: column;
+        }
+
+        input {
+            width: 100%;
+        }
+
+        button {
+            width: 100%;
+        }
+    }
+</style>
+</head>
+<body>
+
+<section class="game-card">
+    <h1>🧠 Game Pola Angka</h1>
+    <p>Temukan angka berikutnya secepat mungkin dan tingkatkan skor sebelum waktunya habis.</p>
+
+    <div id="pattern">Klik mulai</div>
+
+    <div class="controls">
+        <input type="number" id="answer" placeholder="Jawaban" autocomplete="off" />
+        <button class="btn-primary" onclick="checkAnswer()">Jawab</button>
+        <button class="btn-secondary" onclick="startGame()">Mulai Game</button>
+    </div>
+
+    <div id="info">
+        <div class="status-chip">⏱ Waktu: <span id="time">0</span></div>
+        <div class="status-chip">⭐ Skor: <span id="score">0</span></div>
+    </div>
+</section>
+
+<script>
+let currentAnswer = 0;
+let score = 0;
+let timeLeft = 60;
+let timer;
+
+function startGame() {
+    score = 0;
+    timeLeft = 60;
+
+    document.getElementById("score").innerText = score;
+    document.getElementById("time").innerText = timeLeft;
+
+    generatePattern();
+
+    clearInterval(timer);
+    timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("time").innerText = timeLeft;
+
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            alert("⏰ Waktu habis! Skor kamu: " + score);
+        }
+    }, 1000);
+}
+
+function generatePattern() {
+    const type = Math.floor(Math.random() * 4);
+    let pattern = [];
+
+    if (type === 0) {
+        // Penjumlahan
+        let start = Math.floor(Math.random() * 10);
+        let step = Math.floor(Math.random() * 5) + 1;
+
+        for (let i = 0; i < 5; i++) {
+            pattern.push(start + i * step);
+        }
+        currentAnswer = start + 5 * step;
+
+    } else if (type === 1) {
+        // Perkalian
+        let start = Math.floor(Math.random() * 5) + 1;
+        let mult = Math.floor(Math.random() * 3) + 2;
+
+        for (let i = 0; i < 5; i++) {
+            pattern.push(start * Math.pow(mult, i));
+        }
+        currentAnswer = start * Math.pow(mult, 5);
+
+    } else if (type === 2) {
+        // Fibonacci
+        let a = 1, b = 1;
+        pattern = [a, b];
+        for (let i = 2; i < 5; i++) {
+            let next = a + b;
+            pattern.push(next);
+            a = b;
+            b = next;
+        }
+        currentAnswer = a + b;
+
+    } else {
+        // Campuran sederhana
+        let num = Math.floor(Math.random() * 10) + 1;
+        pattern.push(num);
+
+        for (let i = 1; i < 5; i++) {
+            if (i % 2 === 0) {
+                num += 2;
+            } else {
+                num *= 2;
+            }
+            pattern.push(num);
+        }
+
+        if (5 % 2 === 0) {
+            currentAnswer = num + 2;
+        } else {
+            currentAnswer = num * 2;
+        }
+    }
+
+    document.getElementById("pattern").innerText =
+        pattern.join(" , ") + " , ?";
+
+    document.getElementById("answer").value = "";
+}
+
+function checkAnswer() {
+    const userAnswer = parseInt(document.getElementById("answer").value);
+
+    if (userAnswer === currentAnswer) {
+        score++;
+        document.getElementById("score").innerText = score;
+        generatePattern();
+    } else {
+        alert("❌ Salah! Jawaban benar: " + currentAnswer);
+    }
+}
+</script>
+
+</body>
+</html>
