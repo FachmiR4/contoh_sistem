@@ -308,7 +308,7 @@ function startGame() {
         time++;
         document.getElementById("time").innerText = time;
 
-        if (time >= 60) {
+        if (time >= 600000) { // 1000 menit
             clearInterval(timer);
             updateHighScores();
             showModal("Game Over", "Waktu habis! Skor kamu: " + score);
