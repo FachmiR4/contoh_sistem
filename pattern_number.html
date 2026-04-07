@@ -162,13 +162,57 @@
             width: 100%;
         }
     }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 24px;
+        margin: 15% auto;
+        padding: 20px;
+        width: 80%;
+        max-width: 400px;
+        text-align: center;
+        color: var(--text-light);
+    }
+
+    .modal-content h2 {
+        margin: 0 0 16px;
+    }
+
+    .modal-content p {
+        margin: 0 0 20px;
+    }
+
+    .modal-content button {
+        background: linear-gradient(135deg, #7f5cff, #4487ff);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 1rem;
+    }
 </style>
 </head>
 <body>
 
 <section class="game-card">
     <h1>🧠 Game Pola Angka</h1>
-    <p>Temukan angka berikutnya secepat mungkin dan tingkatkan skor sebelum waktunya habis.</p>
+    <p>Temukan angka berikutnya dengan 5 kesempatan sebelum waktu habis atau kesempatan habis.</p>
 
     <div id="pattern">Klik mulai</div>
 
@@ -181,32 +225,93 @@
     <div id="info">
         <div class="status-chip">⏱ Waktu: <span id="time">0</span></div>
         <div class="status-chip">⭐ Skor: <span id="score">0</span></div>
+        <div class="status-chip">🎯 Kesempatan: <span id="attempts">5</span></div>
+    </div>
+
+    <div id="highscores">
+        <div class="status-chip">🏆 Skor Tertinggi: <span id="highScore">0</span></div>
+        <div class="status-chip">⏳ Waktu Tertinggi: <span id="highTime">0</span></div>
     </div>
 </section>
+
+<!-- Modal -->
+<div id="myModal" class="modal">
+    <div class="modal-content">
+        <h2 id="modalTitle">Kamu Salah!</h2>
+        <p id="modalMessage"></p>
+        <button onclick="closeModal()">OK</button>
+    </div>
+</div>
 
 <script>
 let currentAnswer = 0;
 let score = 0;
-let timeLeft = 60;
+let time = 0;
+let attempts = 5;
 let timer;
+let highScore = 0;
+let highTime = 0;
+
+// Load high scores from localStorage
+function loadHighScores() {
+    highScore = parseInt(localStorage.getItem('highScore')) || 0;
+    highTime = parseInt(localStorage.getItem('highTime')) || 0;
+    document.getElementById("highScore").innerText = highScore;
+    document.getElementById("highTime").innerText = highTime;
+}
+
+// Update high scores
+function updateHighScores() {
+    if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('highScore', highScore);
+        document.getElementById("highScore").innerText = highScore;
+    }
+    if (time > highTime) {
+        highTime = time;
+        localStorage.setItem('highTime', highTime);
+        document.getElementById("highTime").innerText = highTime;
+    }
+}
+
+// Load high scores on page load
+window.onload = loadHighScores;
+
+// Modal functions
+function showModal(title, message) {
+    document.getElementById("modalTitle").innerText = title;
+    document.getElementById("modalMessage").innerText = message;
+    document.getElementById("myModal").style.display = "block";
+}
+
+function closeModal() {
+    document.getElementById("myModal").style.display = "none";
+    // Only generate new pattern if not game over
+    if (attempts > 0 && time < 60) {
+        generatePattern();
+    }
+}
 
 function startGame() {
     score = 0;
-    timeLeft = 60;
+    time = 0;
+    attempts = 5;
 
     document.getElementById("score").innerText = score;
-    document.getElementById("time").innerText = timeLeft;
+    document.getElementById("time").innerText = time;
+    document.getElementById("attempts").innerText = attempts;
 
     generatePattern();
 
     clearInterval(timer);
     timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById("time").innerText = timeLeft;
+        time++;
+        document.getElementById("time").innerText = time;
 
-        if (timeLeft <= 0) {
+        if (time >= 60) {
             clearInterval(timer);
-            alert("⏰ Waktu habis! Skor kamu: " + score);
+            updateHighScores();
+            showModal("Game Over", "Waktu habis! Skor kamu: " + score);
         }
     }, 1000);
 }
@@ -282,7 +387,15 @@ function checkAnswer() {
         document.getElementById("score").innerText = score;
         generatePattern();
     } else {
-        alert("❌ Salah! Jawaban benar: " + currentAnswer);
+        attempts--;
+        document.getElementById("attempts").innerText = attempts;
+        if (attempts <= 0) {
+            clearInterval(timer);
+            updateHighScores();
+            showModal("Game Over", "Kesempatan habis! Skor kamu: " + score);
+        } else {
+            showModal("Kamu Salah!", "Jawaban benar: " + currentAnswer + ". Kesempatan tersisa: " + attempts);
+        }
     }
 }
 </script>
