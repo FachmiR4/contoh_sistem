@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Deteksi Pergerakan Kamera</title>
+
+<style>
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #0e1c34 0%, #05080f 55%, #030407 100%);
+    color: #f4f7fb;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.card {
+    width: min(980px, 100%);
+    background: rgba(7, 16, 30, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 28px;
+    padding: 28px;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+}
+
+#title {
+    margin: 0;
+    font-size: clamp(2rem, 3vw, 2.8rem);
+    letter-spacing: -0.02em;
+}
+
+#subtitle {
+    margin: 10px 0 20px;
+    color: #a9b1c7;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+#status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 52px;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f8f9fc;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 18px;
+}
+
+canvas {
+    width: 100%;
+    height: auto;
+    max-height: 560px;
+    border-radius: 22px;
+    background: #000;
+    box-shadow: 0 22px 70px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+#error {
+    color: #ff7e7e;
+    margin-top: 10px;
+    text-align: center;
+    font-weight: 600;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+
+</head>
+
+<body>
+
+<div class="wrapper">
+    <div class="card">
+        <h1 id="title">Deteksi Pergerakan Kamera</h1>
+        <p id="subtitle">Sistem sederhana yang mendeteksi gerakan menggunakan kamera dan menandai area objek bergerak secara real-time.</p>
+        <div id="status">Menunggu gerakan...</div>
+        <canvas id="canvas"></canvas>
+        <div id="error"></div>
+    </div>
+</div>
+
+<video id="video" autoplay playsinline style="display:none;"></video>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const statusText = document.getElementById('status');
+const errorText = document.getElementById('error');
+
+let model = null;
+const modelScore = 0.55;
+const frameInterval = 150;
+let lastFrameTime = 0;
+
+function showError(message) {
+    errorText.textContent = message;
+    statusText.textContent = 'Kamera tidak tersedia';
+    statusText.style.color = '#ff8a8a';
+}
+
+navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+.then(stream => {
+    video.srcObject = stream;
+})
+.catch(err => {
+    showError('Tidak bisa mengakses kamera. Pastikan izin kamera sudah diberikan.');
+    console.error(err);
+});
+
+function drawPredictionBox(pred) {
+    const [x, y, width, height] = pred.bbox;
+    ctx.strokeStyle = 'rgba(0, 221, 255, 0.95)';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(x, y, width, height);
+
+    ctx.fillStyle = 'rgba(0, 221, 255, 0.16)';
+    ctx.fillRect(x, y, width, height);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '600 18px Inter, sans-serif';
+    const label = `Orang ${Math.round(pred.score * 100)}%`;
+    const textWidth = ctx.measureText(label).width + 14;
+    const labelHeight = 26;
+    ctx.fillRect(x, Math.max(0, y - 32), textWidth, labelHeight);
+    ctx.fillStyle = '#080b13';
+    ctx.fillText(label, x + 8, Math.max(0, y - 10));
+}
+
+function renderStatus(count) {
+    if (count > 0) {
+        statusText.textContent = `👤 ${count} orang terdeteksi`;
+        statusText.style.color = '#62d5ff';
+    } else {
+        statusText.textContent = 'Menunggu orang...';
+        statusText.style.color = '#dce1f5';
+    }
+}
+
+function startDetection() {
+    statusText.textContent = 'Memuat model deteksi...';
+    statusText.style.color = '#dce1f5';
+
+    cocoSsd.load({ base: 'lite_mobilenet_v2' })
+    .then(loadedModel => {
+        model = loadedModel;
+        statusText.textContent = 'Model siap. Menunggu orang...';
+        requestAnimationFrame(detectFrame);
+    })
+    .catch(err => {
+        showError('Gagal memuat model deteksi objek.');
+        console.error(err);
+    });
+}
+
+video.addEventListener('loadeddata', () => {
+    const aspectRatio = video.videoWidth / video.videoHeight;
+    canvas.width = Math.min(video.videoWidth, 720);
+    canvas.height = Math.round(canvas.width / aspectRatio);
+    requestAnimationFrame(detectFrame);
+});
+
+function detectFrame(timestamp) {
+    if (!model) {
+        if (video.readyState >= 2) {
+            requestAnimationFrame(detectFrame);
+        }
+        return;
+    }
+
+    if (timestamp - lastFrameTime < frameInterval) {
+        requestAnimationFrame(detectFrame);
+        return;
+    }
+    lastFrameTime = timestamp;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    model.detect(video).then(predictions => {
+        const persons = predictions.filter(pred => pred.class === 'person' && pred.score >= modelScore);
+        persons.forEach(drawPredictionBox);
+        renderStatus(persons.length);
+        requestAnimationFrame(detectFrame);
+    }).catch(err => {
+        console.error(err);
+        requestAnimationFrame(detectFrame);
+    });
+}
+
+window.addEventListener('load', () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        startDetection();
+    } else {
+        showError('Perangkat ini tidak mendukung kamera.');
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Deteksi Pergerakan Kamera</title>
+
+<style>
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #0e1c34 0%, #05080f 55%, #030407 100%);
+    color: #f4f7fb;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.card {
+    width: min(980px, 100%);
+    background: rgba(7, 16, 30, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 28px;
+    padding: 28px;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+}
+
+#title {
+    margin: 0;
+    font-size: clamp(2rem, 3vw, 2.8rem);
+    letter-spacing: -0.02em;
+}
+
+#subtitle {
+    margin: 10px 0 20px;
+    color: #a9b1c7;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+#status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 52px;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f8f9fc;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 18px;
+}
+
+canvas {
+    width: 100%;
+    height: auto;
+    max-height: 560px;
+    border-radius: 22px;
+    background: #000;
+    box-shadow: 0 22px 70px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+#error {
+    color: #ff7e7e;
+    margin-top: 10px;
+    text-align: center;
+    font-weight: 600;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="wrapper">
+    <div class="card">
+        <h1 id="title">Deteksi Pergerakan Kamera</h1>
+        <p id="subtitle">Sistem sederhana yang mendeteksi gerakan menggunakan kamera dan menandai area objek bergerak secara real-time.</p>
+        <div id="status">Menunggu gerakan...</div>
+        <canvas id="canvas"></canvas>
+        <div id="error"></div>
+    </div>
+</div>
+
+<video id="video" autoplay playsinline style="display:none;"></video>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const statusText = document.getElementById('status');
+const errorText = document.getElementById('error');
+
+const motionCanvas = document.createElement('canvas');
+const motionCtx = motionCanvas.getContext('2d');
+let previousFrame = null;
+let motionWidth = 320;
+let motionHeight = 180;
+const motionThreshold = 30;
+const sampleStep = 4;
+const minMotionPixels = 45;
+
+function showError(message) {
+    errorText.textContent = message;
+    statusText.textContent = 'Kamera tidak tersedia';
+    statusText.style.color = '#ff8a8a';
+}
+
+navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+.then(stream => {
+    video.srcObject = stream;
+})
+.catch(err => {
+    showError('Tidak bisa mengakses kamera. Pastikan izin kamera sudah diberikan.');
+    console.error(err);
+});
+
+video.addEventListener('loadeddata', () => {
+    const aspectRatio = video.videoWidth / video.videoHeight;
+    canvas.width = Math.min(video.videoWidth, 960);
+    canvas.height = Math.round(canvas.width / aspectRatio);
+
+    motionWidth = 320;
+    motionHeight = Math.round(motionWidth / aspectRatio);
+    motionCanvas.width = motionWidth;
+    motionCanvas.height = motionHeight;
+
+    requestAnimationFrame(detectMotion);
+});
+
+function detectMotion() {
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    motionCtx.drawImage(video, 0, 0, motionWidth, motionHeight);
+    const currentFrame = motionCtx.getImageData(0, 0, motionWidth, motionHeight);
+
+    let motionCount = 0;
+    let sumX = 0;
+    let sumY = 0;
+    let minX = motionWidth;
+    let maxX = 0;
+    let minY = motionHeight;
+    let maxY = 0;
+
+    if (previousFrame) {
+        for (let y = 0; y < motionHeight; y += sampleStep) {
+            for (let x = 0; x < motionWidth; x += sampleStep) {
+                const idx = (y * motionWidth + x) * 4;
+                const currGray = (currentFrame.data[idx] + currentFrame.data[idx + 1] + currentFrame.data[idx + 2]) / 3;
+                const prevGray = (previousFrame.data[idx] + previousFrame.data[idx + 1] + previousFrame.data[idx + 2]) / 3;
+                const diff = Math.abs(currGray - prevGray);
+
+                if (diff > motionThreshold) {
+                    motionCount += 1;
+                    sumX += x;
+                    sumY += y;
+                    minX = Math.min(minX, x);
+                    maxX = Math.max(maxX, x);
+                    minY = Math.min(minY, y);
+                    maxY = Math.max(maxY, y);
+                }
+            }
+        }
+
+        if (motionCount >= minMotionPixels) {
+            const scaleX = canvas.width / motionWidth;
+            const scaleY = canvas.height / motionHeight;
+            const boxMargin = sampleStep * 2;
+            const boxX = Math.max(0, (minX - boxMargin) * scaleX);
+            const boxY = Math.max(0, (minY - boxMargin) * scaleY);
+            const boxW = Math.min(canvas.width - boxX, (maxX - minX + boxMargin * 2) * scaleX);
+            const boxH = Math.min(canvas.height - boxY, (maxY - minY + boxMargin * 2) * scaleY);
+
+            ctx.fillStyle = 'rgba(255, 69, 96, 0.18)';
+            ctx.fillRect(boxX, boxY, boxW, boxH);
+            ctx.strokeStyle = 'rgba(255, 69, 96, 0.9)';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+            statusText.textContent = '⚠️ Gerakan terdeteksi';
+            statusText.style.color = '#ff6c6c';
+        } else {
+            statusText.textContent = 'Menunggu gerakan...';
+            statusText.style.color = '#dce1f5';
+        }
+    }
+
+    previousFrame = currentFrame;
+    requestAnimationFrame(detectMotion);
+}
+</script>
+
+</body>
+</html>
